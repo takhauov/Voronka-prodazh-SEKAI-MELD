@@ -437,6 +437,8 @@
       <p><b>По товару</b> — план и факт конкретного товара. План вводится вручную раз в месяц (в ₽ и шт.) либо считается кнопкой «Рассчитать автоматически» — по среднему темпу продаж за последние месяцы с поправкой на рост и на остаток товара на складе (с учётом даты поступления новой партии).</p>
       <p><b>Run-rate</b> — прогноз, куда придём к концу месяца, если ничего не менять (факт шт/день × дни в месяце). Показывается только для текущего месяца.</p>
       <p><b>Темп за 7 дней</b> — средняя скорость продаж за последнюю неделю и сравнение с неделей до неё — быстрее реагирует на изменения, чем Run-rate.</p>
+      <p><b>Группа плана</b> — для случаев, когда один и тот же товар продаётся с двух и более карточек (частый случай на Я.Маркете). Назначается на вкладке «Товары» кнопкой «Группа плана» — карточки с одинаковым названием группы получают общий план, общий остаток на складе и общее поступление, при этом ежедневные данные, воронка и точки роста у каждой карточки остаются свои.</p>
+      <p style="margin-left:16px;color:var(--ink-2);font-size:12.5px;">Если дубли появляются и пропадают периодически (например, полгода одна карточка, потом временно вторая, потом снова одна) — специально ничего откатывать не нужно: группу можно оставить назначенной навсегда. Если вторая карточка перестала использоваться (или удалена), в общий факт группы она просто перестаёт что-либо добавлять — план продолжает корректно считаться по оставшейся карточке. Единственное, о чём стоит помнить: план за месяцы, которые были введены <b>до</b> того, как назначили группу, при первом объединении карточек переносится в общий план группы автоматически — переносить вручную не придётся.</p>
     </div>
     <div class="panel">
       <h2>Ежедневные данные</h2>
@@ -465,7 +467,7 @@
     </div>
     <div class="panel">
       <h2>Товары</h2>
-      <p>Список всех товаров по всем площадкам. Здесь же — кнопка «Пороги» у каждого товара, чтобы настроить свои границы нормы для «Точек роста» (по умолчанию: CTR 3%, конверсия в корзину 10%, в заказ 20%, выкуп 80%, отмены 10%).</p>
+      <p>Список всех товаров по всем площадкам. Здесь же — кнопка «Пороги» у каждого товара, чтобы настроить свои границы нормы для «Точек роста» (по умолчанию: CTR 3%, конверсия в корзину 10%, в заказ 20%, выкуп 80%, отмены 10%), и кнопка «Группа плана» — для товаров, которые продаются с нескольких карточек одновременно (подробнее — в разделе «План и факт» этой справки).</p>
     </div>
   </div>
 
@@ -613,7 +615,9 @@ async function loadProducts(){
   list.sort((a,b)=> (a.mp+a.name).localeCompare(b.mp+b.name));
   state.products=list;
 }
-async function getPlanMap(productId){ return (await storeGet('plan:'+productId)) || {}; }
+function planKeyFor(product){ return product?.planGroup ? 'plangroup:'+product.planGroup : 'plan:'+product.id; }
+async function getPlanMap(product){ return (await storeGet(planKeyFor(product))) || {}; }
+function productsInGroup(groupName){ return state.products.filter(p=>p.planGroup && p.planGroup===groupName); }
 async function getDailyMap(productId){ return (await storeGet('daily:'+productId)) || {}; }
 
 function productLabel(p){ return `[${MP_LABEL[p.mp]}] ${p.name}`; }
@@ -666,10 +670,10 @@ async function renderProductsTable(){
     const th=getThresholds(p);
     return `<tr>
       <td class="txt"><span class="badge ${p.mp}">${MP_LABEL[p.mp]}</span></td>
-      <td class="txt">${p.name}</td>
+      <td class="txt">${p.name}${p.planGroup?` <span class="badge" style="background:var(--funnel-bg);color:var(--funnel);">группа: ${p.planGroup}</span>`:''}</td>
       <td>${p.currentPriceLK? fmt(p.currentPriceLK)+' ₽' : '—'}</td>
       <td>${p.currentPriceCustomer? fmt(p.currentPriceCustomer)+' ₽' : '—'}</td>
-      <td><button class="btn secondary" data-rename="${p.id}">Переименовать</button> <button class="btn secondary" data-thresh-toggle="${p.id}">Пороги</button> <button class="btn danger" data-del="${p.id}">Удалить</button></td>
+      <td><button class="btn secondary" data-rename="${p.id}">Переименовать</button> <button class="btn secondary" data-thresh-toggle="${p.id}">Пороги</button> <button class="btn secondary" data-group-toggle="${p.id}">Группа плана</button> <button class="btn danger" data-del="${p.id}">Удалить</button></td>
     </tr>
     <tr class="thresh-row" data-thresh-row="${p.id}" style="display:none;">
       <td colspan="5">
@@ -682,6 +686,15 @@ async function renderProductsTable(){
           <button class="btn secondary" data-thresh-save="${p.id}">Сохранить пороги</button>
           <button class="btn secondary" data-thresh-reset="${p.id}">Сбросить по умолчанию</button>
         </div>
+      </td>
+    </tr>
+    <tr class="group-row" data-group-row="${p.id}" style="display:none;">
+      <td colspan="5">
+        <div class="row" style="padding:8px 0;">
+          <div class="field" style="min-width:260px;"><label>Название группы плана (пусто — без группы)</label><input type="text" data-groupinput="${p.id}" value="${p.planGroup||''}" placeholder="Например, Термокружка 500мл"></div>
+          <button class="btn secondary" data-group-save="${p.id}">Сохранить группу</button>
+        </div>
+        <div class="note">Товары с одинаковым названием группы получают общий план, общий остаток и общее поступление на вкладке «План и факт» — при этом ежедневные данные и воронка остаются у каждой карточки своими.</div>
       </td>
     </tr>`;
   }).join('');
@@ -705,6 +718,52 @@ async function renderProductsTable(){
   wrap.querySelectorAll('[data-thresh-toggle]').forEach(b=>b.addEventListener('click', ()=>{
     const row=wrap.querySelector(`[data-thresh-row="${b.dataset.threshToggle}"]`);
     row.style.display = row.style.display==='none' ? 'table-row' : 'none';
+  }));
+  wrap.querySelectorAll('[data-group-toggle]').forEach(b=>b.addEventListener('click', ()=>{
+    const row=wrap.querySelector(`[data-group-row="${b.dataset.groupToggle}"]`);
+    row.style.display = row.style.display==='none' ? 'table-row' : 'none';
+  }));
+  wrap.querySelectorAll('[data-group-save]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id=b.dataset.groupSave;
+    const p=state.products.find(x=>x.id===id);
+    const prevGroup=p.planGroup;
+    const inp=wrap.querySelector(`[data-groupinput="${id}"]`);
+    const newGroup=inp.value.trim();
+    const originalText=b.textContent;
+    b.disabled=true; b.textContent='Сохраняю…';
+
+    // если раньше группы не было, а теперь назначается — переносим уже введённый индивидуальный план в план группы,
+    // чтобы история за месяцы до объединения карточек не потерялась
+    let migratedMonths=0;
+    if(newGroup && !prevGroup){
+      const individualPlan=await storeGet('plan:'+id);
+      if(individualPlan){
+        const groupPlan=(await storeGet('plangroup:'+newGroup)) || {};
+        Object.keys(individualPlan).forEach(month=>{
+          if(!groupPlan[month]){ groupPlan[month]=individualPlan[month]; migratedMonths++; }
+        });
+        if(migratedMonths>0){
+          const mOk=await storeSet('plangroup:'+newGroup, groupPlan);
+          if(!mOk){
+            b.disabled=false; b.textContent=originalText;
+            alert('Не удалось перенести старый план в группу — сбой хранилища. Попробуйте ещё раз.');
+            return;
+          }
+        }
+      }
+    }
+
+    p.planGroup = newGroup || null;
+    const ok=await storeSet('product:'+id, p);
+    if(!ok){
+      p.planGroup=prevGroup;
+      b.disabled=false; b.textContent=originalText;
+      alert('Не удалось сохранить группу — сбой хранилища. Попробуйте ещё раз.');
+      return;
+    }
+    await loadProducts();
+    renderProductsTable();
+    if(migratedMonths>0) alert(`Готово. Заодно перенесли план за ${migratedMonths} мес., которые были введены до объединения карточек, — они уже видны в общем плане группы.`);
   }));
   wrap.querySelectorAll('[data-thresh-save]').forEach(b=>b.addEventListener('click', async ()=>{
     const id=b.dataset.threshSave;
@@ -778,6 +837,16 @@ async function productMonthFact(productId, month){
   const adSpend=entries.reduce((s,e)=>s+(+e.adspend||0),0);
   return {factUnits, factRub, adSpend};
 }
+async function planFactFor(product, month){
+  if(!product.planGroup) return productMonthFact(product.id, month);
+  const members=productsInGroup(product.planGroup);
+  let factUnits=0, factRub=0, adSpend=0;
+  for(const p of members){
+    const f=await productMonthFact(p.id, month);
+    factUnits+=f.factUnits; factRub+=f.factRub; adSpend+=f.adSpend;
+  }
+  return {factUnits, factRub, adSpend};
+}
 
 function computeAvailableStock(month, stockQty, arrivalDate, arrivalQty){
   const stock=+stockQty||0;
@@ -801,10 +870,14 @@ async function computeAutoPlan(productId, month){
   const noteEl=document.getElementById('autoPlanNote');
   const product=state.products.find(p=>p.id===productId);
   const growthPct=+document.getElementById('plan_growth_pct').value||0;
+  const groupMembers = product.planGroup ? productsInGroup(product.planGroup) : [product];
 
-  const dm=await getDailyMap(productId);
-  const monthsWithData=[...new Set(Object.keys(dm).map(d=>d.slice(0,7)))].filter(m=>m<month).sort().reverse();
-  const baseMonths=monthsWithData.slice(0,3);
+  const monthsSet=new Set();
+  for(const p of groupMembers){
+    const dm=await getDailyMap(p.id);
+    Object.keys(dm).forEach(d=>{ if(d.slice(0,7)<month) monthsSet.add(d.slice(0,7)); });
+  }
+  const baseMonths=[...monthsSet].sort().reverse().slice(0,3);
 
   if(baseMonths.length===0){
     noteEl.textContent='Нет данных за прошлые месяцы по этому товару — считать не от чего, введите план вручную.';
@@ -813,8 +886,12 @@ async function computeAutoPlan(productId, month){
 
   let totalUnits=0, totalDays=0;
   for(const m of baseMonths){
-    const f=await productMonthFact(productId, m);
-    totalUnits+=f.factUnits;
+    let monthUnits=0;
+    for(const p of groupMembers){
+      const f=await productMonthFact(p.id, m);
+      monthUnits+=f.factUnits;
+    }
+    totalUnits+=monthUnits;
     totalDays+=daysInMonth(m);
   }
   const avgDailyRate=totalUnits/totalDays;
@@ -922,9 +999,10 @@ async function renderOverviewTab(){
   for(const p of state.products){
     const entries=await monthEntries(p.id, month);
     const f=await productMonthFact(p.id, month);
-    const planMap=await getPlanMap(p.id);
+    const planFact=await planFactFor(p, month);
+    const planMap=await getPlanMap(p);
     const plan=planMap[month]||{planRub:0,planUnits:0};
-    const actualUnitsPerDay=f.factUnits/daysElapsed;
+    const actualUnitsPerDay=planFact.factUnits/daysElapsed;
     const runRateUnits=Math.round(actualUnitsPerDay*dim);
     const runRateRub=Math.round(runRateUnits*(p.currentPriceLK||0));
     const runRatePct = plan.planRub>0 ? runRateRub/plan.planRub*100 : null;
@@ -1040,12 +1118,16 @@ async function renderPlanTab(){
     const daysElapsed = isCurrentMonth? dayOfMonth : dim;
     let planRub=0, planUnits=0, factRub=0, factUnits=0, runRateUnitsTotal=0, runRateRubTotal=0;
     const rowsData=[];
+    const seenGroups=new Set();
     for(const p of products){
-      const pm=await getPlanMap(p.id);
+      const pm=await getPlanMap(p);
       const pl=pm[month]||{planRub:0,planUnits:0};
       const f=await productMonthFact(p.id, month);
-      planRub+=+pl.planRub||0; planUnits+=+pl.planUnits||0; factRub+=f.factRub; factUnits+=f.factUnits;
-      rowsData.push({name:p.name, planRub:pl.planRub||0, planUnits:pl.planUnits||0, factRub:f.factRub, factUnits:f.factUnits});
+      const isDupGroup = p.planGroup && seenGroups.has(p.planGroup);
+      if(p.planGroup) seenGroups.add(p.planGroup);
+      if(!isDupGroup){ planRub+=+pl.planRub||0; planUnits+=+pl.planUnits||0; }
+      factRub+=f.factRub; factUnits+=f.factUnits;
+      rowsData.push({name:p.name+(p.planGroup?` (группа «${p.planGroup}»)`:''), planRub:pl.planRub||0, planUnits:pl.planUnits||0, factRub:f.factRub, factUnits:f.factUnits});
       if(isCurrentMonth && daysElapsed>0){
         const productRunRateUnits=(f.factUnits/daysElapsed)*dim;
         runRateUnitsTotal+=productRunRateUnits;
@@ -1080,9 +1162,12 @@ async function renderPlanTab(){
   const month=document.getElementById('plan_product_month').value || monthNow();
   document.getElementById('plan_product_month').value=month;
   if(!productId){ editorWrap.innerHTML='<div class="panel"><div class="empty">Выберите товар</div></div>'; summaryWrap.innerHTML=''; return; }
-  const planMap=await getPlanMap(productId);
+  const planMap=await getPlanMap(product);
   const plan=planMap[month] || {planRub:'', planUnits:'', stockQty:'', arrivalDate:'', arrivalQty:''};
-  editorWrap.innerHTML = `<div class="panel"><h2>План на ${month}</h2><p class="hint">Вносится раз в месяц, можно отредактировать в любой момент</p>
+  const groupBanner = product.planGroup
+    ? `<div class="note" style="margin-bottom:12px;">Общий план на группу «${product.planGroup}»: ${productsInGroup(product.planGroup).map(p=>p.name).join(', ')}. Остаток на складе и поступление тоже общие на группу.</div>`
+    : '';
+  editorWrap.innerHTML = `<div class="panel">${groupBanner}<h2>План на ${month}</h2><p class="hint">Вносится раз в месяц, можно отредактировать в любой момент</p>
     <div class="row">
       <div class="field"><label>План, ₽</label><input id="plan_rub" type="number" min="0" value="${plan.planRub}"></div>
       <div class="field"><label>План, шт</label><input id="plan_units" type="number" min="0" value="${plan.planUnits}"></div>
@@ -1107,13 +1192,13 @@ async function renderPlanTab(){
     const stockQty=document.getElementById('plan_stock').value?+document.getElementById('plan_stock').value:'';
     const arrivalDate=document.getElementById('plan_arrival_date').value||'';
     const arrivalQty=document.getElementById('plan_arrival_qty').value?+document.getElementById('plan_arrival_qty').value:'';
-    const pm=await getPlanMap(productId);
+    const pm=await getPlanMap(product);
     pm[month]={planRub, planUnits, stockQty, arrivalDate, arrivalQty};
-    await storeSet('plan:'+productId, pm);
+    await storeSet(planKeyFor(product), pm);
     renderPlanTab();
   });
 
-  const {factUnits, factRub, adSpend}=await productMonthFact(productId, month);
+  const {factUnits, factRub, adSpend}=await planFactFor(product, month);
   const planRub=plan.planRub||0, planUnits=plan.planUnits||0;
   const remainingPct = planRub>0 ? Math.max(0,(planRub-factRub)/planRub*100) : null;
   const donePct = planRub>0 ? factRub/planRub*100 : null;
@@ -2131,10 +2216,11 @@ async function renderGrowthPoints(product, month, entries, sums){
 async function renderRecs(productId, month, entries){
   const wrap=document.getElementById('recsWrap');
   const product=state.products.find(p=>p.id===productId);
-  const planMap=await getPlanMap(productId);
+  const planMap=await getPlanMap(product);
   const plan=planMap[month]||{planRub:0,planUnits:0};
-  const factUnits=sumField(entries,'orders');
-  const factRub=sumField(entries,'ordersRub');
+  const planFact=await planFactFor(product, month);
+  const factUnits=product.planGroup? planFact.factUnits : sumField(entries,'orders');
+  const factRub=product.planGroup? planFact.factRub : sumField(entries,'ordersRub');
   const dim=daysInMonth(month);
   const isCurrentMonth=month===monthNow();
   const dayOfMonth=new Date().getDate();
@@ -2145,13 +2231,14 @@ async function renderRecs(productId, month, entries){
 
   const {prev,recent}=splitHalves(entries);
   const recs=[];
+  const groupNote = product.planGroup ? ` (план и факт общие на группу «${product.planGroup}», не только на эту карточку)` : '';
 
   if(neededUnitsPerDay!==null){
     if(actualUnitsPerDay < neededUnitsPerDay*0.9){
       const gap=Math.round((neededUnitsPerDay-actualUnitsPerDay)*daysRemaining);
-      recs.push({level:'critical', text:`Темп продаж отстаёт от плана: нужно ${fmt1(neededUnitsPerDay)} шт/день, факт — ${fmt1(actualUnitsPerDay)} шт/день. При таком темпе к концу месяца не хватит примерно ${gap} шт. Варианты: краткосрочное промо на этот товар, проверить и точечно поднять ставку в рекламе именно по нему, либо пересмотреть план, если причина не в спросе.`});
+      recs.push({level:'critical', text:`Темп продаж отстаёт от плана${groupNote}: нужно ${fmt1(neededUnitsPerDay)} шт/день, факт — ${fmt1(actualUnitsPerDay)} шт/день. При таком темпе к концу месяца не хватит примерно ${gap} шт. Варианты: краткосрочное промо на этот товар, проверить и точечно поднять ставку в рекламе именно по нему, либо пересмотреть план, если причина не в спросе.`});
     } else {
-      recs.push({level:'ok', text:`Темп продаж соответствует плану: нужно ${fmt1(neededUnitsPerDay)} шт/день, факт — ${fmt1(actualUnitsPerDay)} шт/день.`});
+      recs.push({level:'ok', text:`Темп продаж соответствует плану${groupNote}: нужно ${fmt1(neededUnitsPerDay)} шт/день, факт — ${fmt1(actualUnitsPerDay)} шт/день.`});
     }
   } else if(plan.planUnits>0){
     const p2=factUnits/plan.planUnits*100;
