@@ -159,8 +159,24 @@
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<div id="loginScreen" style="display:none;max-width:380px;margin:80px auto;padding:0 20px;">
+  <div class="panel">
+    <h1 style="font-size:18px;">Вход в дашборд</h1>
+    <p class="sub">Логин и пароль запроси у администратора либо используй выданный логин/пароль</p>
+    <div class="field" style="margin-bottom:10px;"><label>Email</label><input id="login_email" type="email" autocomplete="username" style="width:100%;"></div>
+    <div class="field" style="margin-bottom:14px;"><label>Пароль</label><input id="login_password" type="password" autocomplete="current-password" style="width:100%;"></div>
+    <button class="btn" id="loginBtn" style="width:100%;">Войти</button>
+    <div id="loginError" style="color:var(--neg);margin-top:10px;font-size:13px;"></div>
+  </div>
+</div>
+
+<div class="wrap" id="mainApp" style="display:none;">
   <div id="fbStatusBanner" style="display:none;background:var(--neg-bg);color:var(--neg);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;"></div>
+  <div id="userBar" style="display:none;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:8px;font-size:12.5px;color:var(--ink-2);">
+    <span id="userEmailLabel"></span>
+    <button class="btn secondary" id="logoutBtn" style="padding:5px 10px;font-size:12px;">Выйти</button>
+  </div>
   <h1>Воронка продаж</h1>
   <div class="sub">Ручной учёт по товарам на WB, Ozon и Яндекс Маркете</div>
 
@@ -548,10 +564,9 @@ function initFirebase(){
       if(!FIREBASE_CONFIG.apiKey || FIREBASE_CONFIG.apiKey==='ВСТАВЬ_СЮДА'){
         throw new Error('Firebase не настроен: в коде не заполнен FIREBASE_CONFIG');
       }
-      const app=firebase.initializeApp(FIREBASE_CONFIG);
-      firebase.auth().signInAnonymously()
-        .then(()=>{ hideFbError(); resolve(firebase.firestore()); })
-        .catch(err=>{ showFbError('Не удалось подключиться к базе данных: '+err.message); reject(err); });
+      if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      hideFbError();
+      resolve(firebase.firestore());
     }catch(e){
       showFbError('Не удалось подключиться к базе данных: '+e.message);
       reject(e);
@@ -560,11 +575,16 @@ function initFirebase(){
   return fbReadyPromise;
 }
 
+/* Название коллекции в Firestore. Если в будущем будешь использовать этот же Firebase-проект
+   под другой дашборд для той же команды — просто смени здесь имя (например, 'app_data_dashboard2'),
+   чтобы данные разных дашбордов не пересекались. Логины/пароли сотрудников при этом останутся общими. */
+const FIRESTORE_COLLECTION = 'app_data';
+
 async function storeGet(key){
   if(!USE_FIREBASE){ try{ const r=await window.storage.get(key,false); return r?JSON.parse(r.value):null; }catch(e){ return null; } }
   try{
     const db=await initFirebase();
-    const doc=await db.collection('app_data').doc(key).get();
+    const doc=await db.collection(FIRESTORE_COLLECTION).doc(key).get();
     if(!doc.exists) return null;
     const data=doc.data();
     return (data && data.v!==undefined) ? JSON.parse(data.v) : null;
@@ -582,7 +602,7 @@ async function storeSet(key,val){
   for(let attempt=0; attempt<2; attempt++){
     try{
       const db=await initFirebase();
-      await db.collection('app_data').doc(key).set({v: JSON.stringify(val)});
+      await db.collection(FIRESTORE_COLLECTION).doc(key).set({v: JSON.stringify(val)});
       return true;
     }catch(e){ console.error('storage set failed',key,e); }
     if(attempt===0) await new Promise(res=>setTimeout(res,600));
@@ -593,14 +613,14 @@ async function storeDelete(key){
   if(!USE_FIREBASE){ try{ await window.storage.delete(key,false); }catch(e){} return; }
   try{
     const db=await initFirebase();
-    await db.collection('app_data').doc(key).delete();
+    await db.collection(FIRESTORE_COLLECTION).doc(key).delete();
   }catch(e){ console.error('storage delete failed',key,e); }
 }
 async function storeListKeys(prefix){
   if(!USE_FIREBASE){ try{ const r=await window.storage.list(prefix,false); return r?r.keys:[]; }catch(e){ return []; } }
   try{
     const db=await initFirebase();
-    const snap=await db.collection('app_data')
+    const snap=await db.collection(FIRESTORE_COLLECTION)
       .where(firebase.firestore.FieldPath.documentId(), '>=', prefix)
       .where(firebase.firestore.FieldPath.documentId(), '<', prefix+'\uf8ff')
       .get();
@@ -2614,7 +2634,7 @@ document.getElementById('parseImportBtn').addEventListener('click', async ()=>{
   }
 });
 
-(async function init(){
+async function startApp(){
   document.getElementById('plan_mp_month').value=monthNow();
   document.getElementById('plan_product_month').value=monthNow();
   document.getElementById('funnel_month').value=monthNow();
@@ -2624,7 +2644,63 @@ document.getElementById('parseImportBtn').addEventListener('click', async ()=>{
   await productsReadyPromise;
   refreshAllProductSelects();
   renderOverviewTab();
-})();
+}
+
+function showLogin(){
+  document.getElementById('loginScreen').style.display='block';
+  document.getElementById('mainApp').style.display='none';
+}
+function showApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('mainApp').style.display='block';
+}
+
+if(USE_FIREBASE){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    showLogin();
+    firebase.auth().onAuthStateChanged(async (user)=>{
+      if(user){
+        document.getElementById('userEmailLabel').textContent=user.email;
+        document.getElementById('userBar').style.display='flex';
+        showApp();
+        await startApp();
+      } else {
+        showLogin();
+      }
+    });
+  }catch(e){
+    showLogin();
+    document.getElementById('loginError').textContent='Не удалось подключиться к Firebase: '+e.message;
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', async ()=>{
+    const email=document.getElementById('login_email').value.trim();
+    const password=document.getElementById('login_password').value;
+    const errEl=document.getElementById('loginError');
+    errEl.textContent='';
+    if(!email || !password){ errEl.textContent='Введите email и пароль.'; return; }
+    const btn=document.getElementById('loginBtn');
+    btn.disabled=true; btn.textContent='Вхожу…';
+    try{
+      await firebase.auth().signInWithEmailAndPassword(email, password);
+    }catch(e){
+      const badCreds=['auth/invalid-credential','auth/wrong-password','auth/user-not-found','auth/invalid-email'].includes(e.code);
+      errEl.textContent = badCreds ? 'Неверный email или пароль.' : ('Не удалось войти: '+e.message);
+    }
+    btn.disabled=false; btn.textContent='Войти';
+  });
+  document.getElementById('login_password').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter') document.getElementById('loginBtn').click();
+  });
+  document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+    await firebase.auth().signOut();
+  });
+} else {
+  // локальный тестовый режим (window.storage) — вход не нужен
+  showApp();
+  startApp();
+}
 </script>
 </body>
 </html>
