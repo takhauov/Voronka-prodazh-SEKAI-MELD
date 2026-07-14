@@ -2415,12 +2415,15 @@ function syncProductSelector(mpId, productId){
   });
 });
 
-document.getElementById('tabs').addEventListener('click',(e)=>{
+let productsReadyPromise=null;
+
+document.getElementById('tabs').addEventListener('click', async (e)=>{
   if(e.target.tagName!=='BUTTON') return;
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
   e.target.classList.add('active');
   document.querySelectorAll('.tabpane').forEach(p=>p.style.display='none');
   document.getElementById('tab-'+e.target.dataset.tab).style.display='block';
+  if(productsReadyPromise) await productsReadyPromise;
   if(e.target.dataset.tab==='overview'){ renderOverviewTab(); }
   if(e.target.dataset.tab==='plan'){ syncProductSelector('plan_product_mp','plan_product'); renderPlanTab(); }
   if(e.target.dataset.tab==='daily'){ syncProductSelector('daily_mp','daily_product'); loadDailyForm(); renderDailyTab(); }
@@ -2617,7 +2620,8 @@ document.getElementById('parseImportBtn').addEventListener('click', async ()=>{
   document.getElementById('funnel_month').value=monthNow();
   document.getElementById('daily_history_month').value=monthNow();
   document.getElementById('cmp_monthB').value=monthNow();
-  await loadProducts();
+  productsReadyPromise=loadProducts();
+  await productsReadyPromise;
   refreshAllProductSelects();
   renderOverviewTab();
 })();
