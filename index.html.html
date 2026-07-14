@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Воронка продаж — WB / Ozon / Яндекс Маркет</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
+<style>
+  :root{
+    --bg:#F4F5F1; --surface:#FFFFFF; --border:#E2E4DE;
+    --ink:#1B1E23; --ink-2:#63676E; --ink-3:#929699;
+    --wb:#7B2E9E; --wb-bg:#F4EAF9; --wb-ink:#5C1F79;
+    --ozon:#0057FF; --ozon-bg:#E9F0FF; --ozon-ink:#0041C4;
+    --ym:#B8860B; --ym-bg:#FFF6D9; --ym-ink:#8A6D00;
+    --pos:#1F8A5F; --pos-bg:#E7F5EE;
+    --neg:#C0392B; --neg-bg:#FBEAE8;
+    --warn:#B4740E; --warn-bg:#FBF1E1;
+    --info:#3260A8; --info-bg:#EAF1FB;
+    --funnel:#3355CC; --funnel-bg:#E8EBFA;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);padding:26px;}
+  .wrap{max-width:1280px;margin:0 auto;}
+  h1{font-family:var(--font-display);font-weight:600;font-size:22px;margin:0 0 4px;}
+  .sub{color:var(--ink-2);font-size:13px;margin-bottom:18px;}
+
+  nav{display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-wrap:wrap;}
+  nav button{background:transparent;border:none;padding:10px 14px;font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--ink-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  nav button.active{color:var(--ink);border-bottom-color:var(--ink);}
+
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:18px;}
+  .panel h2{font-family:var(--font-display);font-size:15px;font-weight:600;margin:0 0 2px;}
+  .panel .hint{font-size:12px;color:var(--ink-2);margin:0 0 14px;}
+  .note{font-size:11.5px;color:var(--ink-3);margin-top:6px;}
+
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+  .field{display:flex;flex-direction:column;gap:4px;min-width:130px;}
+  .field label{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-2);font-weight:500;}
+  input,select{font-family:var(--font-body);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);}
+  input[type=number]{font-family:var(--font-mono);}
+  input:disabled{background:var(--bg);color:var(--ink-2);}
+  button.btn{font-family:var(--font-body);font-size:13px;font-weight:500;padding:9px 16px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;}
+  button.btn.secondary{background:transparent;color:var(--ink);border-color:var(--border);}
+  button.btn.danger{background:transparent;color:var(--neg);border-color:var(--neg-bg);}
+
+  .segmented{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface);}
+  .segmented button{border:none;background:transparent;padding:8px 14px;font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--border);}
+  .segmented button:last-child{border-right:none;}
+  .segmented button.active{background:var(--ink);color:#fff;}
+
+  .table-scroll{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
+  th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.02em;color:var(--ink-2);font-weight:500;padding:7px 7px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  th.group{text-align:center;background:var(--bg);font-size:9.5px;letter-spacing:.04em;}
+  td{padding:7px 7px;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:12px;white-space:nowrap;}
+  td.txt{font-family:var(--font-body);white-space:normal;}
+  tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:#FAFAF9;}
+  td.sticky, th.sticky{position:sticky;left:0;background:var(--surface);z-index:2;box-shadow:2px 0 5px rgba(0,0,0,0.05);}
+  tbody tr:nth-child(even) td.sticky{background:#FAFAF9;}
+  .badge{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;}
+  .badge.wb{background:var(--wb-bg);color:var(--wb-ink);}
+  .badge.ozon{background:var(--ozon-bg);color:var(--ozon-ink);}
+  .badge.ym{background:var(--ym-bg);color:var(--ym-ink);}
+  .delta{font-size:11px;font-weight:500;}
+  .delta.good{color:var(--pos);} .delta.bad{color:var(--neg);} .delta.flat{color:var(--ink-3);}
+  .delta-na{color:var(--ink-3);font-size:11px;}
+  .movebadge{font-family:var(--font-mono);font-size:11.5px;padding:3px 8px;border-radius:6px;font-weight:500;white-space:nowrap;}
+  .movebadge.up{background:var(--pos-bg);color:var(--pos);}
+  .movebadge.down{background:var(--neg-bg);color:var(--neg);}
+  .movebadge.flat{background:var(--bg);color:var(--ink-3);}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:4px;}
+  .kpi{background:var(--bg);border-radius:var(--radius);padding:12px 14px;}
+  .kpi .label{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-2);margin-bottom:6px;font-weight:500;}
+  .kpi .value{font-family:var(--font-mono);font-size:19px;font-weight:600;}
+  .kpi .bar{margin-top:8px;height:5px;border-radius:3px;background:var(--border);overflow:hidden;}
+  .kpi .bar>div{height:100%;background:var(--ink);}
+
+  .funnel{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+  .fstage{display:grid;grid-template-columns:150px 1fr 100px 70px;align-items:center;gap:10px;}
+  .fstage .fname{font-size:12.5px;color:var(--ink-2);cursor:help;border-bottom:1px dotted var(--ink-3);width:fit-content;}
+  .ftrack{height:20px;background:var(--bg);border-radius:6px;overflow:hidden;}
+  .ftrack>div{height:100%;background:var(--funnel);}
+  .fvalue{font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--ink);text-align:right;}
+  .fdrop{font-family:var(--font-mono);font-size:12px;color:var(--ink-2);text-align:right;}
+
+  tr.section-row td{background:var(--bg);font-family:var(--font-body);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-2);padding:6px 8px;}
+  .cellbadge{display:inline-block;padding:2px 6px;border-radius:5px;font-size:11.5px;font-weight:500;}
+  .cellbadge.up{background:var(--pos-bg);color:var(--pos);}
+  .cellbadge.down{background:var(--neg-bg);color:var(--neg);}
+  .cellbadge.flat{background:var(--bg);color:var(--ink-3);}
+  table.daytable td, table.daytable th{border-right:1px solid var(--border);}
+  table.daytable td:last-child, table.daytable th:last-child{border-right:none;}
+
+  .rec{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .rec:last-child{border-bottom:none;}
+  .rec .dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+  .rec.ok .dot{background:var(--pos);} .rec.warn .dot{background:var(--warn);} .rec.critical .dot{background:var(--neg);} .rec.info .dot{background:var(--info);}
+
+  .empty{color:var(--ink-3);font-size:13px;padding:20px 0;text-align:center;}
+  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .chart-title{font-size:12.5px;font-weight:500;color:var(--ink-2);margin-bottom:8px;}
+
+  .growth-card{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;}
+  .growth-card:last-child{margin-bottom:0;}
+  .growth-card.warn{border-color:var(--warn-bg);background:var(--warn-bg);}
+  .growth-card.ok{background:var(--bg);}
+  .growth-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .growth-head .gt{font-weight:600;font-size:13.5px;}
+  .growth-head .gv{font-family:var(--font-mono);font-size:13px;}
+  .growth-head .gv.warn{color:var(--warn);} .growth-head .gv.ok{color:var(--pos);}
+  .growth-body{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .growth-body h4{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-2);margin:0 0 6px;font-weight:600;}
+  .growth-body ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.55;}
+  @media(max-width:800px){.growth-body{grid-template-columns:1fr;}}
+
+  .bidrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  .bidrow input{width:100%;}
+
+  .diag-card{border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;}
+  .diag-card.green{background:var(--pos-bg);}
+  .diag-card.yellow{background:var(--warn-bg);}
+  .diag-card.orange{background:#FBEADF;}
+  .diag-card.red{background:var(--neg-bg);}
+  .diag-card.black{background:#E7E7EA;}
+  .diag-title{font-weight:600;font-size:15px;margin-bottom:4px;}
+  .diag-desc{font-size:13px;color:var(--ink-2);}
+  .rule-box{border:1px dashed var(--ink-3);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;font-size:13px;}
+  .rule-box .rb-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-2);font-weight:600;margin-bottom:4px;}
+  .cause-rank{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;}
+  .cause-rank .cr-bar{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden;}
+  .cause-rank .cr-bar>div{height:100%;background:var(--funnel);}
+  .cause-rank .cr-pct{font-family:var(--font-mono);font-size:12px;color:var(--ink-2);width:38px;text-align:right;}
+
+  .jcard{border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;background:var(--bg);}
+  .jcard.success{background:var(--pos-bg);}
+  .jcard.negative{background:var(--neg-bg);}
+  .jcard.neutral{background:var(--bg);}
+  .jcard.early{background:var(--info-bg);}
+  .jcard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+  .jcard-head .jc-title{font-weight:600;font-size:13.5px;}
+  .jcard-head .jc-meta{font-size:11.5px;color:var(--ink-2);}
+  .jcard-body{margin-top:8px;font-size:13px;}
+  .jcard-metric{font-family:var(--font-mono);font-size:12px;color:var(--ink-2);margin-top:6px;}
+  .jcard-caveat{margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.08);font-size:12.5px;color:var(--ink-2);}
+  .checkgroup{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;padding-top:4px;}
+  .checkgroup label{display:flex;align-items:center;gap:5px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink);cursor:pointer;}
+  @media(max-width:800px){.kpis{grid-template-columns:repeat(2,1fr);} .charts-row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="fbStatusBanner" style="display:none;background:var(--neg-bg);color:var(--neg);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;"></div>
+  <h1>Воронка продаж</h1>
+  <div class="sub">Ручной учёт по товарам на WB, Ozon и Яндекс Маркете</div>
+
+  <nav id="tabs">
+    <button data-tab="overview" class="active">Обзор</button>
+    <button data-tab="plan">План и факт</button>
+    <button data-tab="daily">Ежедневные данные</button>
+    <button data-tab="funnel">Воронка и точки роста</button>
+    <button data-tab="compare">Сравнение периодов</button>
+    <button data-tab="import">Импорт данных</button>
+    <button data-tab="products">Товары</button>
+    <button data-tab="help">Справка</button>
+  </nav>
+
+  <!-- ПЛАН И ФАКТ -->
+  <!-- ОБЗОР -->
+  <div id="tab-overview" class="tabpane">
+    <div class="panel">
+      <h2>Зоны риска</h2>
+      <p class="hint">Товары, где Run-rate ниже 95% от плана или сработали «Точки роста» за текущий месяц</p>
+      <div id="riskWrap"><div class="empty">Загрузка…</div></div>
+    </div>
+    <div class="panel">
+      <h2>Рейтинг товаров</h2>
+      <p class="hint">За текущий месяц. Нажмите на заголовок столбца, чтобы отсортировать</p>
+      <div class="row" style="margin-bottom:6px;">
+        <div class="field"><label>Площадка</label><select id="overview_mp_filter">
+          <option value="all">Все площадки</option>
+          <option value="wb">Wildberries</option>
+          <option value="ozon">Ozon</option>
+          <option value="ym">Яндекс Маркет</option>
+        </select></div>
+      </div>
+      <div id="rankingWrap"><div class="empty">Загрузка…</div></div>
+    </div>
+  </div>
+
+  <div id="tab-plan" class="tabpane" style="display:none;">
+    <div class="panel">
+      <div class="row">
+        <div class="segmented" id="planModeToggle">
+          <button data-mode="mp" class="active">По площадке</button>
+          <button data-mode="product">По товару</button>
+        </div>
+      </div>
+      <div class="row" id="planModeMpRow" style="margin-top:14px;">
+        <div class="field"><label>Площадка</label>
+          <select id="plan_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select>
+        </div>
+        <div class="field"><label>Месяц</label><input id="plan_mp_month" type="month"></div>
+      </div>
+      <div class="row" id="planModeProductRow" style="margin-top:14px;display:none;">
+        <div class="field"><label>Площадка</label><select id="plan_product_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
+        <div class="field" style="min-width:220px;"><label>Товар</label><select id="plan_product"></select></div>
+        <div class="field"><label>Месяц</label><input id="plan_product_month" type="month"></div>
+      </div>
+    </div>
+    <div id="planEditorWrap"></div>
+    <div id="planSummaryWrap"></div>
+  </div>
+
+  <!-- ЕЖЕДНЕВНЫЕ ДАННЫЕ -->
+  <div id="tab-daily" class="tabpane" style="display:none;">
+    <div class="panel">
+      <h2>Внести данные за день</h2>
+      <p class="hint">Выберите дату вручную. Цена в ЛК вносится «на сегодня», но для расчёта суммы вчерашних заказов используется цена, действовавшая на момент этих заказов</p>
+      <div class="row">
+        <div class="field"><label>Площадка</label><select id="daily_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
+        <div class="field" style="min-width:220px;"><label>Товар</label><select id="daily_product"></select></div>
+        <div class="field"><label>Дата</label><input id="daily_date" type="date"></div>
+      </div>
+      <div id="editBanner" style="display:none;margin-top:10px;padding:8px 12px;background:var(--info-bg);color:var(--info);border-radius:8px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;">
+        <span id="editBannerText"></span>
+        <button class="btn secondary" id="cancelEditBtn" style="padding:5px 10px;">Новая запись</button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div class="field"><label>Цена в ЛК, ₽</label><input id="d_priceLK" type="number" min="0"></div>
+        <div class="field"><label>СПП площадки</label><input id="d_spp_preview" disabled></div>
+        <div class="field"><label>Цена для покупателя, ₽</label><input id="d_priceCustomer" type="number" min="0"></div>
+        <div class="field" id="d_ozonCardWrap" style="display:none;"><label>Цена с Ozon картой, ₽</label><input id="d_priceOzonCard" type="number" min="0"></div>
+      </div>
+      <div class="note" id="priceLogicNote"></div>
+      <div class="row" style="margin-top:10px;">
+        <div class="field"><label>Показы</label><input id="d_impr" type="number" min="0"></div>
+        <div class="field" id="d_uniqVisitorsWrap" style="display:none;"><label>Уникальные посетители</label><input id="d_uniqVisitors" type="number" min="0"></div>
+        <div class="field"><label>Клики</label><input id="d_clicks" type="number" min="0"></div>
+        <div class="field"><label>Корзины</label><input id="d_carts" type="number" min="0"></div>
+        <div class="field"><label>Заказы, шт</label><input id="d_orders" type="number" min="0"></div>
+        <div class="field"><label>Заказы, ₽</label><input id="d_ordersRub" type="number" min="0"></div>
+        <div class="field"><label>Выкупили, шт</label><input id="d_buyouts" type="number" min="0"></div>
+        <div class="field"><label>Отмены, шт</label><input id="d_cancels" type="number" min="0"></div>
+        <div class="field" id="d_adspend_ozon_wrap" style="display:none;"><label>Рекламные расходы, ₽</label><input id="d_adspend" type="number" min="0"></div>
+        <div class="field" id="d_adspend_ark_wrap" style="display:none;"><label>АРК, факт ₽</label><input id="d_adspend_ark" type="number" min="0"></div>
+        <div class="field" id="d_adspend_search_wrap" style="display:none;"><label>Поиск, факт ₽</label><input id="d_adspend_search" type="number" min="0"></div>
+        <div class="field" id="d_adspend_bpr_wrap" style="display:none;"><label>БПР, факт ₽</label><input id="d_adspend_bpr" type="number" min="0"></div>
+        <div class="field" id="d_adspend_bpk_wrap" style="display:none;"><label>БПК, факт ₽</label><input id="d_adspend_bpk" type="number" min="0"></div>
+        <div class="field" id="d_adspend_polki_wrap" style="display:none;"><label>Полки, факт ₽</label><input id="d_adspend_polki" type="number" min="0"></div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div class="field" style="min-width:340px;">
+          <label>Тип изменения (можно несколько)</label>
+          <div class="checkgroup">
+            <label><input type="checkbox" class="d_changeType_cb" value="photo_main"> Главное фото/обложка</label>
+            <label><input type="checkbox" class="d_changeType_cb" value="title"> Заголовок</label>
+            <label><input type="checkbox" class="d_changeType_cb" value="photo_order"> Доп. фото / порядок фото</label>
+            <label><input type="checkbox" class="d_changeType_cb" value="description"> Описание/характеристики</label>
+            <label><input type="checkbox" class="d_changeType_cb" value="price"> Цена</label>
+            <label><input type="checkbox" class="d_changeType_cb" value="ads"> Реклама/ставка</label>
+            <label><input type="checkbox" class="d_changeType_cb" value="other"> Другое</label>
+          </div>
+        </div>
+        <div class="field" style="min-width:280px;flex:1;"><label>Что именно изменили (необязательно)</label><input id="d_change" placeholder="Например, заменили главное фото"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Рекламные ставки</h2>
+      <p class="hint">Не влияет на расчёты. Названия можно переименовать под свои кампании. Работают как цена: значение за этот день — прежнее, новое значение уйдёт в черновик на завтра</p>
+      <div id="bidsWrap"></div>
+    </div>
+    <div class="panel">
+      <h2>Акции</h2>
+      <p class="hint">Не влияет на расчёты. Запоминает выбор с предыдущего дня, можно поменять. Сохраняется вместе с днём — кнопкой ниже</p>
+      <div class="checkgroup">
+        <label><input type="checkbox" id="promo_yes"> Участвую</label>
+        <label><input type="checkbox" id="promo_no"> Не участвую</label>
+      </div>
+      <button class="btn" id="saveDailyBtn" style="margin-top:14px;">Сохранить день</button>
+    </div>
+    <div class="panel">
+      <h2>Аномалии по сравнению с прошлым днём</h2>
+      <p class="hint">Сверяет последний внесённый день с предыдущим календарным днём и подсвечивает резкие скачки</p>
+      <div id="anomaliesWrap"><div class="empty">Выберите товар</div></div>
+    </div>
+    <div class="panel">
+      <h2>История по товару</h2>
+      <div class="row" style="margin-bottom:6px;">
+        <div class="field"><label>Месяц</label><input id="daily_history_month" type="month"></div>
+      </div>
+      <div class="table-scroll" id="dailyTableWrap"><div class="empty">Выберите товар</div></div>
+    </div>
+  </div>
+
+  <!-- ВОРОНКА -->
+  <div id="tab-funnel" class="tabpane" style="display:none;">
+    <div class="panel">
+      <div class="row">
+        <div class="field"><label>Площадка</label><select id="funnel_product_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
+        <div class="field" style="min-width:220px;"><label>Товар</label><select id="funnel_product"></select></div>
+        <div class="field"><label>Месяц</label><input id="funnel_month" type="month"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Воронка за месяц</h2>
+      <p class="hint">Наведите на название этапа для подсказки. Справа — доля от предыдущего этапа (для «Выкупы» — доля от «Заказы»)</p>
+      <div id="funnelWrap"><div class="empty">Нет данных за выбранный период</div></div>
+    </div>
+    <div class="panel">
+      <h2>Динамика по дням</h2>
+      <div class="charts-row">
+        <div>
+          <div class="chart-title">ДРР, % от суммы заказов</div>
+          <div style="position:relative;height:220px;"><canvas id="drrChart" role="img" aria-label="ДРР по дням"></canvas></div>
+        </div>
+        <div>
+          <div class="chart-title">Показы, CTR и конверсии</div>
+          <div style="position:relative;height:220px;"><canvas id="crChart" role="img" aria-label="Показы, CTR, конверсия в корзину и в заказ по дням"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Диагноз воронки</h2>
+      <div id="diagnosisWrap"><div class="empty">Нет данных за выбранный период</div></div>
+    </div>
+    <div class="panel">
+      <h2>Точки роста</h2>
+      <p class="hint">Разбор по каждому этапу воронки отдельно. Показаны только показатели ниже порога — если пункта здесь нет, он в норме</p>
+      <div id="growthWrap"><div class="empty">Нет данных за выбранный период</div></div>
+    </div>
+    <div class="panel">
+      <h2>Рекомендации</h2>
+      <div id="recsWrap"><div class="empty">Нет данных для анализа</div></div>
+    </div>
+    <div class="panel">
+      <h2>Журнал изменений карточки</h2>
+      <p class="hint">Для каждой правки — свой показатель, своё окно ожидания эффекта, оценка силы эффекта и проверка на побочные эффекты. Обновляется по мере добавления новых дней</p>
+      <div id="changesTableWrap"><div class="empty">За этот месяц изменений не отмечено</div></div>
+    </div>
+  </div>
+
+  <!-- СРАВНЕНИЕ ПЕРИОДОВ -->
+  <div id="tab-compare" class="tabpane" style="display:none;">
+    <div class="panel">
+      <div class="row">
+        <div class="field"><label>Площадка</label><select id="cmp_product_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
+        <div class="field" style="min-width:220px;"><label>Товар</label><select id="cmp_product"></select></div>
+        <div class="segmented" id="cmpModeToggle">
+          <button data-mode="month" class="active">Месяцы</button>
+          <button data-mode="days">Дни</button>
+        </div>
+      </div>
+      <div class="row" id="cmpMonthRow" style="margin-top:14px;">
+        <div class="field"><label>Период A</label><input id="cmp_monthA" type="month"></div>
+        <div class="field"><label>Период B</label><input id="cmp_monthB" type="month"></div>
+      </div>
+      <div class="row" id="cmpDaysRow" style="margin-top:14px;display:none;">
+        <div class="field"><label>Период A, с</label><input id="cmp_fromA" type="date"></div>
+        <div class="field"><label>по</label><input id="cmp_toA" type="date"></div>
+        <div class="field"><label>Период B, с</label><input id="cmp_fromB" type="date"></div>
+        <div class="field"><label>по</label><input id="cmp_toB" type="date"></div>
+      </div>
+      <p class="note">В режиме «Дни» каждый период — не более 31 дня</p>
+    </div>
+    <div class="panel">
+      <h2>Сравнение показателей</h2>
+      <p class="hint">Зелёная стрелка — период B лучше периода A по этому показателю</p>
+      <div id="compareWrap"><div class="empty">Выберите товар и оба периода</div></div>
+    </div>
+  </div>
+
+  <!-- ИМПОРТ ДАННЫХ -->
+  <div id="tab-import" class="tabpane" style="display:none;">
+    <div class="panel">
+      <div class="row">
+        <div class="field"><label>Площадка</label><select id="imp_product_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
+        <div class="field" style="min-width:220px;"><label>Товар</label><select id="imp_product"></select></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>1. Скачать шаблон</h2>
+      <p class="hint">Шаблон подстраивается под площадку выбранного товара — свой набор полей рекламы для WB/Ozon/Я.Маркет. Заполните строки и сохраните файл</p>
+      <button class="btn secondary" id="downloadTemplateBtn">Скачать шаблон (.xlsx)</button>
+    </div>
+    <div class="panel">
+      <h2>2. Загрузить заполненный файл</h2>
+      <p class="hint">Даты, которые уже есть в истории товара, будут перезаписаны данными из файла — остальное добавится как новые дни</p>
+      <div class="row">
+        <input type="file" id="importFileInput" accept=".xlsx,.xls">
+        <button class="btn secondary" id="parseImportBtn">Проверить файл</button>
+      </div>
+      <div id="importPreviewWrap" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- ТОВАРЫ -->
+  <div id="tab-products" class="tabpane" style="display:none;">
+    <div class="panel">
+      <h2>Добавить товар</h2>
+      <p class="hint">Один и тот же товар на разных площадках добавляйте отдельными карточками. Цены вносятся позже, на вкладке «Ежедневные данные»</p>
+      <div class="row">
+        <div class="field"><label>Площадка</label>
+          <select id="p_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select>
+        </div>
+        <div class="field" style="min-width:260px;"><label>Название товара</label><input id="p_name" placeholder="Например, Термокружка 500мл черная"></div>
+        <button class="btn" id="addProductBtn">Добавить</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Товары</h2>
+      <div id="productsTableWrap"><div class="empty">Пока нет товаров — добавьте первый выше</div></div>
+    </div>
+  </div>
+
+  <!-- СПРАВКА -->
+  <div id="tab-help" class="tabpane" style="display:none;">
+    <div class="panel">
+      <h2>Обзор</h2>
+      <p class="hint">Первое, что стоит открывать в начале дня</p>
+      <p><b>Зоны риска</b> — список товаров, у которых за текущий месяц темп продаж (Run-rate) ниже 95% от плана, или сработала хотя бы одна «Точка роста» (например, низкий CTR или много отмен). Пусто здесь — хороший знак.</p>
+      <p><b>Рейтинг товаров</b> — сводная таблица по всем товарам сразу: выручка за месяц, % выполнения плана, ДРР, тренд конверсии. Можно отфильтровать по площадке и отсортировать кликом по заголовку столбца — удобно сравнить товары между собой или внутри одной площадки.</p>
+    </div>
+    <div class="panel">
+      <h2>План и факт</h2>
+      <p><b>По площадке</b> — общие цифры плана/факта по всем товарам одного маркетплейса сразу.</p>
+      <p><b>По товару</b> — план и факт конкретного товара. План вводится вручную раз в месяц (в ₽ и шт.) либо считается кнопкой «Рассчитать автоматически» — по среднему темпу продаж за последние месяцы с поправкой на рост и на остаток товара на складе (с учётом даты поступления новой партии).</p>
+      <p><b>Run-rate</b> — прогноз, куда придём к концу месяца, если ничего не менять (факт шт/день × дни в месяце). Показывается только для текущего месяца.</p>
+      <p><b>Темп за 7 дней</b> — средняя скорость продаж за последнюю неделю и сравнение с неделей до неё — быстрее реагирует на изменения, чем Run-rate.</p>
+    </div>
+    <div class="panel">
+      <h2>Ежедневные данные</h2>
+      <p>Основной раздел для ежедневного ввода. Данные по воронке вносятся за вчерашний день. Текущая цена и изменения в ЛК — на текущий день.</p>
+      <p><b>Цена в ЛК / для покупателя / с Ozon картой</b> — при первом заполнении подставляется прежняя цена автоматически. Если цена изменилась — впишите новую и отметьте тип изменения «Цена»: в этот день сохранится прежняя цена (она и правда действовала в этот день), а новая автоматически появится в черновике на завтра.</p>
+      <p><b>Черновик</b> — фиксирует цену и изменения в ЛК на текущий день. На следующий день остаётся дозаполнить показатели воронки, когда будут данные.</p>
+      <p><b>Рекламные ставки и Акции</b> — справочная информация, на расчёты не влияет, но переносится изо дня в день автоматически, чтобы зафиксировать текущие значения. Изменение ставки можно зафиксировать с помощью ручного ввода.</p>
+      <p><b>Аномалии</b> — сравнивает последний полностью заполненный день с днём перед ним и предупреждает о резких скачках (показы, CTR, конверсии, рекламные расходы).</p>
+      <p><b>История по товару</b> — вся история день за днём, с цветовой подсветкой изменений показателей. Строку «Что изменили» можно поправить от руки прямо в таблице.</p>
+    </div>
+    <div class="panel">
+      <h2>Воронка и точки роста</h2>
+      <p><b>Воронка за месяц</b> — показы → клики → корзины → заказы → выкупы, с процентом перехода на каждом этапе.</p>
+      <p><b>Диагноз воронки</b> — один общий вывод о том, что сейчас главная проблема (или что всё в порядке), плюс вероятные причины с примерной значимостью каждой.</p>
+      <p><b>Точки роста</b> — подробный разбор по каждому этапу воронки отдельно: показывается только то, что ниже нормы, с причинами и что проверить. Пороги нормы можно настроить под конкретный товар на вкладке «Товары».</p>
+      <p><b>Рекомендации</b> — про темп плана, ДРР и динамику конверсии, с конкретными цифрами.</p>
+      <p><b>Журнал изменений</b> — оценивает, помогло ли конкретное изменение карточки: сравнивает нужный показатель до/после, с поправкой на то, сколько дней нужно подождать для честной оценки этого типа правки.</p>
+    </div>
+    <div class="panel">
+      <h2>Сравнение периодов</h2>
+      <p>Сравнение показателей товара за два периода — по месяцам или по датам (диапазон не длиннее 31 дня). Показывает, что выросло/упало, и для просевших показателей — гипотезу и рекомендацию.</p>
+    </div>
+    <div class="panel">
+      <h2>Импорт данных</h2>
+      <p>Если есть данные за прошлые периоды — можно скачать Excel-шаблон под конкретную площадку, заполнить и загрузить обратно. Даты, которые уже есть в истории, будут перезаписаны файлом, остальные добавятся как новые.</p>
+    </div>
+    <div class="panel">
+      <h2>Товары</h2>
+      <p>Список всех товаров по всем площадкам. Здесь же — кнопка «Пороги» у каждого товара, чтобы настроить свои границы нормы для «Точек роста» (по умолчанию: CTR 3%, конверсия в корзину 10%, в заказ 20%, выкуп 80%, отмены 10%).</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const MP_LABEL={wb:'WB', ozon:'Ozon', ym:'Я.Маркет'};
+const CHANGE_TYPES={
+  photo_main:{label:'Главное фото/обложка', metric:'ctr', metricLabel:'CTR'},
+  title:{label:'Заголовок', metric:'ctr', metricLabel:'CTR'},
+  photo_order:{label:'Доп. фото / порядок фото', metric:'cr1', metricLabel:'CR клик→корзина'},
+  description:{label:'Описание/характеристики', metric:'cr2', metricLabel:'CR корзина→заказ'},
+  price:{label:'Цена', metric:'cr2', metricLabel:'CR корзина→заказ'},
+  ads:{label:'Реклама/ставка', metric:'drr', metricLabel:'ДРР'},
+  other:{label:'Другое', metric:'crf', metricLabel:'CR клик→заказ'}
+};
+const EVAL_WINDOWS={ photo_main:1, title:3, photo_order:3, description:5, price:1, ads:1, other:3 };
+const CHANGE_ANALYSIS={
+  photo_main:{primary:'ctr', secondary:'cr1', label:'CTR', secLabel:'CR клик→корзина', goodUp:true},
+  title:{primary:'ctr', secondary:'impressions', label:'CTR', secLabel:'Показы', goodUp:true},
+  photo_order:{primary:'cr1', secondary:null, label:'CR клик→корзина', goodUp:true},
+  description:{primary:'cr2', secondary:'impressions', label:'CR корзина→заказ', secLabel:'Показы', goodUp:true},
+  price:{primary:'cr2', secondary:'drr', label:'CR корзина→заказ', secLabel:'ДРР', goodUp:true},
+  ads:{primary:'drr', secondary:'orders', label:'ДРР', secLabel:'Заказы', goodUp:false},
+  other:{primary:'crf', secondary:null, label:'CR клик→заказ', goodUp:true}
+};
+const state={ products:[] };
+let drrChart=null, crChart=null;
+let dailyPrefill={lk:null, customer:null, isEdit:false};
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function dateToISO(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function todayISO(){ return dateToISO(new Date()); }
+function yesterdayISO(){ const d=new Date(); d.setDate(d.getDate()-1); return dateToISO(d); }
+function monthNow(){ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
+function fmt(n){ return Math.round(n||0).toLocaleString('ru-RU'); }
+function fmt1(n){ return n===null||n===undefined? '—' : (Math.round(n*10)/10).toLocaleString('ru-RU'); }
+function daysInMonth(ym){ const [y,m]=ym.split('-').map(Number); return new Date(y,m,0).getDate(); }
+function pct(a,b){ return (b && b>0)? a/b*100 : null; }
+
+/* ================== ПЕРЕКЛЮЧАТЕЛЬ ХРАНИЛИЩА ==================
+   true  — Firebase (для рабочей версии на GitHub Pages)
+   false — window.storage (для быстрых тестов прямо в Claude.ai)
+   Перед заливкой на GitHub Pages поставь true. */
+const USE_FIREBASE = true;
+/* ================================================================ */
+
+/* ================== FIREBASE ==================
+   Вставь сюда конфиг своего проекта (Firebase Console → Project settings → твоё веб-приложение).
+   До заполнения реальными ключами дашборд не сможет сохранять данные — покажет баннер ошибки сверху. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCATxnU6PHqW9YjkuFW9UYedvD7nLdG2bs",
+  authDomain: "voronka-prodazh-sekai-meld.firebaseapp.com",
+  projectId: "voronka-prodazh-sekai-meld",
+  storageBucket: "voronka-prodazh-sekai-meld.firebasestorage.app",
+  messagingSenderId: "95056188106",
+  appId: "1:95056188106:web:e4488440af501b7813da33"
+};
+/* ================================================ */
+
+let fbReadyPromise=null;
+function showFbError(msg){
+  const b=document.getElementById('fbStatusBanner');
+  b.textContent=msg;
+  b.style.display='block';
+}
+function hideFbError(){
+  document.getElementById('fbStatusBanner').style.display='none';
+}
+function initFirebase(){
+  if(fbReadyPromise) return fbReadyPromise;
+  fbReadyPromise=new Promise((resolve,reject)=>{
+    try{
+      if(typeof firebase==='undefined'){
+        throw new Error('библиотека Firebase не загрузилась (проблема с подключением скрипта, не с настройками)');
+      }
+      if(!FIREBASE_CONFIG.apiKey || FIREBASE_CONFIG.apiKey==='ВСТАВЬ_СЮДА'){
+        throw new Error('Firebase не настроен: в коде не заполнен FIREBASE_CONFIG');
+      }
+      const app=firebase.initializeApp(FIREBASE_CONFIG);
+      firebase.auth().signInAnonymously()
+        .then(()=>{ hideFbError(); resolve(firebase.firestore()); })
+        .catch(err=>{ showFbError('Не удалось подключиться к базе данных: '+err.message); reject(err); });
+    }catch(e){
+      showFbError('Не удалось подключиться к базе данных: '+e.message);
+      reject(e);
+    }
+  });
+  return fbReadyPromise;
+}
+
+async function storeGet(key){
+  if(!USE_FIREBASE){ try{ const r=await window.storage.get(key,false); return r?JSON.parse(r.value):null; }catch(e){ return null; } }
+  try{
+    const db=await initFirebase();
+    const doc=await db.collection('app_data').doc(key).get();
+    if(!doc.exists) return null;
+    const data=doc.data();
+    return (data && data.v!==undefined) ? JSON.parse(data.v) : null;
+  }catch(e){ console.error('storage get failed',key,e); return null; }
+}
+async function storeSet(key,val){
+  if(!USE_FIREBASE){
+    for(let attempt=0; attempt<2; attempt++){
+      try{ const r=await window.storage.set(key, JSON.stringify(val), false); if(r) return true; }
+      catch(e){ console.error('storage set failed',key,e); }
+      if(attempt===0) await new Promise(res=>setTimeout(res,600));
+    }
+    return false;
+  }
+  for(let attempt=0; attempt<2; attempt++){
+    try{
+      const db=await initFirebase();
+      await db.collection('app_data').doc(key).set({v: JSON.stringify(val)});
+      return true;
+    }catch(e){ console.error('storage set failed',key,e); }
+    if(attempt===0) await new Promise(res=>setTimeout(res,600));
+  }
+  return false;
+}
+async function storeDelete(key){
+  if(!USE_FIREBASE){ try{ await window.storage.delete(key,false); }catch(e){} return; }
+  try{
+    const db=await initFirebase();
+    await db.collection('app_data').doc(key).delete();
+  }catch(e){ console.error('storage delete failed',key,e); }
+}
+async function storeListKeys(prefix){
+  if(!USE_FIREBASE){ try{ const r=await window.storage.list(prefix,false); return r?r.keys:[]; }catch(e){ return []; } }
+  try{
+    const db=await initFirebase();
+    const snap=await db.collection('app_data')
+      .where(firebase.firestore.FieldPath.documentId(), '>=', prefix)
+      .where(firebase.firestore.FieldPath.documentId(), '<', prefix+'\uf8ff')
+      .get();
+    return snap.docs.map(d=>d.id);
+  }catch(e){ console.error('storage list failed',prefix,e); return []; }
+}
+
+async function loadProducts(){
+  const keys=await storeListKeys('product:');
+  const list=[];
+  for(const k of keys){ const p=await storeGet(k); if(p) list.push(p); }
+  list.sort((a,b)=> (a.mp+a.name).localeCompare(b.mp+b.name));
+  state.products=list;
+}
+async function getPlanMap(productId){ return (await storeGet('plan:'+productId)) || {}; }
+async function getDailyMap(productId){ return (await storeGet('daily:'+productId)) || {}; }
+
+function productLabel(p){ return `[${MP_LABEL[p.mp]}] ${p.name}`; }
+function fillProductSelect(sel){
+  const cur=sel.value;
+  sel.innerHTML = state.products.map(p=>`<option value="${p.id}">${productLabel(p)}</option>`).join('') || '<option value="">— нет товаров —</option>';
+  if(cur && state.products.find(p=>p.id===cur)) sel.value=cur;
+}
+function refreshAllProductSelects(){
+  fillFilteredProductSelect('daily_mp','daily_product');
+  fillFilteredProductSelect('plan_product_mp','plan_product');
+  fillFilteredProductSelect('funnel_product_mp','funnel_product');
+  fillFilteredProductSelect('cmp_product_mp','cmp_product');
+  fillFilteredProductSelect('imp_product_mp','imp_product');
+}
+function fillFilteredProductSelect(mpId, productId){
+  const mp=document.getElementById(mpId).value;
+  const sel=document.getElementById(productId);
+  const cur=sel.value;
+  const filtered=state.products.filter(p=>p.mp===mp);
+  sel.innerHTML = filtered.map(p=>`<option value="${p.id}">${p.name}</option>`).join('') || '<option value="">— нет товаров на этой площадке —</option>';
+  if(cur && filtered.find(p=>p.id===cur)) sel.value=cur;
+}
+document.getElementById('daily_mp').addEventListener('change', ()=>{
+  fillFilteredProductSelect('daily_mp','daily_product');
+  document.getElementById('daily_date').value='';
+  loadDailyForm(); renderDailyTab();
+});
+document.getElementById('plan_product_mp').addEventListener('change', ()=>{ fillFilteredProductSelect('plan_product_mp','plan_product'); renderPlanTab(); });
+document.getElementById('funnel_product_mp').addEventListener('change', ()=>{ fillFilteredProductSelect('funnel_product_mp','funnel_product'); renderFunnelTab(); });
+document.getElementById('cmp_product_mp').addEventListener('change', ()=>{ fillFilteredProductSelect('cmp_product_mp','cmp_product'); renderCompareTab(); });
+document.getElementById('imp_product_mp').addEventListener('change', ()=>{ fillFilteredProductSelect('imp_product_mp','imp_product'); resetImportPreview(); });
+document.getElementById('imp_product').addEventListener('change', resetImportPreview);
+
+function bidCountForMp(mp){ return mp==='ozon' ? 3 : 2; }
+function computeSPP(before, after){
+  before=+before; after=+after;
+  if(!before || before<=0) return null;
+  return (1 - after/before)*100;
+}
+
+/* ---------------- ТОВАРЫ ---------------- */
+const DEFAULT_THRESHOLDS={ctr:3, cr1:10, cr2:20, buyout:80, cancel:10};
+function getThresholds(product){ return {...DEFAULT_THRESHOLDS, ...(product?.thresholds||{})}; }
+
+async function renderProductsTable(){
+  const wrap=document.getElementById('productsTableWrap');
+  if(state.products.length===0){ wrap.innerHTML='<div class="empty">Пока нет товаров — добавьте первый выше</div>'; return; }
+  const rows = state.products.map(p=>{
+    const th=getThresholds(p);
+    return `<tr>
+      <td class="txt"><span class="badge ${p.mp}">${MP_LABEL[p.mp]}</span></td>
+      <td class="txt">${p.name}</td>
+      <td>${p.currentPriceLK? fmt(p.currentPriceLK)+' ₽' : '—'}</td>
+      <td>${p.currentPriceCustomer? fmt(p.currentPriceCustomer)+' ₽' : '—'}</td>
+      <td><button class="btn secondary" data-rename="${p.id}">Переименовать</button> <button class="btn secondary" data-thresh-toggle="${p.id}">Пороги</button> <button class="btn danger" data-del="${p.id}">Удалить</button></td>
+    </tr>
+    <tr class="thresh-row" data-thresh-row="${p.id}" style="display:none;">
+      <td colspan="5">
+        <div class="row" style="padding:8px 0;">
+          <div class="field"><label>CTR < %</label><input type="number" step="0.1" data-th="ctr" data-thpid="${p.id}" value="${th.ctr}" style="width:80px;"></div>
+          <div class="field"><label>CR в корзину < %</label><input type="number" step="0.1" data-th="cr1" data-thpid="${p.id}" value="${th.cr1}" style="width:80px;"></div>
+          <div class="field"><label>CR в заказ < %</label><input type="number" step="0.1" data-th="cr2" data-thpid="${p.id}" value="${th.cr2}" style="width:80px;"></div>
+          <div class="field"><label>Выкуп < %</label><input type="number" step="0.1" data-th="buyout" data-thpid="${p.id}" value="${th.buyout}" style="width:80px;"></div>
+          <div class="field"><label>Отмены > %</label><input type="number" step="0.1" data-th="cancel" data-thpid="${p.id}" value="${th.cancel}" style="width:80px;"></div>
+          <button class="btn secondary" data-thresh-save="${p.id}">Сохранить пороги</button>
+          <button class="btn secondary" data-thresh-reset="${p.id}">Сбросить по умолчанию</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<table><thead><tr><th>Площадка</th><th>Товар</th><th>Текущая цена ЛК</th><th>Текущая цена покупателю</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  wrap.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id=b.dataset.del;
+    if(!confirm('Удалить товар и все данные по нему?')) return;
+    await storeDelete('product:'+id); await storeDelete('plan:'+id); await storeDelete('daily:'+id);
+    await loadProducts(); refreshAllProductSelects(); renderProductsTable();
+  }));
+  wrap.querySelectorAll('[data-rename]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id=b.dataset.rename; const p=state.products.find(x=>x.id===id);
+    const nn=prompt('Новое название товара', p.name);
+    if(nn===null || !nn.trim()) return;
+    const oldName=p.name;
+    p.name=nn.trim();
+    const ok=await storeSet('product:'+id, p);
+    if(!ok){ p.name=oldName; alert('Не удалось сохранить — сбой хранилища. Название не изменено, попробуйте ещё раз.'); return; }
+    await loadProducts(); refreshAllProductSelects(); renderProductsTable();
+  }));
+  wrap.querySelectorAll('[data-thresh-toggle]').forEach(b=>b.addEventListener('click', ()=>{
+    const row=wrap.querySelector(`[data-thresh-row="${b.dataset.threshToggle}"]`);
+    row.style.display = row.style.display==='none' ? 'table-row' : 'none';
+  }));
+  wrap.querySelectorAll('[data-thresh-save]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id=b.dataset.threshSave;
+    const p=state.products.find(x=>x.id===id);
+    const prevThresholds=p.thresholds;
+    const thresholds={};
+    wrap.querySelectorAll(`[data-thpid="${id}"]`).forEach(inp=>{ thresholds[inp.dataset.th]=+inp.value||0; });
+    p.thresholds=thresholds;
+    const originalText=b.textContent;
+    b.disabled=true; b.textContent='Сохраняю…';
+    const ok=await storeSet('product:'+id, p);
+    if(!ok){
+      p.thresholds=prevThresholds;
+      b.disabled=false; b.textContent=originalText;
+      b.style.background='var(--neg-bg)'; b.style.color='var(--neg)'; b.style.borderColor='var(--neg-bg)';
+      alert('Не удалось сохранить пороги — сбой хранилища. Попробуйте ещё раз.');
+      setTimeout(()=>{ b.style.background=''; b.style.color=''; b.style.borderColor=''; }, 2000);
+      return;
+    }
+    await loadProducts();
+    b.disabled=false;
+    b.textContent='✓ Сохранено';
+    b.style.background='var(--pos-bg)'; b.style.color='var(--pos)'; b.style.borderColor='var(--pos-bg)';
+    setTimeout(()=>{ b.textContent=originalText; b.style.background=''; b.style.color=''; b.style.borderColor=''; }, 2000);
+  }));
+  wrap.querySelectorAll('[data-thresh-reset]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id=b.dataset.threshReset;
+    const p=state.products.find(x=>x.id===id);
+    const prevThresholds=p.thresholds;
+    delete p.thresholds;
+    const ok=await storeSet('product:'+id, p);
+    if(!ok){ p.thresholds=prevThresholds; alert('Не удалось сбросить пороги — сбой хранилища. Попробуйте ещё раз.'); return; }
+    await loadProducts(); renderProductsTable();
+  }));
+}
+document.getElementById('addProductBtn').addEventListener('click', async ()=>{
+  const mp=document.getElementById('p_mp').value;
+  const name=document.getElementById('p_name').value.trim();
+  if(!name){ alert('Введите название товара'); return; }
+  const id=uid();
+  const bidCount=bidCountForMp(mp);
+  const ok=await storeSet('product:'+id, {id, mp, name, currentPriceLK:null, currentPriceCustomer:null, currentPriceOzonCard:null, currentPromo:null,
+    adBids:Array.from({length:bidCount},(_,i)=>({label:`Ставка ${i+1}`,value:null}))});
+  if(!ok){ alert('Не удалось добавить товар — сбой хранилища. Попробуйте ещё раз.'); return; }
+  document.getElementById('p_name').value='';
+  await loadProducts(); refreshAllProductSelects(); renderProductsTable();
+});
+
+/* ---------------- ПЛАН И ФАКТ ---------------- */
+document.getElementById('planModeToggle').addEventListener('click',(e)=>{
+  if(e.target.tagName!=='BUTTON') return;
+  document.querySelectorAll('#planModeToggle button').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  const mode=e.target.dataset.mode;
+  document.getElementById('planModeMpRow').style.display = mode==='mp'?'flex':'none';
+  document.getElementById('planModeProductRow').style.display = mode==='product'?'flex':'none';
+  renderPlanTab();
+});
+document.getElementById('plan_mp').addEventListener('change', renderPlanTab);
+document.getElementById('plan_mp_month').addEventListener('change', renderPlanTab);
+document.getElementById('plan_product').addEventListener('change', renderPlanTab);
+document.getElementById('plan_product_month').addEventListener('change', renderPlanTab);
+
+function currentPlanMode(){ return document.querySelector('#planModeToggle button.active').dataset.mode; }
+
+async function productMonthFact(productId, month){
+  const dm=await getDailyMap(productId);
+  const entries=Object.entries(dm).filter(([d])=>d.startsWith(month)).map(([,v])=>v);
+  const factUnits=entries.reduce((s,e)=>s+(+e.orders||0),0);
+  const factRub=entries.reduce((s,e)=>s+(+e.ordersRub||0),0);
+  const adSpend=entries.reduce((s,e)=>s+(+e.adspend||0),0);
+  return {factUnits, factRub, adSpend};
+}
+
+function computeAvailableStock(month, stockQty, arrivalDate, arrivalQty){
+  const stock=+stockQty||0;
+  const arr=+arrivalQty||0;
+  const result={available:stock, arrivalCounted:false, arrivalNote:null};
+  if(arrivalDate && arr>0){
+    const acceptDate=datePlusDays(arrivalDate, 5);
+    const monthEnd=`${month}-${pad2(daysInMonth(month))}`;
+    const monthStart=`${month}-01`;
+    if(acceptDate<=monthEnd){
+      result.available=stock+arr;
+      result.arrivalCounted=true;
+    } else {
+      result.arrivalNote=`Поступление ${arr} шт. ожидается ${arrivalDate}, но с учётом приёмки (+5 дней) станет доступно только с ${acceptDate} — это уже за пределами ${month}, в план этого месяца не учтено.`;
+    }
+  }
+  return result;
+}
+
+async function computeAutoPlan(productId, month){
+  const noteEl=document.getElementById('autoPlanNote');
+  const product=state.products.find(p=>p.id===productId);
+  const growthPct=+document.getElementById('plan_growth_pct').value||0;
+
+  const dm=await getDailyMap(productId);
+  const monthsWithData=[...new Set(Object.keys(dm).map(d=>d.slice(0,7)))].filter(m=>m<month).sort().reverse();
+  const baseMonths=monthsWithData.slice(0,3);
+
+  if(baseMonths.length===0){
+    noteEl.textContent='Нет данных за прошлые месяцы по этому товару — считать не от чего, введите план вручную.';
+    return;
+  }
+
+  let totalUnits=0, totalDays=0;
+  for(const m of baseMonths){
+    const f=await productMonthFact(productId, m);
+    totalUnits+=f.factUnits;
+    totalDays+=daysInMonth(m);
+  }
+  const avgDailyRate=totalUnits/totalDays;
+  const dailyRate=avgDailyRate*(1+growthPct/100);
+  const dim=daysInMonth(month);
+  const desiredUnits=Math.round(dailyRate*dim);
+  const price=product?.currentPriceLK||0;
+
+  const stockQtyRaw=document.getElementById('plan_stock').value;
+  const arrivalDate=document.getElementById('plan_arrival_date').value;
+  const arrivalQtyRaw=document.getElementById('plan_arrival_qty').value;
+  const stockQty=stockQtyRaw?+stockQtyRaw:0;
+  const arrivalQty=arrivalQtyRaw?+arrivalQtyRaw:0;
+
+  let noteText=`Средний темп продаж: ${fmt1(avgDailyRate)} шт/день за последние ${baseMonths.length} мес. (${baseMonths.join(', ')}). С ростом ${growthPct}% → ${fmt1(dailyRate)} шт/день × ${dim} дн. в ${month} = расчётный план ${fmt(desiredUnits)} шт.`;
+  let finalUnits=desiredUnits;
+  let arrivalNote=null;
+
+  if(stockQtyRaw===''){
+    noteText+=' Внесите остаток на складе, чтобы план учитывал доступное количество товара.';
+  } else {
+    const monthStart=`${month}-01`;
+    const monthEnd=`${month}-${pad2(dim)}`;
+    let daysBeforeArrival=dim, arrivalCounted=false;
+
+    if(arrivalDate && arrivalQty>0){
+      const acceptDate=datePlusDays(arrivalDate,5);
+      if(acceptDate>monthEnd){
+        arrivalNote=`Поступление ${fmt(arrivalQty)} шт. ожидается ${arrivalDate}, но с учётом приёмки (+5 дней) станет доступно только с ${acceptDate} — это уже за пределами ${month}, в план этого месяца не учтено.`;
+      } else if(acceptDate<=monthStart){
+        daysBeforeArrival=0;
+        arrivalCounted=true;
+      } else {
+        daysBeforeArrival=daysBetweenInclusive(monthStart, dateMinusDays(acceptDate,1));
+        arrivalCounted=true;
+      }
+    }
+
+    // фаза 1 — продажи с текущего остатка до момента, пока поступление не примут на склад
+    const daysAfterArrival=dim-daysBeforeArrival;
+    const desiredPhase1=dailyRate*daysBeforeArrival;
+    const soldPhase1=Math.min(desiredPhase1, stockQty);
+    const stockLeftAfterPhase1=Math.max(0, stockQty-desiredPhase1);
+    // фаза 2 — продажи после приёмки поступления, из остатка + нового поступления
+    const stockPhase2=stockLeftAfterPhase1+(arrivalCounted?arrivalQty:0);
+    const desiredPhase2=dailyRate*daysAfterArrival;
+    const soldPhase2=daysAfterArrival>0 ? Math.min(desiredPhase2, stockPhase2) : 0;
+    const achievable=Math.round(soldPhase1+soldPhase2);
+
+    if(achievable<desiredUnits){
+      finalUnits=achievable;
+      noteText=`План с учётом текущего доступного остатка товара: при темпе ${fmt1(dailyRate)} шт/день и остатке ${fmt(stockQty)} шт.${arrivalCounted?` + поступлении ${fmt(arrivalQty)} шт. (доступно после приёмки, ${fmt(daysAfterArrival)} дн. из ${dim})`:''} реально продать за месяц получится ${fmt(achievable)} шт. вместо расчётных ${fmt(desiredUnits)} шт.${stockLeftAfterPhase1===0 && daysBeforeArrival>0 ? ' Часть дней в начале месяца товар может закончиться ещё до поступления.' : ''}`;
+    }
+  }
+  if(arrivalNote) noteText+=' '+arrivalNote;
+
+  const finalRub=Math.round(finalUnits*price);
+  document.getElementById('plan_units').value=finalUnits;
+  document.getElementById('plan_rub').value=finalRub;
+  noteEl.textContent=noteText+` Итог: ${fmt(finalUnits)} шт × текущая цена в ЛК ${fmt(price)} ₽ = ${fmt(finalRub)} ₽. Проверьте и сохраните, если согласны.`;
+}
+
+async function computeWeeklyDynamicsKpi(productId){
+  const dm=await getDailyMap(productId);
+  const realDates=Object.keys(dm).filter(d=>!dm[d].draft).sort();
+  if(realDates.length<2) return '';
+  const lastDate=realDates[realDates.length-1];
+  const last7From=dateMinusDays(lastDate,6);
+  const prev7From=dateMinusDays(lastDate,13);
+  const prev7To=dateMinusDays(lastDate,7);
+  const sumUnitsInRange=(from,to)=>realDates.filter(d=>d>=from&&d<=to).reduce((s,d)=>s+(+dm[d].orders||0),0);
+  const countDaysInRange=(from,to)=>realDates.filter(d=>d>=from&&d<=to).length;
+  const last7Units=sumUnitsInRange(last7From,lastDate);
+  const last7Days=countDaysInRange(last7From,lastDate);
+  const prev7Units=sumUnitsInRange(prev7From,prev7To);
+  const prev7Days=countDaysInRange(prev7From,prev7To);
+  if(last7Days===0) return '';
+  const last7Rate=last7Units/last7Days;
+  const prev7Rate=prev7Days>0? prev7Units/prev7Days : null;
+  let deltaHtml='';
+  if(prev7Rate!==null && prev7Rate>0){
+    const diffPct=(last7Rate-prev7Rate)/prev7Rate*100;
+    const cls=Math.abs(diffPct)<3?'flat':(diffPct>0?'good':'bad');
+    deltaHtml=`<div class="delta ${cls}">${diffPct>0?'+':''}${fmt1(diffPct)}% к пред. неделе</div>`;
+  }
+  return `<div class="kpi"><div class="label">Темп за 7 дней</div><div class="value">${fmt1(last7Rate)} шт/день</div>${deltaHtml}</div>`;
+}
+
+let overviewSortCol='revenue', overviewSortDir='desc';
+
+document.getElementById('overview_mp_filter').addEventListener('change', ()=>renderOverviewRanking(overviewRows));
+
+async function renderOverviewTab(){
+  const riskWrap=document.getElementById('riskWrap');
+  const rankWrap=document.getElementById('rankingWrap');
+  if(state.products.length===0){ riskWrap.innerHTML='<div class="empty">Пока нет товаров</div>'; rankWrap.innerHTML=''; return; }
+  riskWrap.innerHTML='<div class="empty">Загрузка…</div>';
+  rankWrap.innerHTML='<div class="empty">Загрузка…</div>';
+
+  const month=monthNow();
+  const dim=daysInMonth(month);
+  const daysElapsed=Math.max(1,new Date().getDate());
+
+  const rows=[];
+  for(const p of state.products){
+    const entries=await monthEntries(p.id, month);
+    const f=await productMonthFact(p.id, month);
+    const planMap=await getPlanMap(p.id);
+    const plan=planMap[month]||{planRub:0,planUnits:0};
+    const actualUnitsPerDay=f.factUnits/daysElapsed;
+    const runRateUnits=Math.round(actualUnitsPerDay*dim);
+    const runRateRub=Math.round(runRateUnits*(p.currentPriceLK||0));
+    const runRatePct = plan.planRub>0 ? runRateRub/plan.planRub*100 : null;
+    const drrMonth = f.factRub>0 ? f.adSpend/f.factRub*100 : null;
+
+    const sums={impressions:0,uniqueVisitors:0,clicks:0,carts:0,orders:0,cancellations:0,buyouts:0};
+    entries.forEach(([,e])=>{ sums.impressions+=+e.impressions||0; sums.uniqueVisitors+=+e.uniqueVisitors||0; sums.clicks+=+e.clicks||0; sums.carts+=+e.carts||0; sums.orders+=+e.orders||0; sums.cancellations+=+e.cancellations||0; sums.buyouts+=+e.buyouts||0; });
+    const ctrBase=(p.mp==='ozon'&&sums.uniqueVisitors)?sums.uniqueVisitors:sums.impressions;
+    const ctr=pct(sums.clicks, ctrBase);
+    const cr1=pct(sums.carts, sums.clicks);
+    const cr2=pct(sums.orders, sums.carts);
+    const buyoutRate=sums.orders>0? sums.buyouts/sums.orders*100 : null;
+    const cancelRate=sums.orders>0? sums.cancellations/sums.orders*100 : null;
+    const th=getThresholds(p);
+    const flags=[];
+    if(ctr!==null && ctr<th.ctr) flags.push('Низкая кликабельность');
+    if(cr1!==null && cr1<th.cr1) flags.push('Не доходят до корзины');
+    if(cr2!==null && cr2<th.cr2) flags.push('Бросают корзину');
+    if(buyoutRate!==null && buyoutRate<th.buyout) flags.push('Низкий выкуп');
+    if(cancelRate!==null && cancelRate>th.cancel) flags.push('Много отмен');
+
+    let trendDirVal=null;
+    if(entries.length>=4){
+      const {prev,recent}=splitHalves(entries);
+      const prevClicks=sumField(prev,'clicks'), prevOrders=sumField(prev,'orders');
+      const recentClicks=sumField(recent,'clicks'), recentOrders=sumField(recent,'orders');
+      if(prevClicks>=10 && recentClicks>=10){
+        const prevCrf=prevOrders/prevClicks*100, recentCrf=recentOrders/recentClicks*100;
+        trendDirVal=trendDir(prevCrf, recentCrf, 0.1);
+      }
+    }
+    rows.push({product:p, factRub:f.factRub, planRub:plan.planRub, runRatePct, drrMonth, flags, trendDirVal});
+  }
+
+  const riskRows=rows.filter(r=> (r.runRatePct!==null && r.runRatePct<95) || r.flags.length>0)
+    .sort((a,b)=>{
+      const aScore=(a.runRatePct!==null && a.runRatePct<95?1:0)+a.flags.length;
+      const bScore=(b.runRatePct!==null && b.runRatePct<95?1:0)+b.flags.length;
+      return bScore-aScore;
+    });
+  if(riskRows.length===0){
+    riskWrap.innerHTML='<div class="rec ok"><div class="dot"></div><div>Явных проблем не найдено — все товары в норме по плану и точкам роста.</div></div>';
+  } else {
+    riskWrap.innerHTML=riskRows.map(r=>{
+      const parts=[];
+      if(r.runRatePct!==null && r.runRatePct<95) parts.push(`Run-rate ${fmt1(r.runRatePct)}% от плана`);
+      if(r.flags.length>0) parts.push(r.flags.join(', '));
+      return `<div class="rec warn"><div class="dot"></div><div><b>[${MP_LABEL[r.product.mp]}] ${r.product.name}</b>: ${parts.join(' · ')}</div></div>`;
+    }).join('');
+  }
+
+  renderOverviewRanking(rows);
+}
+
+let overviewRows=[];
+function renderOverviewRanking(rows){
+  overviewRows=rows;
+  const rankWrap=document.getElementById('rankingWrap');
+  const mpFilter=document.getElementById('overview_mp_filter').value;
+  const filtered = mpFilter==='all' ? rows : rows.filter(r=>r.product.mp===mpFilter);
+  const sorted=[...filtered].sort((a,b)=>{
+    let av,bv;
+    if(overviewSortCol==='plan'){ av=a.runRatePct??-1; bv=b.runRatePct??-1; }
+    else if(overviewSortCol==='drr'){ av=a.drrMonth??-1; bv=b.drrMonth??-1; }
+    else { av=a.factRub; bv=b.factRub; }
+    return overviewSortDir==='desc'? bv-av : av-bv;
+  });
+  const trendArrow=d=> d==='up'?'<span class="delta good">▲</span>':d==='down'?'<span class="delta bad">▼</span>':d==='flat'?'<span class="delta flat">≈</span>':'—';
+  const rowsHtml=sorted.map(r=>`<tr>
+    <td class="txt"><span class="badge ${r.product.mp}">${MP_LABEL[r.product.mp]}</span></td>
+    <td class="txt">${r.product.name}</td>
+    <td>${fmt(r.factRub)} ₽</td>
+    <td>${r.runRatePct!==null? fmt1(r.runRatePct)+'%':'—'}</td>
+    <td>${r.drrMonth!==null? fmt1(r.drrMonth)+'%':'—'}</td>
+    <td>${trendArrow(r.trendDirVal)}</td>
+  </tr>`).join('');
+  const arrow=(col)=> overviewSortCol===col ? (overviewSortDir==='desc'?' ▼':' ▲') : '';
+  if(sorted.length===0){
+    rankWrap.innerHTML='<div class="empty">Нет товаров на этой площадке</div>';
+    return;
+  }
+  rankWrap.innerHTML=`<div class="table-scroll"><table><thead><tr>
+    <th>Площадка</th>
+    <th>Товар</th>
+    <th data-sortcol="revenue" style="cursor:pointer;">Выручка (мес.)${arrow('revenue')}</th>
+    <th data-sortcol="plan" style="cursor:pointer;">% плана (Run-rate)${arrow('plan')}</th>
+    <th data-sortcol="drr" style="cursor:pointer;">ДРР${arrow('drr')}</th>
+    <th>Тренд конверсии</th>
+  </tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
+  rankWrap.querySelectorAll('[data-sortcol]').forEach(th=>th.addEventListener('click', ()=>{
+    const col=th.dataset.sortcol;
+    if(overviewSortCol===col) overviewSortDir = overviewSortDir==='desc'?'asc':'desc';
+    else { overviewSortCol=col; overviewSortDir='desc'; }
+    renderOverviewRanking(overviewRows);
+  }));
+}
+
+async function renderPlanTab(){
+  const mode=currentPlanMode();
+  const editorWrap=document.getElementById('planEditorWrap');
+  const summaryWrap=document.getElementById('planSummaryWrap');
+
+  if(mode==='mp'){
+    editorWrap.innerHTML='';
+    const mp=document.getElementById('plan_mp').value;
+    const month=document.getElementById('plan_mp_month').value || monthNow();
+    document.getElementById('plan_mp_month').value=month;
+    const products=state.products.filter(p=>p.mp===mp);
+    if(products.length===0){ summaryWrap.innerHTML='<div class="panel"><div class="empty">Нет товаров на этой площадке</div></div>'; return; }
+    const isCurrentMonth = month===monthNow();
+    const dim=daysInMonth(month);
+    const dayOfMonth=new Date().getDate();
+    const daysElapsed = isCurrentMonth? dayOfMonth : dim;
+    let planRub=0, planUnits=0, factRub=0, factUnits=0, runRateUnitsTotal=0, runRateRubTotal=0;
+    const rowsData=[];
+    for(const p of products){
+      const pm=await getPlanMap(p.id);
+      const pl=pm[month]||{planRub:0,planUnits:0};
+      const f=await productMonthFact(p.id, month);
+      planRub+=+pl.planRub||0; planUnits+=+pl.planUnits||0; factRub+=f.factRub; factUnits+=f.factUnits;
+      rowsData.push({name:p.name, planRub:pl.planRub||0, planUnits:pl.planUnits||0, factRub:f.factRub, factUnits:f.factUnits});
+      if(isCurrentMonth && daysElapsed>0){
+        const productRunRateUnits=(f.factUnits/daysElapsed)*dim;
+        runRateUnitsTotal+=productRunRateUnits;
+        runRateRubTotal+=productRunRateUnits*(p.currentPriceLK||0);
+      }
+    }
+    const remainingPct = planRub>0? Math.max(0,(planRub-factRub)/planRub*100) : null;
+    const rows=rowsData.map(r=>`<tr><td class="txt">${r.name}</td><td>${fmt(r.planRub)} ₽</td><td>${fmt(r.factRub)} ₽</td><td>${fmt(r.planUnits)}</td><td>${fmt(r.factUnits)}</td></tr>`).join('');
+    let runRateKpiMp='';
+    if(isCurrentMonth){
+      const runRateUnitsRounded=Math.round(runRateUnitsTotal);
+      const runRateRubRounded=Math.round(runRateRubTotal);
+      const runRatePctMp = planRub>0 ? runRateRubRounded/planRub*100 : null;
+      runRateKpiMp=`<div class="kpi"><div class="label">Run-rate (прогноз на месяц)</div><div class="value">${fmt(runRateUnitsRounded)} шт / ${fmt(runRateRubRounded)} ₽</div>${runRatePctMp!==null?`<div class="delta ${runRatePctMp>=95?'good':'bad'}">${fmt1(runRatePctMp)}% от плана</div>`:''}</div>`;
+    }
+    summaryWrap.innerHTML = `<div class="panel"><h2>${MP_LABEL[mp]} — ${month}</h2>
+      <div class="kpis">
+        <div class="kpi"><div class="label">План, ₽</div><div class="value">${fmt(planRub)} ₽</div></div>
+        <div class="kpi"><div class="label">Факт, ₽</div><div class="value">${fmt(factRub)} ₽</div>${planRub? `<div class="bar"><div style="width:${Math.min(100,factRub/planRub*100)}%"></div></div>`:''}</div>
+        <div class="kpi"><div class="label">Осталось до плана</div><div class="value">${remainingPct!==null? fmt1(remainingPct)+'%':'—'}</div></div>
+        <div class="kpi"><div class="label">Факт, шт / план, шт</div><div class="value">${fmt(factUnits)} / ${fmt(planUnits)}</div></div>
+        ${runRateKpiMp}
+      </div>
+      <div class="table-scroll"><table><thead><tr><th>Товар</th><th>План ₽</th><th>Факт ₽</th><th>План шт</th><th>Факт шт</th></tr></thead><tbody>${rows}</tbody></table></div>
+    </div>`;
+    return;
+  }
+
+  // mode === product
+  const productId=document.getElementById('plan_product').value;
+  const product=state.products.find(p=>p.id===productId);
+  const month=document.getElementById('plan_product_month').value || monthNow();
+  document.getElementById('plan_product_month').value=month;
+  if(!productId){ editorWrap.innerHTML='<div class="panel"><div class="empty">Выберите товар</div></div>'; summaryWrap.innerHTML=''; return; }
+  const planMap=await getPlanMap(productId);
+  const plan=planMap[month] || {planRub:'', planUnits:'', stockQty:'', arrivalDate:'', arrivalQty:''};
+  editorWrap.innerHTML = `<div class="panel"><h2>План на ${month}</h2><p class="hint">Вносится раз в месяц, можно отредактировать в любой момент</p>
+    <div class="row">
+      <div class="field"><label>План, ₽</label><input id="plan_rub" type="number" min="0" value="${plan.planRub}"></div>
+      <div class="field"><label>План, шт</label><input id="plan_units" type="number" min="0" value="${plan.planUnits}"></div>
+      <button class="btn" id="savePlanBtn">Сохранить план</button>
+    </div>
+    <div class="row" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+      <div class="field"><label>Остаток на складе, шт.</label><input id="plan_stock" type="number" min="0" value="${plan.stockQty||''}"></div>
+      <div class="field"><label>Дата поступления</label><input id="plan_arrival_date" type="date" value="${plan.arrivalDate||''}"></div>
+      <div class="field"><label>Поступит, шт.</label><input id="plan_arrival_qty" type="number" min="0" value="${plan.arrivalQty||''}"></div>
+    </div>
+    <div class="note">Поступление считается доступным для продажи через 5 дней после даты (время на приёмку складом)</div>
+    <div class="row" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+      <div class="field"><label>Рост к среднему факту, %</label><input id="plan_growth_pct" type="number" value="10"></div>
+      <button class="btn secondary" id="autoPlanBtn">Рассчитать автоматически</button>
+    </div>
+    <div class="note" id="autoPlanNote"></div>
+    </div>`;
+  document.getElementById('autoPlanBtn').addEventListener('click', ()=>computeAutoPlan(productId, month));
+  document.getElementById('savePlanBtn').addEventListener('click', async ()=>{
+    const planRub=+document.getElementById('plan_rub').value||0;
+    const planUnits=+document.getElementById('plan_units').value||0;
+    const stockQty=document.getElementById('plan_stock').value?+document.getElementById('plan_stock').value:'';
+    const arrivalDate=document.getElementById('plan_arrival_date').value||'';
+    const arrivalQty=document.getElementById('plan_arrival_qty').value?+document.getElementById('plan_arrival_qty').value:'';
+    const pm=await getPlanMap(productId);
+    pm[month]={planRub, planUnits, stockQty, arrivalDate, arrivalQty};
+    await storeSet('plan:'+productId, pm);
+    renderPlanTab();
+  });
+
+  const {factUnits, factRub, adSpend}=await productMonthFact(productId, month);
+  const planRub=plan.planRub||0, planUnits=plan.planUnits||0;
+  const remainingPct = planRub>0 ? Math.max(0,(planRub-factRub)/planRub*100) : null;
+  const donePct = planRub>0 ? factRub/planRub*100 : null;
+  const drrMonth = factRub>0 ? adSpend/factRub*100 : null;
+  const dim=daysInMonth(month);
+  const isCurrentMonth = month===monthNow();
+  const dayOfMonth=new Date().getDate();
+  const daysElapsed = isCurrentMonth? dayOfMonth : dim;
+  const daysRemaining = isCurrentMonth? Math.max(1,dim-dayOfMonth) : 0;
+  const neededUnitsPerDay = (isCurrentMonth && planUnits>0) ? Math.max(0,(planUnits-factUnits))/daysRemaining : null;
+  const actualUnitsPerDay = daysElapsed>0 ? factUnits/daysElapsed : 0;
+
+  let runRateKpi='';
+  if(isCurrentMonth){
+    const runRateUnits=Math.round(actualUnitsPerDay*dim);
+    const runRateRub=Math.round(runRateUnits*(product?.currentPriceLK||0));
+    const runRatePct = planRub>0 ? runRateRub/planRub*100 : null;
+    runRateKpi=`<div class="kpi"><div class="label">Run-rate (прогноз на месяц)</div><div class="value">${fmt(runRateUnits)} шт / ${fmt(runRateRub)} ₽</div>${runRatePct!==null?`<div class="delta ${runRatePct>=95?'good':'bad'}">${fmt1(runRatePct)}% от плана</div>`:''}</div>`;
+  }
+  const weeklyKpi = isCurrentMonth ? await computeWeeklyDynamicsKpi(productId) : '';
+
+  let stockWarning='';
+  if(plan.stockQty!==undefined && plan.stockQty!==''){
+    const {available, arrivalCounted, arrivalNote}=computeAvailableStock(month, plan.stockQty, plan.arrivalDate, plan.arrivalQty);
+    if(planUnits>available){
+      stockWarning=`<div class="rec warn" style="margin-top:14px;"><div class="dot"></div><div>План (${fmt(planUnits)} шт.) превышает доступный остаток товара — ${fmt(available)} шт.${arrivalCounted?` (остаток ${fmt(+plan.stockQty||0)} + поступление ${fmt(+plan.arrivalQty||0)})`:''}. Физически продать больше доступного не получится.</div></div>`;
+    }
+    if(arrivalNote){
+      stockWarning+=`<div class="rec info" style="margin-top:8px;"><div class="dot"></div><div>${arrivalNote}</div></div>`;
+    }
+  }
+
+  summaryWrap.innerHTML = `<div class="panel"><h2>Факт по плану</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="label">Факт, ₽</div><div class="value">${fmt(factRub)} ₽</div>${planRub? `<div class="bar"><div style="width:${Math.min(100,factRub/planRub*100)}%"></div></div>`:''}</div>
+      <div class="kpi"><div class="label">Факт, шт</div><div class="value">${fmt(factUnits)}</div>${planUnits? `<div class="bar"><div style="width:${Math.min(100,factUnits/planUnits*100)}%"></div></div>`:''}</div>
+      <div class="kpi"><div class="label">Выполнение плана</div><div class="value">${donePct!==null? fmt1(donePct)+'%' : '—'}</div></div>
+      <div class="kpi"><div class="label">Осталось до плана</div><div class="value">${remainingPct!==null? fmt1(remainingPct)+'%' : '—'}</div></div>
+      <div class="kpi"><div class="label">Нужно шт/день</div><div class="value">${neededUnitsPerDay!==null? fmt1(neededUnitsPerDay):'—'}</div></div>
+      <div class="kpi"><div class="label">Факт шт/день</div><div class="value">${fmt1(actualUnitsPerDay)}</div></div>
+      <div class="kpi"><div class="label">ДРР за месяц</div><div class="value">${drrMonth!==null? fmt1(drrMonth)+'%' : '—'}</div></div>
+      ${runRateKpi}
+      ${weeklyKpi}
+    </div>${stockWarning}</div>`;
+}
+
+/* ---------------- ЕЖЕДНЕВНЫЕ ДАННЫЕ ---------------- */
+function suggestOrdersRub(){
+  const qty=+document.getElementById('d_orders').value||0;
+  const basisPrice = (dailyPrefill.isEdit && !dailyPrefill.isDraft) ? (+document.getElementById('d_priceLK').value||0) : (dailyPrefill.lk||+document.getElementById('d_priceLK').value||0);
+  document.getElementById('d_ordersRub').value = qty>0 ? Math.round(qty*basisPrice) : 0;
+}
+document.getElementById('d_orders').addEventListener('input', suggestOrdersRub);
+
+function updateDailySppPreview(){
+  const lk=document.getElementById('d_priceLK').value, cu=document.getElementById('d_priceCustomer').value;
+  const spp=computeSPP(lk,cu);
+  document.getElementById('d_spp_preview').value = spp!==null? fmt1(spp)+'%':'';
+}
+document.getElementById('d_priceLK').addEventListener('input', ()=>{ updateDailySppPreview(); suggestOrdersRub(); });
+document.getElementById('d_priceCustomer').addEventListener('input', updateDailySppPreview);
+
+function getPromoValue(){
+  if(document.getElementById('promo_yes').checked) return 'yes';
+  if(document.getElementById('promo_no').checked) return 'no';
+  return null;
+}
+function setPromoCheckboxes(value){
+  document.getElementById('promo_yes').checked = value==='yes';
+  document.getElementById('promo_no').checked = value==='no';
+}
+document.getElementById('promo_yes').addEventListener('change', ()=>{ if(document.getElementById('promo_yes').checked) document.getElementById('promo_no').checked=false; });
+document.getElementById('promo_no').addEventListener('change', ()=>{ if(document.getElementById('promo_no').checked) document.getElementById('promo_yes').checked=false; });
+
+function renderBidsForm(product, sourceBids){
+  const bidCount = bidCountForMp(product?.mp);
+  const src = sourceBids || product?.adBids;
+  const bids = (src && src.length===bidCount) ? src : Array.from({length:bidCount},(_,i)=>({label:`Ставка ${i+1}`,value:null}));
+  document.getElementById('bidsWrap').innerHTML = bids.map((b,i)=>`
+    <div class="bidrow">
+      <input data-bidlabel="${i}" value="${b.label}" placeholder="Название ставки">
+      <input data-bidvalue="${i}" type="text" value="${b.value??''}" placeholder="Значение (число, текст или знак)">
+    </div>`).join('');
+}
+
+let loadFormToken=0;
+async function loadDailyForm(){
+  const myToken=++loadFormToken;
+  const productId=document.getElementById('daily_product').value;
+  const date=document.getElementById('daily_date').value;
+  const noteEl=document.getElementById('priceLogicNote');
+  const selProduct = state.products.find(p=>p.id===productId);
+  const isOzon = selProduct?.mp==='ozon';
+  const isWb = selProduct?.mp==='wb';
+  const isYm = selProduct?.mp==='ym';
+  document.getElementById('d_uniqVisitorsWrap').style.display = isOzon? 'flex':'none';
+  document.getElementById('d_ozonCardWrap').style.display = isOzon? 'flex':'none';
+  document.getElementById('d_adspend_ozon_wrap').style.display = isOzon? 'flex':'none';
+  document.getElementById('d_adspend_ark_wrap').style.display = isWb? 'flex':'none';
+  document.getElementById('d_adspend_search_wrap').style.display = isWb? 'flex':'none';
+  document.getElementById('d_adspend_bpr_wrap').style.display = isYm? 'flex':'none';
+  document.getElementById('d_adspend_bpk_wrap').style.display = isYm? 'flex':'none';
+  document.getElementById('d_adspend_polki_wrap').style.display = isYm? 'flex':'none';
+  if(!productId){ noteEl.textContent=''; document.getElementById('bidsWrap').innerHTML=''; return; }
+  const product=selProduct;
+  if(!date){
+    renderBidsForm(product);
+    noteEl.textContent='Данные сохранены. Выберите дату, чтобы внести следующую запись.';
+    document.getElementById('editBanner').style.display='none';
+    document.getElementById('saveDailyBtn').textContent='Сохранить день';
+    document.getElementById('d_priceLK').value='';
+    document.getElementById('d_priceCustomer').value='';
+    document.getElementById('d_priceOzonCard').value='';
+    document.getElementById('d_uniqVisitors').value='';
+    document.getElementById('d_spp_preview').value='';
+    document.querySelectorAll('.d_changeType_cb').forEach(cb=>{ cb.checked=false; });
+    setPromoCheckboxes(null);
+    ['d_impr','d_clicks','d_carts','d_orders','d_ordersRub','d_buyouts','d_cancels','d_adspend','d_adspend_ark','d_adspend_search','d_adspend_bpr','d_adspend_bpk','d_adspend_polki','d_change'].forEach(id=>document.getElementById(id).value='');
+    return;
+  }
+  const dm=await getDailyMap(productId);
+  if(myToken!==loadFormToken) return;
+  const existing=dm[date];
+
+  const banner=document.getElementById('editBanner');
+  const saveBtn=document.getElementById('saveDailyBtn');
+  const changeTypesOf = e => e?.changeTypes || (e?.changeType ? [e.changeType] : []);
+  if(existing){
+    dailyPrefill={lk:existing.priceLK, customer:existing.priceCustomer, ozonCard:existing.priceOzonCard, isEdit:true, isDraft:!!existing.draft,
+      stagedChangeTypes: existing.changeTypes || (existing.changeType?[existing.changeType]:[]), stagedChangeNote: existing.changeNote||'',
+      stagedBids: (existing.adBids && existing.adBids.length) ? existing.adBids : (product?.adBids||null)};
+    renderBidsForm(product, dailyPrefill.stagedBids);
+    document.getElementById('d_priceLK').value=existing.priceLK||'';
+    document.getElementById('d_priceCustomer').value=existing.priceCustomer||'';
+    document.getElementById('d_priceOzonCard').value=existing.priceOzonCard||'';
+    document.getElementById('d_impr').value=existing.impressions||'';
+    document.getElementById('d_uniqVisitors').value=existing.uniqueVisitors||'';
+    document.getElementById('d_clicks').value=existing.clicks||'';
+    document.getElementById('d_carts').value=existing.carts||'';
+    document.getElementById('d_orders').value=existing.orders||'';
+    document.getElementById('d_ordersRub').value=existing.ordersRub||'';
+    document.getElementById('d_buyouts').value=existing.buyouts||'';
+    document.getElementById('d_cancels').value=existing.cancellations||'';
+    document.getElementById('d_adspend').value=existing.adspend||'';
+    document.getElementById('d_adspend_ark').value=existing.adspend_ark||'';
+    document.getElementById('d_adspend_search').value=existing.adspend_search||'';
+    document.getElementById('d_adspend_bpr').value=existing.adspend_bpr||'';
+    document.getElementById('d_adspend_bpk').value=existing.adspend_bpk||'';
+    document.getElementById('d_adspend_polki').value=existing.adspend_polki||'';
+    document.getElementById('d_change').value = existing.draft ? '' : (existing.changeNote||'');
+    const checked = existing.draft ? [] : changeTypesOf(existing);
+    document.querySelectorAll('.d_changeType_cb').forEach(cb=>{ cb.checked = checked.includes(cb.value); });
+    setPromoCheckboxes(existing.draft ? (product?.currentPromo||null) : (existing.promo||null));
+    if(existing.draft){
+      noteEl.textContent='Цена (и отметка об изменении, если она была) уже зафиксированы за этот день — впишите показатели воронки и сохраните. Галочки ниже пустые специально: если сегодня произошло ещё одно изменение — отметьте его здесь, оно уйдёт в черновик на завтра, а не задвоится с уже зафиксированным.';
+      banner.style.display='flex';
+      banner.style.background='var(--warn-bg)'; banner.style.color='var(--warn)';
+      document.getElementById('editBannerText').textContent=`Черновик за ${date} — нужно дополнить`;
+      saveBtn.textContent='Заполнить день';
+    } else {
+      noteEl.textContent='Редактируется уже сохранённый день — цена ниже сохранится как есть, без переноса на будущее.';
+      banner.style.display='flex';
+      banner.style.background='var(--info-bg)'; banner.style.color='var(--info)';
+      document.getElementById('editBannerText').textContent=`Редактирование записи за ${date}`;
+      saveBtn.textContent='Сохранить изменения';
+    }
+  } else {
+    dailyPrefill={lk:product?.currentPriceLK||null, customer:product?.currentPriceCustomer||null, ozonCard:product?.currentPriceOzonCard||null, isEdit:false, stagedBids:product?.adBids||null};
+    renderBidsForm(product, dailyPrefill.stagedBids);
+    document.getElementById('d_priceLK').value=dailyPrefill.lk||'';
+    document.getElementById('d_priceCustomer').value=dailyPrefill.customer||'';
+    document.getElementById('d_priceOzonCard').value=dailyPrefill.ozonCard||'';
+    document.getElementById('d_uniqVisitors').value='';
+    document.querySelectorAll('.d_changeType_cb').forEach(cb=>{ cb.checked=false; });
+    setPromoCheckboxes(product?.currentPromo||null);
+    ['d_impr','d_clicks','d_carts','d_orders','d_ordersRub','d_buyouts','d_cancels','d_adspend','d_adspend_ark','d_adspend_search','d_adspend_bpr','d_adspend_bpk','d_adspend_polki','d_change'].forEach(id=>document.getElementById(id).value='');
+    noteEl.textContent = dailyPrefill.lk ? 'Цена подставлена из последнего сохранённого значения. Если сегодня цена изменилась или отмечено изменение в карточке — для заказов этого дня всё равно используется прежняя цена, а на завтра дашборд сам подготовит черновик с новой ценой и пометкой об изменении — просто дополните его показателями воронки, когда дойдёт очередь.' : 'Это первая запись по товару — введите текущую цену.';
+    banner.style.display='none';
+    saveBtn.textContent='Сохранить день';
+  }
+  updateDailySppPreview();
+}
+document.getElementById('daily_product').addEventListener('change', ()=>{
+  document.getElementById('daily_date').value='';
+  loadDailyForm(); renderDailyTab();
+});
+document.getElementById('daily_date').addEventListener('change', loadDailyForm);
+document.getElementById('cancelEditBtn').addEventListener('click', async ()=>{
+  document.getElementById('daily_date').value='';
+  await loadDailyForm();
+});
+
+document.getElementById('saveDailyBtn').addEventListener('click', async ()=>{
+  const productId=document.getElementById('daily_product').value;
+  if(!productId){ alert('Выберите товар'); return; }
+  const date=document.getElementById('daily_date').value;
+  if(!date){ alert('Выберите дату'); return; }
+  const product=state.products.find(p=>p.id===productId);
+  const isOzon = product?.mp==='ozon';
+  const isWb = product?.mp==='wb';
+  const isYm = product?.mp==='ym';
+  const typedLK=+document.getElementById('d_priceLK').value||0;
+  const typedCustomer=+document.getElementById('d_priceCustomer').value||0;
+  const typedOzonCard=+document.getElementById('d_priceOzonCard').value||0;
+
+  const isTrueEdit = dailyPrefill.isEdit && !dailyPrefill.isDraft;
+  let effectiveLK, effectiveCustomer, effectiveOzonCard;
+  if(isTrueEdit){
+    effectiveLK=typedLK; effectiveCustomer=typedCustomer; effectiveOzonCard=typedOzonCard;
+  } else {
+    effectiveLK = dailyPrefill.lk || typedLK;
+    effectiveCustomer = dailyPrefill.customer || typedCustomer;
+    effectiveOzonCard = dailyPrefill.ozonCard || typedOzonCard;
+  }
+
+  let adspendTotal=0, adspendBreakdown={};
+  if(isOzon){
+    adspendTotal=+document.getElementById('d_adspend').value||0;
+  } else if(isWb){
+    const ark=+document.getElementById('d_adspend_ark').value||0;
+    const search=+document.getElementById('d_adspend_search').value||0;
+    adspendTotal=ark+search;
+    adspendBreakdown={adspend_ark:ark, adspend_search:search};
+  } else if(isYm){
+    const bpr=+document.getElementById('d_adspend_bpr').value||0;
+    const bpk=+document.getElementById('d_adspend_bpk').value||0;
+    const polki=+document.getElementById('d_adspend_polki').value||0;
+    adspendTotal=bpr+bpk+polki;
+    adspendBreakdown={adspend_bpr:bpr, adspend_bpk:bpk, adspend_polki:polki};
+  }
+
+  const changeTypes=[...document.querySelectorAll('.d_changeType_cb:checked')].map(cb=>cb.value);
+  const changeNoteTyped=document.getElementById('d_change').value.trim();
+  const hasChangeInfo = changeNoteTyped!=='' || changeTypes.length>0;
+  // форма для черновика показывает пустые галочки/заметку — значит, любое заполненное поле здесь уже новое
+  const hasNewChangeInfo = hasChangeInfo;
+
+  const entry={
+    priceLK: effectiveLK,
+    priceCustomer: effectiveCustomer,
+    impressions:+document.getElementById('d_impr').value||0,
+    clicks:+document.getElementById('d_clicks').value||0,
+    carts:+document.getElementById('d_carts').value||0,
+    orders:+document.getElementById('d_orders').value||0,
+    ordersRub:(+document.getElementById('d_orders').value||0)>0 ? (+document.getElementById('d_ordersRub').value||0) : 0,
+    buyouts:+document.getElementById('d_buyouts').value||0,
+    cancellations:+document.getElementById('d_cancels').value||0,
+    adspend: adspendTotal,
+    ...adspendBreakdown,
+    // на этот день всегда сохраняется то, что уже было зафиксировано ранее (для черновика) или введено вручную (при настоящем редактировании)
+    changeNote: isTrueEdit ? changeNoteTyped : (dailyPrefill.stagedChangeNote||''),
+    changeTypes: isTrueEdit ? changeTypes : (dailyPrefill.stagedChangeTypes||[]),
+    promo: getPromoValue()
+  };
+  if(isOzon){
+    entry.uniqueVisitors=+document.getElementById('d_uniqVisitors').value||0;
+    entry.priceOzonCard=effectiveOzonCard;
+  }
+
+  const dm=await getDailyMap(productId);
+  const bidCount=bidCountForMp(product?.mp);
+  const typedBids=Array.from({length:bidCount},(_,i)=>({
+    label: document.querySelector(`[data-bidlabel="${i}"]`)?.value.trim() || `Ставка ${i+1}`,
+    value: document.querySelector(`[data-bidvalue="${i}"]`)?.value.trim() || null
+  }));
+  const stagedBidsArr = dailyPrefill.stagedBids;
+  const effectiveBids = isTrueEdit ? typedBids : ((stagedBidsArr && stagedBidsArr.length===bidCount) ? stagedBidsArr : typedBids);
+  entry.adBids=effectiveBids;
+  dm[date]=entry;
+
+  // цена и ставки переносятся на завтра всегда (обычный ежедневный перенос), заметка об изменении — только если она новая
+  if(!isTrueEdit){
+    const nextDate=datePlusDays(date,1);
+    const nextExisting=dm[nextDate];
+    const draftEntry = (nextExisting && !nextExisting.draft) ? nextExisting : (nextExisting ? {...nextExisting} : {
+      priceLK:0, priceCustomer:0, impressions:0, clicks:0, carts:0, orders:0, ordersRub:0,
+      buyouts:0, cancellations:0, adspend:0, changeNote:'', changeTypes:[], promo:null, adBids:typedBids, draft:true
+    });
+    if(!nextExisting || nextExisting.draft){
+      draftEntry.priceLK = typedLK || effectiveLK;
+      draftEntry.priceCustomer = typedCustomer || effectiveCustomer;
+      if(isOzon) draftEntry.priceOzonCard = typedOzonCard || effectiveOzonCard;
+      draftEntry.adBids = typedBids;
+      if(hasNewChangeInfo){ draftEntry.changeNote=changeNoteTyped; draftEntry.changeTypes=changeTypes; }
+      draftEntry.draft=true;
+      dm[nextDate]=draftEntry;
+    }
+  }
+
+  const ok=await storeSet('daily:'+productId, dm);
+  if(!ok){
+    alert('Не удалось сохранить день — сбой хранилища. Данные из формы никуда не делись, попробуйте нажать «Сохранить» ещё раз.');
+    return;
+  }
+
+  if(product){
+    if(!isTrueEdit){
+      product.currentPriceLK=typedLK||effectiveLK;
+      product.currentPriceCustomer=typedCustomer||effectiveCustomer;
+      if(isOzon) product.currentPriceOzonCard=typedOzonCard||effectiveOzonCard;
+      product.adBids=typedBids;
+    } else {
+      const maxDate=Object.keys(dm).sort().slice(-1)[0];
+      if(date===maxDate){
+        product.currentPriceLK=typedLK;
+        product.currentPriceCustomer=typedCustomer;
+        if(isOzon) product.currentPriceOzonCard=typedOzonCard;
+        product.adBids=typedBids;
+      }
+    }
+    product.currentPromo=entry.promo;
+    const productCacheOk=await storeSet('product:'+productId, product);
+    if(!productCacheOk){
+      alert('День сохранён, но не удалось обновить карточку товара (текущую цену/ставки на будущее) — сбой хранилища. Проверьте это при следующем вводе.');
+    }
+    await loadProducts();
+  }
+
+  document.getElementById('daily_date').value='';
+  await loadDailyForm();
+  renderDailyTab();
+});
+
+function deltaHtml(curr, prev, {goodUp=true, decimals=1, suffix='', neutral=false}={}){
+  if(prev===null||prev===undefined||curr===null||curr===undefined) return '<span class="delta-na">—</span>';
+  const diff=curr-prev;
+  if(Math.abs(diff)<0.05) return '<span class="delta flat">0'+suffix+'</span>';
+  const isUp=diff>0;
+  const arrow=isUp?'▲':'▼';
+  let cls='flat';
+  if(!neutral) cls = (isUp===goodUp)?'good':'bad';
+  return `<span class="delta ${cls}">${arrow}${Math.abs(diff).toFixed(decimals)}${suffix}</span>`;
+}
+
+function enrichEntries(dailyMap, mp){
+  const dates=Object.keys(dailyMap).sort();
+  return dates.map(d=>{
+    const e=dailyMap[d];
+    const ctrBase = (mp==='ozon' && e.uniqueVisitors) ? e.uniqueVisitors : e.impressions;
+    return { date:d, ...e,
+      ctr: pct(e.clicks, ctrBase),
+      cr1: pct(e.carts, e.clicks),
+      cr2: pct(e.orders, e.carts),
+      crf: pct(e.orders, e.clicks),
+      drr: pct(e.adspend, e.ordersRub),
+      cpc: e.clicks? e.adspend/e.clicks : null,
+      cpo: e.orders? e.adspend/e.orders : null,
+      spp: computeSPP(e.priceLK, e.priceCustomer)
+    };
+  });
+}
+
+function dayBefore(dateStr){ const [y,m,day]=dateStr.split('-').map(Number); const d=new Date(y,m-1,day); d.setDate(d.getDate()-1); return dateToISO(d); }
+
+async function renderAnomalies(){
+  const productId=document.getElementById('daily_product').value;
+  const wrap=document.getElementById('anomaliesWrap');
+  if(!productId){ wrap.innerHTML='<div class="empty">Выберите товар</div>'; return; }
+  const product=state.products.find(p=>p.id===productId);
+  const dm=await getDailyMap(productId);
+  const dates=Object.keys(dm).filter(d=>!dm[d].draft).sort();
+  if(dates.length===0){ wrap.innerHTML='<div class="empty">Пока нет данных</div>'; return; }
+  const lastDate=dates[dates.length-1];
+  const enrichedByDate={};
+  enrichEntries(dm, product?.mp).forEach(e=>{ enrichedByDate[e.date]=e; });
+  const curr=enrichedByDate[lastDate];
+  const prev=enrichedByDate[dayBefore(lastDate)];
+  if(!prev){ wrap.innerHTML=`<div class="empty">Нет данных за день перед ${lastDate} — сравнивать не с чем</div>`; return; }
+
+  const anomalies=[];
+  if(curr.impressions>0 && prev.impressions>0 && curr.impressions >= prev.impressions*2){
+    const times=(curr.impressions/prev.impressions).toFixed(1);
+    anomalies.push(`Показы выросли в ${times} раза — с ${fmt(prev.impressions)} до ${fmt(curr.impressions)}. Проверьте: не запустилась ли новая рекламная кампания или акция, не попал ли товар в подборку площадки, нет ли аномального (накрученного) трафика.`);
+  }
+  if(curr.impressions>=0 && prev.impressions>0 && curr.impressions <= prev.impressions/2){
+    const times=(prev.impressions/Math.max(curr.impressions,1)).toFixed(1);
+    anomalies.push(`Показы упали в ${times} раза — с ${fmt(prev.impressions)} до ${fmt(curr.impressions)}. Проверьте: не улетела ли карточка из топа выдачи, не отключилась ли реклама или бюджет, не пропал ли товар с витрины (нет в наличии, заблокирован, ушёл на модерацию).`);
+  }
+  if(curr.ctr!==null && prev.ctr!==null && (prev.ctr-curr.ctr) > 1){
+    anomalies.push(`CTR упал на ${fmt1(prev.ctr-curr.ctr)} п.п. — с ${fmt1(prev.ctr)}% до ${fmt1(curr.ctr)}%. Проверьте: не поменялось ли главное фото или цена, не появился ли более заметный конкурент в выдаче, не упала ли позиция в поиске.`);
+  }
+  if(curr.cr1!==null && prev.cr1!==null && (prev.cr1-curr.cr1) > 5){
+    anomalies.push(`Конверсия клик→корзина упала на ${fmt1(prev.cr1-curr.cr1)} п.п. — с ${fmt1(prev.cr1)}% до ${fmt1(curr.cr1)}%. Проверьте наличие товара, изменения цены, отзывы и рейтинг, актуальность фото и описания.`);
+  }
+  if(curr.cr2!==null && prev.cr2!==null && (prev.cr2-curr.cr2) > 10){
+    anomalies.push(`Конверсия корзина→заказ упала на ${fmt1(prev.cr2-curr.cr2)} п.п. — с ${fmt1(prev.cr2)}% до ${fmt1(curr.cr2)}%. Проверьте доступность способов оплаты и доставки, актуальность цены в корзине, наличие товара на складе МП.`);
+  }
+
+  if(curr.adspend>0 && prev.adspend>0 && curr.adspend >= prev.adspend*2){
+    const times=(curr.adspend/prev.adspend).toFixed(1);
+    anomalies.push(`Рекламные расходы выросли в ${times} раза — с ${fmt(prev.adspend)} ₽ до ${fmt(curr.adspend)} ₽. Проверьте: не подняли ли ставки вручную, не запустилась ли лишняя кампания, не выросла ли конкуренция по ставкам за клик.`);
+  }
+  if(anomalies.length===0){
+    wrap.innerHTML=`<div class="rec ok"><div class="dot"></div><div>За ${lastDate} резких отклонений от ${dayBefore(lastDate)} не найдено.</div></div>`;
+  } else {
+    wrap.innerHTML=`<div class="note" style="margin-bottom:8px;">Сравнение ${dayBefore(lastDate)} → ${lastDate}</div>` +
+      anomalies.map(a=>`<div class="rec critical"><div class="dot"></div><div>${a}</div></div>`).join('');
+  }
+}
+function cellBadge(diff, {suffix='', decimals=1, goodUp=true, neutral=false}={}){
+  if(diff===null||diff===undefined||isNaN(diff)) return '';
+  if(Math.abs(diff)<0.05) return `<span class="cellbadge flat">0${suffix}</span>`;
+  const isUp=diff>0;
+  const cls = neutral? 'flat' : (isUp===goodUp?'up':'down');
+  const sign=isUp?'+':'−';
+  return `<span class="cellbadge ${cls}">${sign}${Math.abs(diff).toFixed(decimals)}${suffix}</span>`;
+}
+
+async function renderDailyTab(){
+  await renderAnomalies();
+  const productId=document.getElementById('daily_product').value;
+  const wrap=document.getElementById('dailyTableWrap');
+  if(!productId){ wrap.innerHTML='<div class="empty">Выберите товар</div>'; return; }
+  const product=state.products.find(p=>p.id===productId);
+  const isOzon = product?.mp==='ozon';
+  const dm=await getDailyMap(productId);
+  if(Object.keys(dm).length===0){ wrap.innerHTML='<div class="empty">Пока нет данных — внесите первый день выше</div>'; return; }
+
+  const month=document.getElementById('daily_history_month').value || monthNow();
+  document.getElementById('daily_history_month').value=month;
+  const enrichedByDate={};
+  enrichEntries(dm, product?.mp).forEach(e=>{ enrichedByDate[e.date]=e; });
+
+  const dim=daysInMonth(month);
+  const dates=Array.from({length:dim},(_,i)=>`${month}-${String(i+1).padStart(2,'0')}`);
+  const hasAnyDataThisMonth = dates.some(d=>enrichedByDate[d]);
+
+  const bidCount=bidCountForMp(product?.mp);
+  const bidLabels=Array.from({length:bidCount},(_,i)=>product?.adBids?.[i]?.label || `Ставка ${i+1}`);
+
+  const rows=[
+    {section:'Цена'},
+    {label:'Цена в ЛК, ₽', get:e=>e?.priceLK, fmt:v=>v!=null?fmt(v):''},
+    isOzon?{label:'Цена с Ozon картой, ₽', get:e=>e?.priceOzonCard, fmt:v=>v?fmt(v):''}:null,
+    {label:'Цена для покупателя, ₽', get:e=>e?.priceCustomer, fmt:v=>v!=null?fmt(v):''},
+    {label:'СПП, %', get:e=>e?.spp, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
+    {section:'Трафик'},
+    {label:'Показы', get:e=>e?.impressions, fmt:v=>v!=null?fmt(v):''},
+    isOzon?{label:'Уникальные посетители', get:e=>e?.uniqueVisitors, fmt:v=>v!=null?fmt(v):''}:null,
+    {label:'Клики', get:e=>e?.clicks, fmt:v=>v!=null?fmt(v):''},
+    {label:'CTR, %', get:e=>e?.ctr, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
+    {section:'Воронка'},
+    {label:'Корзины', get:e=>e?.carts, fmt:v=>v!=null?fmt(v):''},
+    {label:'CR клик→корзина, %', get:e=>e?.cr1, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
+    {label:'Заказы, шт', get:e=>e?.orders, fmt:v=>v!=null?fmt(v):''},
+    {label:'CR корзина→заказ, %', get:e=>e?.cr2, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
+    {label:'CR клик→заказ, %', get:e=>e?.crf, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
+    {label:'Выкупили, шт', get:e=>e?.buyouts, fmt:v=>v!=null?fmt(v):''},
+    {label:'Отмены, шт', get:e=>e?.cancellations, fmt:v=>v!=null?fmt(v):''},
+    {section:'Реклама и финансы'},
+    {label:'Заказы, ₽', get:e=>e?.ordersRub, fmt:v=>v!=null?fmt(v)+' ₽':''},
+    {label:'Реклама, ₽', get:e=>e?.adspend, fmt:v=>v!=null?fmt(v)+' ₽':''},
+    {label:'ДРР, %', get:e=>e?.drr, fmt:v=>v!=null?fmt1(v)+'%':''},
+    {label:'CPC, ₽', get:e=>e?.cpc, fmt:v=>v!=null?fmt1(v)+' ₽':''},
+    {label:'CPO, ₽', get:e=>e?.cpo, fmt:v=>v!=null?fmt(v)+' ₽':''},
+    ...bidLabels.map((label,i)=>({label, get:e=>e?.adBids?.[i]?.value, fmt:v=>v!=null?v:'', isText:true})),
+    {section:'Акции'},
+    {label:'Участие в акции', get:e=>e? (e.promo==='yes'?'Участвую':e.promo==='no'?'Не участвую':'') : null, fmt:v=>v||'', isText:true},
+    {section:'Изменения'},
+    {label:'Что изменили', get:e=>{
+      if(!e) return null;
+      const types=e.changeTypes || (e.changeType?[e.changeType]:[]);
+      const typeLabels=types.map(t=>CHANGE_TYPES[t]?.label).filter(Boolean).join(', ');
+      if(typeLabels && e.changeNote) return `${typeLabels}: ${e.changeNote}`;
+      return typeLabels || e.changeNote || null;
+    }, fmt:v=>v||'', isText:true, isEditableNote:true},
+    {section:''},
+    {label:'', get:()=>null, isAction:true}
+  ].filter(Boolean);
+
+  const theadCells=dates.map(d=>{
+    const isDraft=enrichedByDate[d]?.draft;
+    return `<th title="${d}${isDraft?' — черновик, нужно дополнить':''}">${d.slice(8,10)}.${d.slice(5,7)}${isDraft?' 🕓':''}</th>`;
+  }).join('');
+  const bodyRows=rows.map(r=>{
+    if(r.section!==undefined){
+      return `<tr class="section-row"><td class="sticky">${r.section}</td>${dates.map(()=>'<td></td>').join('')}</tr>`;
+    }
+    if(r.isAction){
+      return `<tr><td class="sticky txt">Действия</td>${dates.map(d=>{
+        const has=!!enrichedByDate[d];
+        return `<td>${has?`<button class="btn secondary" data-editdaily="${d}" style="padding:2px 6px;font-size:11px;">✎</button> <button class="btn danger" data-deldaily="${d}" style="padding:2px 6px;font-size:11px;">×</button>`:''}</td>`;
+      }).join('')}</tr>`;
+    }
+    const cells=dates.map(d=>{
+      const e=enrichedByDate[d]||null;
+      const val=r.get(e);
+      if(r.isEditableNote){
+        if(!e) return `<td></td>`;
+        const safe=(val||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return `<td class="txt"><textarea class="note-edit-input" data-notedate="${d}" rows="2" style="width:120px;resize:vertical;border:none;background:transparent;font-family:inherit;font-size:11.5px;color:inherit;white-space:normal;overflow-wrap:break-word;padding:2px;">${safe}</textarea></td>`;
+      }
+      if(r.isText) return `<td class="txt">${r.fmt(val)}</td>`;
+      let out=r.fmt(val);
+      if(r.delta){
+        const prevE=enrichedByDate[dayBefore(d)]||null;
+        const prevVal=r.get(prevE);
+        if(val!=null && prevVal!=null){
+          out += ' '+cellBadge(val-prevVal, r.delta);
+        }
+      }
+      return `<td>${out}</td>`;
+    }).join('');
+    return `<tr><td class="sticky txt">${r.label}</td>${cells}</tr>`;
+  }).join('');
+
+  if(!hasAnyDataThisMonth){
+    wrap.innerHTML=`<div class="empty">Нет данных за ${month} — выберите другой месяц</div>`;
+  } else {
+    wrap.innerHTML=`<table class="daytable"><thead><tr><th class="sticky">Показатель</th>${theadCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+  }
+
+  wrap.querySelectorAll('.note-edit-input').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const d=inp.dataset.notedate;
+      const dm2=await getDailyMap(productId);
+      if(dm2[d]){
+        dm2[d].changeNote = inp.value.trim();
+        const ok=await storeSet('daily:'+productId, dm2);
+        if(!ok) alert('Не удалось сохранить заметку — попробуйте ещё раз');
+      }
+    });
+  });
+  wrap.querySelectorAll('[data-editdaily]').forEach(b=>b.addEventListener('click', async ()=>{
+    document.getElementById('daily_date').value=b.dataset.editdaily;
+    await loadDailyForm();
+    document.getElementById('daily_date').scrollIntoView({behavior:'smooth', block:'center'});
+    document.getElementById('d_priceLK').focus();
+  }));
+  wrap.querySelectorAll('[data-deldaily]').forEach(b=>b.addEventListener('click', async ()=>{
+    const dm2=await getDailyMap(productId); delete dm2[b.dataset.deldaily]; await storeSet('daily:'+productId,dm2);
+    renderDailyTab(); loadDailyForm();
+  }));
+}
+document.getElementById('daily_history_month').addEventListener('change', renderDailyTab);
+
+/* ---------------- ВОРОНКА ---------------- */
+async function monthEntries(productId, month){
+  const dm=await getDailyMap(productId);
+  return Object.entries(dm).filter(([d])=>d.startsWith(month)).sort((a,b)=>a[0].localeCompare(b[0]));
+}
+function sumField(entries, field){ return entries.reduce((s,[,e])=>s+(+e[field]||0),0); }
+function splitHalves(entries){ const half=Math.floor(entries.length/2); return {prev:entries.slice(0,half), recent:entries.slice(half)}; }
+
+const STAGE_HINTS={
+  'Показы':'Сколько раз карточку увидели в поиске/каталоге за месяц',
+  'Клики':'Сколько раз по карточке кликнули из показов за месяц',
+  'Корзины':'Сколько раз товар добавили в корзину после клика за месяц',
+  'Заказы':'Сколько заказов оформили из корзины за месяц',
+  'Отменили':'Сколько заказов отменили за месяц',
+  'Выкупы':'Сколько заказов реально выкупили за месяц'
+};
+
+async function renderFunnelTab(){
+  const productId=document.getElementById('funnel_product').value;
+  const month=document.getElementById('funnel_month').value || monthNow();
+  document.getElementById('funnel_month').value=month;
+  const wrap=document.getElementById('funnelWrap');
+  const growthWrap=document.getElementById('growthWrap');
+  const diagWrap=document.getElementById('diagnosisWrap');
+  if(!productId){
+    wrap.innerHTML='<div class="empty">Выберите товар</div>';
+    growthWrap.innerHTML='<div class="empty">Выберите товар</div>';
+    diagWrap.innerHTML='<div class="empty">Выберите товар</div>';
+    document.getElementById('recsWrap').innerHTML='<div class="empty">Выберите товар</div>';
+    document.getElementById('changesTableWrap').innerHTML='<div class="empty">Выберите товар</div>';
+    if(drrChart){drrChart.destroy();drrChart=null;} if(crChart){crChart.destroy();crChart=null;}
+    return;
+  }
+  const product=state.products.find(p=>p.id===productId);
+  const entries=await monthEntries(productId, month);
+  if(entries.length===0){
+    wrap.innerHTML='<div class="empty">Нет данных за выбранный месяц</div>';
+    growthWrap.innerHTML='<div class="empty">Нет данных за выбранный период</div>';
+    diagWrap.innerHTML='<div class="empty">Нет данных за выбранный период</div>';
+    document.getElementById('recsWrap').innerHTML='<div class="empty">Нет данных для анализа</div>';
+    document.getElementById('changesTableWrap').innerHTML='<div class="empty">За этот месяц изменений не отмечено</div>';
+    if(drrChart){drrChart.destroy();drrChart=null;} if(crChart){crChart.destroy();crChart=null;}
+    return;
+  }
+
+  const sums={impressions:0,uniqueVisitors:0,clicks:0,carts:0,orders:0,cancellations:0,buyouts:0};
+  entries.forEach(([,e])=>{ sums.impressions+=+e.impressions||0; sums.uniqueVisitors+=+e.uniqueVisitors||0; sums.clicks+=+e.clicks||0; sums.carts+=+e.carts||0; sums.orders+=+e.orders||0; sums.cancellations+=+e.cancellations||0; sums.buyouts+=+e.buyouts||0; });
+  const stages=[
+    {name:'Показы',v:sums.impressions},
+    {name:'Клики',v:sums.clicks},
+    {name:'Корзины',v:sums.carts},
+    {name:'Заказы',v:sums.orders},
+    {name:'Отменили',v:sums.cancellations},
+    {name:'Выкупы',v:sums.buyouts}
+  ];
+  const maxV=Math.max(...stages.map(s=>s.v),1);
+  const ordersV=stages.find(s=>s.name==='Заказы')?.v||0;
+  wrap.innerHTML='<div class="funnel">'+stages.map((s,i)=>{
+    const w=Math.max(4, s.v/maxV*100);
+    const hint = STAGE_HINTS[s.name]||'';
+    let dropPct='';
+    if(s.name==='Выкупы'){
+      dropPct = ordersV>0 ? fmt1(s.v/ordersV*100)+'%' : '';
+    } else if(i>0 && stages[i-1].v>0){
+      dropPct = fmt1(s.v/stages[i-1].v*100)+'%';
+    }
+    return `<div class="fstage"><div class="fname" title="${hint}">${s.name}</div><div class="ftrack"><div style="width:${w}%"></div></div><div class="fvalue">${fmt(s.v)}</div><div class="fdrop">${dropPct}</div></div>`;
+  }).join('')+'</div>';
+
+  const labels=entries.map(([d])=>d.slice(8,10)+'.'+d.slice(5,7));
+  const enrMonth=enrichEntries(Object.fromEntries(entries), product.mp);
+  const drrData=enrMonth.map(e=>e.drr!==null?+e.drr.toFixed(1):0);
+  const ordersRubData=entries.map(([,e])=>+e.ordersRub||0);
+  const ctrData=enrMonth.map(e=>e.ctr!==null?+e.ctr.toFixed(1):0);
+  const cr1Data=enrMonth.map(e=>e.cr1!==null?+e.cr1.toFixed(1):0);
+  const cr2Data=enrMonth.map(e=>e.cr2!==null?+e.cr2.toFixed(1):0);
+  const imprData=entries.map(([,e])=>+e.impressions||0);
+  if(drrChart) drrChart.destroy();
+  if(crChart) crChart.destroy();
+  drrChart=new Chart(document.getElementById('drrChart'),{type:'line',data:{labels,datasets:[
+    {label:'ДРР',data:drrData,yAxisID:'y',borderColor:'#B4740E',backgroundColor:'rgba(180,116,14,0.08)',fill:true,borderWidth:2,pointRadius:0,tension:.3},
+    {label:'Заказы, ₽',data:ordersRubData,yAxisID:'y1',borderColor:'#3355CC',borderWidth:1.5,pointRadius:0,tension:.3}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:10,font:{size:10.5}}}},
+    scales:{
+      y:{position:'left',ticks:{callback:v=>v+'%'},grid:{color:'#E2E4DE'}},
+      y1:{position:'right',ticks:{callback:v=>fmt(v)},grid:{drawOnChartArea:false}},
+      x:{grid:{display:false}}
+    }}});
+  crChart=new Chart(document.getElementById('crChart'),{type:'line',data:{labels,datasets:[
+    {label:'Показы',data:imprData,yAxisID:'y1',borderColor:'#929699',borderWidth:1.5,pointRadius:0,tension:.3},
+    {label:'CTR',data:ctrData,yAxisID:'y',borderColor:'#0057FF',borderWidth:2,pointRadius:0,tension:.3},
+    {label:'CR в корзину',data:cr1Data,yAxisID:'y',borderColor:'#1F8A5F',borderWidth:2,pointRadius:0,tension:.3},
+    {label:'CR в заказ',data:cr2Data,yAxisID:'y',borderColor:'#B4740E',borderWidth:2,pointRadius:0,tension:.3}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:10,font:{size:10.5}}}},
+    scales:{
+      y:{position:'left',ticks:{callback:v=>v+'%'},grid:{color:'#E2E4DE'}},
+      y1:{position:'right',ticks:{callback:v=>fmt(v)},grid:{drawOnChartArea:false}},
+      x:{grid:{display:false}}
+    }}});
+
+  await renderFunnelDiagnosis(product, month, entries, sums);
+  await renderGrowthPoints(product, month, entries, sums);
+  await renderRecs(productId, month, entries);
+  await renderChangesJournal(productId, product, month, entries);
+}
+document.getElementById('funnel_product').addEventListener('change', renderFunnelTab);
+document.getElementById('funnel_month').addEventListener('change', renderFunnelTab);
+
+function avgMetricInRange(enrichedArr, fromDate, toDate, metricKey){
+  const vals=enrichedArr.filter(e=>e.date>=fromDate && e.date<=toDate && e[metricKey]!==null && e[metricKey]!==undefined).map(e=>e[metricKey]);
+  if(vals.length===0) return null;
+  return vals.reduce((a,b)=>a+b,0)/vals.length;
+}
+function sumMetricInRange(enrichedArr, fromDate, toDate, metricKey){
+  return enrichedArr.filter(e=>e.date>=fromDate && e.date<=toDate).reduce((s,e)=>s+(+e[metricKey]||0),0);
+}
+const SAMPLE_DENOM={ctr:'clicks', cr1:'clicks', cr2:'carts', crf:'clicks', drr:null};
+const MIN_SAMPLE={clicks:10, carts:3};
+function dateMinusDays(dateStr, n){
+  const [y,m,d]=dateStr.split('-').map(Number);
+  const dt=new Date(y,m-1,d);
+  dt.setDate(dt.getDate()-n);
+  return dateToISO(dt);
+}
+function datePlusDays(dateStr, n){ return dateMinusDays(dateStr, -n); }
+function dirFromRel(relPct, noiseAbs){
+  noiseAbs = noiseAbs===undefined ? 3 : noiseAbs;
+  if(relPct>=noiseAbs) return 'up';
+  if(relPct<=-noiseAbs) return 'down';
+  return 'flat';
+}
+
+function journalOutcomeText(type, primaryDir, secondaryDir, priceDir){
+  if(type==='photo_main'){
+    if(primaryDir==='up' && secondaryDir==='up') return 'Новое фото увеличило переходы, и покупатели чаще стали добавлять товар в корзину — изменение можно считать успешным.';
+    if(primaryDir==='up') return 'Фото увеличило количество переходов, но на конверсию в корзину это не повлияло — качество трафика осталось прежним. Стоит доработать карточку дальше по воронке.';
+    if(primaryDir==='down') return 'Новое фото проигрывает предыдущему варианту по кликабельности. Стоит вернуть прежнее или протестировать другой вариант.';
+    return 'Фото заметно не повлияло на кликабельность.';
+  }
+  if(type==='title'){
+    if(primaryDir==='up' && secondaryDir==='down') return 'Заголовок стал кликабельнее, но показов при этом стало меньше — возможно, ушла часть запросов. Проверьте, по каким ключам теперь показывается карточка.';
+    if(primaryDir==='up') return 'Новый заголовок увеличил кликабельность.';
+    if(primaryDir==='down' && secondaryDir==='up') return 'Показов стало больше, но заголовок стал менее кликабельным — вероятно, карточка показывается по менее релевантным запросам.';
+    if(primaryDir==='down') return 'Новый заголовок хуже прежнего по кликабельности.';
+    return 'Заметного эффекта на кликабельность заголовок не дал.';
+  }
+  if(type==='photo_order'){
+    if(primaryDir==='up') return 'Порядок/добавленные фото повысили конверсию в корзину.';
+    if(primaryDir==='down') return 'После изменения фото конверсия в корзину снизилась — возможно, новый порядок хуже раскрывает товар.';
+    return 'Заметного эффекта на конверсию в корзину изменение не дало.';
+  }
+  if(type==='description'){
+    if(primaryDir==='up' && secondaryDir==='down') return 'Конверсия из корзины выросла, но показов стало меньше — вероятно, часть запросов потеряла релевантность. Проверьте индексацию ключей.';
+    if(primaryDir==='up') return 'Обновлённое описание помогло убедить больше покупателей оформить заказ.';
+    if(primaryDir==='down') return 'После изменения описания конверсия из корзины снизилась.';
+    return 'Заметного эффекта на конверсию описание не дало.';
+  }
+  if(type==='price'){
+    if(priceDir==='flat'){
+      if(primaryDir==='up') return 'Цена в ЛК за это окно почти не изменилась, при этом конверсия из корзины выросла — вероятно, сработал не сам ценник, а что-то другое.';
+      if(primaryDir==='down') return 'Цена в ЛК почти не изменилась, а конверсия из корзины снизилась — вряд ли дело в цене, стоит поискать причину в другом.';
+      return 'Цена в ЛК заметно не изменилась за это окно, поэтому влияние на конверсию оценить сложно.';
+    }
+    if(priceDir==='down'){
+      if(primaryDir==='up' && secondaryDir==='up') return 'Цену снизили, продажи выросли, но одновременно вырос и ДРР — рост мог быть частично обеспечен рекламой, а не только снижением цены. Проверьте маржинальность с учётом возросших расходов на рекламу.';
+      if(primaryDir==='up') return 'Снижение цены положительно повлияло на конверсию из корзины в заказ.';
+      if(primaryDir==='down') return 'Несмотря на снижение цены, конверсия из корзины упала — цена, скорее всего, не была основной причиной низких продаж.';
+      return 'Снижение цены не принесло заметного роста конверсии.';
+    }
+    if(priceDir==='up'){
+      if(primaryDir==='up' || primaryDir==='flat') return 'Цену повысили, а конверсия из корзины не просела (или даже выросла) — покупатели готовы приобретать товар по новой цене.';
+      if(primaryDir==='down') return 'После повышения цены конверсия из корзины снизилась — цена могла стать менее конкурентоспособной на фоне аналогичных товаров.';
+    }
+    return 'Заметного влияния на конверсию изменение цены не дало.';
+  }
+  if(type==='ads'){
+    if(primaryDir==='down' && secondaryDir!=='down') return 'ДРР снизился без потери заказов — реклама стала эффективнее.';
+    if(primaryDir==='down' && secondaryDir==='down') return 'ДРР снизился, но и заказы просели — экономия на рекламе могла стоить части продаж.';
+    if(primaryDir==='up' && secondaryDir==='up') return 'ДРР вырос, но и заказы выросли — рост продаж куплен более дорогой рекламой. Оцените, оправдан ли рост расходов.';
+    if(primaryDir==='up') return 'ДРР вырос без соразмерного роста заказов — эффективность рекламы снизилась.';
+    return 'Заметного влияния на ДРР изменение не дало.';
+  }
+  if(primaryDir==='up') return 'Итоговая конверсия в заказ выросла после этого изменения.';
+  if(primaryDir==='down') return 'Итоговая конверсия в заказ снизилась после этого изменения.';
+  return 'Заметного эффекта на итоговую конверсию изменение не дало.';
+}
+
+async function renderChangesJournal(productId, product, month, entries){
+  const changeEntries=entries.filter(([,e])=>!e.draft && (e.changeNote || (e.changeTypes&&e.changeTypes.length) || e.changeType));
+  const chWrap=document.getElementById('changesTableWrap');
+  if(changeEntries.length===0){ chWrap.innerHTML='<div class="empty">За этот месяц изменений не отмечено</div>'; return; }
+  const fullDm=await getDailyMap(productId);
+  const fullEnriched=enrichEntries(fullDm, product.mp);
+  const latestDate=fullEnriched[fullEnriched.length-1].date;
+
+  // даты изменений по товару, сгруппированные по типу — нужно для границы окна сравнения
+  const changeDatesByType={};
+  fullEnriched.forEach(e=>{
+    const types=e.changeTypes && e.changeTypes.length ? e.changeTypes : (e.changeType?[e.changeType]:[]);
+    types.forEach(t=>{ (changeDatesByType[t]=changeDatesByType[t]||[]).push(e.date); });
+  });
+
+  const cards=[];
+  [...changeEntries].sort((a,b)=>b[0].localeCompare(a[0])).forEach(([d])=>{
+    const idx=fullEnriched.findIndex(x=>x.date===d);
+    const e=fullEnriched[idx];
+    const types = e.changeTypes && e.changeTypes.length ? e.changeTypes : (e.changeType?[e.changeType]:['other']);
+    types.forEach(t=>{
+      const typeInfo=CHANGE_TYPES[t] || CHANGE_TYPES.other;
+      const cfg=CHANGE_ANALYSIS[t] || CHANGE_ANALYSIS.other;
+      const evalDays=EVAL_WINDOWS[t]===undefined?3:EVAL_WINDOWS[t];
+      const windowStart=datePlusDays(d, evalDays);
+      const head=`<div class="jcard-head"><div><div class="jc-title">${d} · ${e.changeNote||typeInfo.label}</div><div class="jc-meta"><span class="badge ${product.mp}">${MP_LABEL[product.mp]}</span> ${typeInfo.label}</div></div></div>`;
+
+      // граница окна — следующее изменение того же типа (если было раньше конца данных)
+      const sameTypeDates=(changeDatesByType[t]||[]).filter(cd=>cd>d).sort();
+      const nextSameTypeDate=sameTypeDates[0]||null;
+      const windowEnd = nextSameTypeDate ? dateMinusDays(nextSameTypeDate,1) : latestDate;
+
+      if(windowEnd<windowStart){
+        cards.push(`<div class="jcard neutral">${head}<div class="jcard-body">Недостаточно данных для анализа — до следующего такого же изменения («${typeInfo.label}») прошло слишком мало времени, период сравнения получился короче необходимого.</div></div>`);
+        return;
+      }
+      if(latestDate<windowStart){
+        const daysElapsed=Math.max(0, daysBetweenInclusive(d, latestDate)-1);
+        cards.push(`<div class="jcard early">${head}<div class="jcard-body">Пока рано делать выводы — прошло ${daysElapsed} из ${evalDays} дн., нужных для оценки этого типа правки.</div></div>`);
+        return;
+      }
+      const afterEnd = windowEnd<latestDate ? windowEnd : latestDate;
+
+      const beforeVal=avgMetricInRange(fullEnriched, dateMinusDays(d,3), dateMinusDays(d,1), cfg.primary);
+      const afterVal=avgMetricInRange(fullEnriched, windowStart, afterEnd, cfg.primary);
+      if(beforeVal===null || afterVal===null){
+        cards.push(`<div class="jcard neutral">${head}<div class="jcard-body">Недостаточно данных до или после изменения, чтобы посчитать эффект.</div></div>`);
+        return;
+      }
+
+      // проверка объёма данных — не делаем выводы на единичных кликах/корзинах
+      const denomField=SAMPLE_DENOM[cfg.primary];
+      let lowConfidence=false;
+      if(denomField){
+        const denomBefore=sumMetricInRange(fullEnriched, dateMinusDays(d,3), dateMinusDays(d,1), denomField);
+        const denomAfter=sumMetricInRange(fullEnriched, windowStart, afterEnd, denomField);
+        if(denomBefore<MIN_SAMPLE[denomField] || denomAfter<MIN_SAMPLE[denomField]) lowConfidence=true;
+      }
+
+      const relPct = beforeVal!==0 ? (afterVal-beforeVal)/Math.abs(beforeVal)*100 : (afterVal>0?100:0);
+      const primaryDir=dirFromRel(relPct);
+      const improved = cfg.goodUp ? relPct>0 : relPct<0;
+      const status = lowConfidence ? 'neutral' : (Math.abs(relPct)<3 ? 'neutral' : (improved ? 'success' : 'negative'));
+      const statusIcon = lowConfidence ? '❓' : (status==='success'?'✅':status==='negative'?'❌':'⚪');
+
+      let secondaryDir=null;
+      if(cfg.secondary){
+        const secBeforeVal=avgMetricInRange(fullEnriched, dateMinusDays(d,3), dateMinusDays(d,1), cfg.secondary);
+        const secAfterVal=avgMetricInRange(fullEnriched, windowStart, afterEnd, cfg.secondary);
+        if(secBeforeVal!==null && secAfterVal!==null){
+          const secRel = secBeforeVal!==0 ? (secAfterVal-secBeforeVal)/Math.abs(secBeforeVal)*100 : (secAfterVal>0?100:0);
+          secondaryDir=dirFromRel(secRel);
+        }
+      }
+
+      // направление изменения цены — специально для типа "Цена" (по цене в ЛК)
+      // новая цена уже действует начиная с самого дня d, поэтому «после» считаем от d, а не от windowStart
+      let priceDir=null;
+      if(t==='price'){
+        const priceBefore=avgMetricInRange(fullEnriched, dateMinusDays(d,3), dateMinusDays(d,1), 'priceLK');
+        const priceAfter=avgMetricInRange(fullEnriched, d, afterEnd, 'priceLK');
+        if(priceBefore!==null && priceAfter!==null){
+          priceDir = priceAfter>priceBefore ? 'up' : (priceAfter<priceBefore ? 'down' : 'flat');
+        }
+      }
+
+      const outcomeText = lowConfidence
+        ? 'Данных пока слишком мало (единицы кликов/корзин), чтобы уверенно судить об эффекте — цифры ниже могут быть случайным колебанием, а не реальным трендом. Стоит подождать ещё несколько дней.'
+        : journalOutcomeText(t, primaryDir, secondaryDir, priceDir);
+      const isPct = cfg.primary!=='impressions' && cfg.primary!=='orders';
+      const fmtVal=v=> isPct? fmt1(v)+'%' : fmt(v);
+
+      let priceLine='';
+      if(t==='price' && priceDir){
+        priceLine=`<div class="jcard-metric">Цена в ЛК: ${priceDir==='up'?'повышена':priceDir==='down'?'снижена':'почти не изменилась'}</div>`;
+      }
+
+      let html=`<div class="jcard ${status}">${head}
+        <div class="jcard-body">${statusIcon} ${outcomeText}</div>
+        ${priceLine}
+        <div class="jcard-metric">${cfg.label}: ${fmtVal(beforeVal)} → ${fmtVal(afterVal)} (среднее за ${windowStart} – ${afterEnd})</div>`;
+
+      html+='</div>';
+      cards.push(html);
+    });
+  });
+  chWrap.innerHTML=cards.join('');
+}
+
+function growthCard(title, valueText, isWarn, causes, actions){
+  if(!isWarn) return '';
+  return `<div class="growth-card warn">
+    <div class="growth-head"><div class="gt">${title}</div><div class="gv warn">${valueText}</div></div>
+    <div class="growth-body">
+      <div><h4>Возможные причины</h4><ul>${causes.map(c=>`<li>${c}</li>`).join('')}</ul></div>
+      <div><h4>Что проверить / сделать</h4><ul>${actions.map(a=>`<li>${a}</li>`).join('')}</ul></div>
+    </div>
+  </div>`;
+}
+
+function trendDir(oldVal, newVal, thresholdRel){
+  thresholdRel = thresholdRel===undefined ? 0.1 : thresholdRel;
+  if(oldVal===null||newVal===null||oldVal===undefined||newVal===undefined) return null;
+  if(oldVal===0 && newVal===0) return 'flat';
+  if(oldVal===0) return newVal>0 ? 'up' : 'flat';
+  const rel=(newVal-oldVal)/oldVal;
+  if(rel>=thresholdRel) return 'up';
+  if(rel<=-thresholdRel) return 'down';
+  return 'flat';
+}
+const DIR_ARROW={up:'▲',down:'▼',flat:'≈',null:'—'};
+
+function causeRankRow(label, pct){
+  return `<div class="cause-rank"><div style="flex:0 0 220px;">${label}</div><div class="cr-bar"><div style="width:${pct}%"></div></div><div class="cr-pct">${pct}%</div></div>`;
+}
+
+async function renderFunnelDiagnosis(product, month, entries, sums){
+  const wrap=document.getElementById('diagnosisWrap');
+  if(entries.length<4){ wrap.innerHTML='<div class="empty">Нужно минимум 4 дня с данными в месяце, чтобы сравнивать периоды</div>'; return; }
+  const {prev,recent}=splitHalves(entries);
+  if(prev.length===0 || recent.length===0){ wrap.innerHTML='<div class="empty">Недостаточно данных для сравнения периодов</div>'; return; }
+
+  function halfStats(halfEntries){
+    const s={impressions:0,uniqueVisitors:0,clicks:0,carts:0,orders:0};
+    halfEntries.forEach(([,e])=>{ s.impressions+=+e.impressions||0; s.uniqueVisitors+=+e.uniqueVisitors||0; s.clicks+=+e.clicks||0; s.carts+=+e.carts||0; s.orders+=+e.orders||0; });
+    const ctrBase=(product.mp==='ozon'&&s.uniqueVisitors)?s.uniqueVisitors:s.impressions;
+    return {...s, ctr:pct(s.clicks,ctrBase), cr1:pct(s.carts,s.clicks), cr2:pct(s.orders,s.carts)};
+  }
+  const A=halfStats(prev), B=halfStats(recent);
+  const MIN_CLICKS=10, MIN_CARTS=5;
+  const enoughClicks = A.clicks>=MIN_CLICKS && B.clicks>=MIN_CLICKS;
+  const enoughCarts = A.carts>=MIN_CARTS && B.carts>=MIN_CARTS;
+
+  const dirImpr = trendDir(A.impressions, B.impressions);
+  const dirCtr = enoughClicks ? trendDir(A.ctr, B.ctr) : null;
+  const dirCr1 = enoughClicks ? trendDir(A.cr1, B.cr1) : null;
+  const dirCr2 = enoughCarts ? trendDir(A.cr2, B.cr2) : null;
+
+  // абсолютные уровни (весь месяц) — для диагноза используем текущее состояние, не только тренд
+  const ctrBaseAll=(product.mp==='ozon'&&sums.uniqueVisitors)?sums.uniqueVisitors:sums.impressions;
+  const ctrAbs=pct(sums.clicks, ctrBaseAll);
+  const cr1Abs=pct(sums.carts, sums.clicks);
+  const cr2Abs=pct(sums.orders, sums.carts);
+  const th=getThresholds(product);
+  const ctrOk = ctrAbs!==null && ctrAbs>=th.ctr;
+  const cr1Ok = cr1Abs!==null && cr1Abs>=th.cr1;
+  const cr2Ok = cr2Abs!==null && cr2Abs>=th.cr2;
+
+  let diag;
+  if(dirImpr==='down' && dirCtr==='down' && dirCr1==='down'){
+    diag={cls:'black', badge:'⚫', title:'Комплексная проблема', desc:'Одновременно падают показы, CTR и конверсия в корзину. Разовая правка не поможет — нужен полный аудит карточки, рекламы и ценового позиционирования.'};
+  } else if(!ctrOk){
+    diag={cls:'orange', badge:'🟠', title:'Низкая кликабельность', desc:'CTR ниже нормы — карточка либо мало показывается целевой аудитории, либо не цепляет в выдаче. Пока это не исправлено, оценивать нижние этапы воронки рано — подробный разбор ниже, в «Точках роста».'};
+  } else if(!cr1Ok){
+    diag={cls:'orange', badge:'🟠', title:'Карточка не убеждает', desc:'В выдаче карточка работает хорошо (кликают охотно), но после перехода не хватает аргументов для добавления в корзину. Нужно переработать контент карточки.'};
+  } else if(!cr2Ok){
+    diag={cls:'red', badge:'🔴', title:'Проблема на этапе покупки', desc:'До корзины покупатели доходят нормально, а вот оформить заказ — нет. Проверьте цену в корзине, доставку и акции конкурентов.'};
+  } else if(dirImpr==='down'){
+    diag={cls:'yellow', badge:'🟡', title:'Недостаточный объём трафика', desc:'Конверсии в норме, но показы снижаются — карточка «хорошая», её просто стали меньше показывать. Усильте SEO и рекламу.'};
+  } else {
+    diag={cls:'green', badge:'🟢', title:'Карточка привлекательная', desc:'CTR и обе конверсии в норме. Основная задача — нарастить трафик, карточка справится с ним хорошо.'};
+  }
+
+  let html=`<div class="diag-card ${diag.cls}"><div class="diag-title">${diag.badge} ${diag.title}</div><div class="diag-desc">${diag.desc}</div></div>`;
+
+  // Правила второго уровня — первое подходящее правило
+  const rules=[
+    {cond: dirCtr==='down' && dirCr1==='up', text:'CTR снизился, а конверсия в корзину выросла — карточка сама по себе хорошая, проблема в выдаче. Работайте над главным фото, заголовком и ценой.'},
+    {cond: dirCtr==='flat' && dirCr1==='down', text:'CTR не изменился, а конверсия в корзину упала — проблема внутри самой карточки. Смотрите слайды, преимущества, отзывы.'},
+    {cond: dirCtr==='up' && dirCr1==='up' && dirCr2==='down', text:'CTR и конверсия в корзину выросли, а заказы просели — проблема именно после добавления в корзину. Смотрите цену, доставку, акции.'},
+    {cond: dirImpr==='down' && dirCtr==='up', text:'Показы упали, а CTR вырос — карточка стала привлекательнее, но её стали меньше показывать. Проблема в SEO, позициях или рекламе, не в самой карточке.'},
+    {cond: dirImpr==='up' && dirCtr==='down', text:'Показы выросли, а CTR упал — пошёл менее целевой трафик. Проверьте источник показов (реклама/рекомендации) и настройки кампаний.'},
+    {cond: dirCtr==='up' && dirCr1==='up' && dirCr2==='up', text:'CTR, конверсия в корзину и заказы выросли одновременно — изменения последних дней сработали хорошо. Не откатывайте их и попробуйте применить похожие правки на других карточках.'}
+  ];
+  const matchedRule=rules.find(r=>r.cond);
+  if(matchedRule){
+    html+=`<div class="rule-box"><div class="rb-label">Общий вывод</div>${matchedRule.text}</div>`;
+  }
+
+  // Вероятные причины — ранжированный список
+  if(dirCtr==='down' || !ctrOk){
+    html+=`<div class="rule-box"><div class="rb-label">Вероятные причины низкого CTR</div>
+      ${causeRankRow('Главное фото', 90)}
+      ${causeRankRow('Цена выше конкурентов', 80)}
+      ${causeRankRow('Заголовок', 70)}
+      ${causeRankRow('Потеря бейджа (акция/новинка)', 60)}
+      ${causeRankRow('SEO / позиции', 40)}
+      ${causeRankRow('Реклама привела менее целевой трафик', 35)}
+    </div>`;
+  }
+  if(dirCr1==='down' || !cr1Ok){
+    html+=`<div class="rule-box"><div class="rb-label">Вероятные причины низкой конверсии в корзину</div>
+      ${causeRankRow('Цена', 95)}
+      ${causeRankRow('Отзывы / рейтинг', 85)}
+      ${causeRankRow('Инфографика', 80)}
+      ${causeRankRow('Комплектация / характеристики', 70)}
+      ${causeRankRow('Появился более сильный конкурент', 65)}
+    </div>`;
+  }
+
+  html+=`<div class="note">Показы: ${DIR_ARROW[dirImpr]}${dirImpr==='down'?' падают':dirImpr==='up'?' растут':dirImpr==='flat'?' без изменений':' недостаточно данных'} · CTR: ${dirCtr===null?'недостаточно кликов для тренда':(fmt1(A.ctr)+'% → '+fmt1(B.ctr)+'%')} · CR в корзину: ${dirCr1===null?'недостаточно данных':(fmt1(A.cr1)+'% → '+fmt1(B.cr1)+'%')} · CR в заказ: ${dirCr2===null?'недостаточно данных':(fmt1(A.cr2)+'% → '+fmt1(B.cr2)+'%')}</div>`;
+
+  wrap.innerHTML=html;
+}
+
+async function renderGrowthPoints(product, month, entries, sums){
+  const wrap=document.getElementById('growthWrap');
+  const ctrBase = (product.mp==='ozon' && sums.uniqueVisitors) ? sums.uniqueVisitors : sums.impressions;
+  const ctr=pct(sums.clicks, ctrBase);
+  const cr1=pct(sums.carts, sums.clicks);
+  const cr2=pct(sums.orders, sums.carts);
+  const buyoutRate = sums.orders>0 ? sums.buyouts/sums.orders*100 : null;
+  const cancelRate = sums.orders>0 ? sums.cancellations/sums.orders*100 : null;
+  const th=getThresholds(product);
+
+  let html='';
+  html+=growthCard('Низкая кликабельность', ctr!==null? fmt1(ctr)+'%':'—', ctr!==null && ctr<th.ctr, [
+    'Главное фото/обложка не выделяется среди конкурентов в выдаче',
+    'Цена в карточке выше, чем у аналогичных товаров рядом',
+    'Низкий рейтинг или недостаточно отзывов',
+    'Заголовок не содержит ключевых слов, по которым ищут товар'
+  ], [
+    'Протестировать другую обложку с явным акцентом на преимущество товара',
+    'Сверить цену с топ-5 конкурентов в выдаче по тому же запросу',
+    'Поработать над количеством и качеством отзывов',
+    'Проверить, что заголовок закрывает частотные поисковые запросы'
+  ]);
+  html+=growthCard('Не доходят до корзины', cr1!==null? fmt1(cr1)+'%':'—', cr1!==null && cr1<th.cr1, [
+    'Карточка не раскрывает преимущества товара — мало доп. фото или инфографики',
+    'Цена при переходе оказывается выше, чем ожидалось по обложке',
+    'Недостаточно отзывов/рейтинга, чтобы решиться на добавление в корзину',
+    'Описание и характеристики не отвечают на частые вопросы покупателей'
+  ], [
+    'Доработать инфографику и порядок доп. фото — показать товар со всех сторон',
+    'Проверить, совпадает ли цена на карточке с тем, что обещано в обложке/рекламе',
+    'Ответить в описании на вопросы, которые чаще всего задают в разделе «Вопросы и ответы»',
+    'Добавить видео в карточку, если его ещё нет'
+  ]);
+  html+=growthCard('Бросают корзину, не доходят до заказа', cr2!==null? fmt1(cr2)+'%':'—', cr2!==null && cr2<th.cr2, [
+    'Долгий или дорогой способ доставки',
+    'Цена в корзине оказалась выше, чем ожидал покупатель',
+    'Конкуренты предлагают тот же товар дешевле или с более быстрой доставкой',
+    'Покупатель отложил решение и не вернулся к оформлению'
+  ], [
+    'Проверить, корректно ли применяется цена/скидка в корзине',
+    'Сравнить сроки и стоимость доставки с конкурентами',
+    'Рассмотреть участие в акции, чтобы ускорить решение о покупке',
+    'Проверить, что товара физически достаточно на складе МП'
+  ]);
+  html+=growthCard('Низкий процент выкупа', buyoutRate!==null? fmt1(buyoutRate)+'%':'—', buyoutRate!==null && buyoutRate<th.buyout, [
+    'Фото/описание создают ожидания, которые не совпадают с реальным товаром',
+    'Брак или повреждение при хранении/доставке',
+    'Долгая доставка — покупатель передумал или купил в другом месте'
+  ], [
+    'Сверить фото и описание с реальным товаром, обновить при расхождениях',
+    'Проверить качество упаковки, чтобы товар не терял вид при хранении и перевозке',
+    'Посмотреть отзывы и причины возвратов — что покупатели пишут чаще всего'
+  ]);
+  html+=growthCard('Много отмен', cancelRate!==null? fmt1(cancelRate)+'%':'—', cancelRate!==null && cancelRate>th.cancel, [
+    'Товар физически закончился на складе МП, а заказ всё равно оформился',
+    'Цена изменилась после оформления заказа',
+    'Покупатель передумал или оформил заказ по ошибке (дубль)',
+    'Долгий срок ожидания сборки/доставки демотивирует покупателя ждать'
+  ], [
+    'Проверить фактические остатки на складе МП — не уходит ли карточка в минус',
+    'Не менять цену резко, пока есть уже оформленные, но ещё не собранные заказы',
+    'Посмотреть, не совпадают ли отмены с датами конкретных изменений в журнале ниже'
+  ]);
+  wrap.innerHTML = html || `<div class="rec ok"><div class="dot"></div><div>Явных проблемных точек не найдено — все показатели воронки в пределах нормы.</div></div>`;
+}
+
+async function renderRecs(productId, month, entries){
+  const wrap=document.getElementById('recsWrap');
+  const product=state.products.find(p=>p.id===productId);
+  const planMap=await getPlanMap(productId);
+  const plan=planMap[month]||{planRub:0,planUnits:0};
+  const factUnits=sumField(entries,'orders');
+  const factRub=sumField(entries,'ordersRub');
+  const dim=daysInMonth(month);
+  const isCurrentMonth=month===monthNow();
+  const dayOfMonth=new Date().getDate();
+  const daysElapsed=isCurrentMonth?dayOfMonth:dim;
+  const daysRemaining=isCurrentMonth?Math.max(1,dim-dayOfMonth):0;
+  const actualUnitsPerDay=daysElapsed>0?factUnits/daysElapsed:0;
+  const neededUnitsPerDay=(isCurrentMonth && plan.planUnits>0)? Math.max(0,(plan.planUnits-factUnits))/daysRemaining : null;
+
+  const {prev,recent}=splitHalves(entries);
+  const recs=[];
+
+  if(neededUnitsPerDay!==null){
+    if(actualUnitsPerDay < neededUnitsPerDay*0.9){
+      const gap=Math.round((neededUnitsPerDay-actualUnitsPerDay)*daysRemaining);
+      recs.push({level:'critical', text:`Темп продаж отстаёт от плана: нужно ${fmt1(neededUnitsPerDay)} шт/день, факт — ${fmt1(actualUnitsPerDay)} шт/день. При таком темпе к концу месяца не хватит примерно ${gap} шт. Варианты: краткосрочное промо на этот товар, проверить и точечно поднять ставку в рекламе именно по нему, либо пересмотреть план, если причина не в спросе.`});
+    } else {
+      recs.push({level:'ok', text:`Темп продаж соответствует плану: нужно ${fmt1(neededUnitsPerDay)} шт/день, факт — ${fmt1(actualUnitsPerDay)} шт/день.`});
+    }
+  } else if(plan.planUnits>0){
+    const p2=factUnits/plan.planUnits*100;
+    recs.push({level: p2>=100?'ok':'warn', text:`План на месяц выполнен на ${fmt1(p2)}%.`});
+  }
+
+  let drrPrev=null, drrRecent=null, crPrev=null, crRecent=null;
+  if(prev.length>=2 && recent.length>=2){
+    const revPrev=sumField(prev,'ordersRub'), revRecent=sumField(recent,'ordersRub');
+    const adPrev=sumField(prev,'adspend'), adRecent=sumField(recent,'adspend');
+    drrPrev=revPrev>0?adPrev/revPrev*100:0; drrRecent=revRecent>0?adRecent/revRecent*100:0;
+    const ordersPrev=sumField(prev,'orders'), ordersRecent=sumField(recent,'orders');
+    if(drrRecent > drrPrev*1.15 && ordersRecent <= ordersPrev*1.05){
+      recs.push({level:'warn', text:`ДРР выросла с ${fmt1(drrPrev)}% до ${fmt1(drrRecent)}%, а заказы почти не изменились (${fmt(ordersPrev)} → ${fmt(ordersRecent)} шт). Вероятно, снизилась эффективность части кампаний или выросла ставка за клик из-за конкуренции. Проверьте CTR по кампаниям, отключите наименее эффективные, пересмотрите ставки по ключевым запросам.`});
+    }
+    const clicksPrev=sumField(prev,'clicks'), clicksRecent=sumField(recent,'clicks');
+    crPrev=clicksPrev>0?ordersPrev/clicksPrev*100:0; crRecent=clicksRecent>0?ordersRecent/clicksRecent*100:0;
+    if(crPrev>0 && crRecent < crPrev*0.9){
+      recs.push({level:'warn', text:`Конверсия в заказ снизилась с ${fmt1(crPrev)}% до ${fmt1(crRecent)}%. Смотрите раздел «Точки роста» ниже — там разобрано, на каком именно этапе (корзина или оформление) теряются покупатели, с гипотезами и рекомендациями.`});
+    } else if(crPrev>0 && crRecent > crPrev*1.1){
+      recs.push({level:'ok', text:`Конверсия в заказ выросла с ${fmt1(crPrev)}% до ${fmt1(crRecent)}%.`});
+    }
+  }
+
+  if(recs.length===0) recs.push({level:'ok', text:'Явных отклонений не обнаружено — показатели в норме.'});
+  wrap.innerHTML = recs.map(r=>`<div class="rec ${r.level}"><div class="dot"></div><div>${r.text}</div></div>`).join('');
+}
+
+/* ---------------- СРАВНЕНИЕ ПЕРИОДОВ ---------------- */
+function aggregateStatsFromEntries(entries, mp){
+  if(entries.length===0) return null;
+  const s={impressions:0,uniqueVisitors:0,clicks:0,carts:0,orders:0,cancellations:0,buyouts:0,ordersRub:0,adspend:0};
+  entries.forEach(([,e])=>{
+    s.impressions+=+e.impressions||0; s.uniqueVisitors+=+e.uniqueVisitors||0; s.clicks+=+e.clicks||0;
+    s.carts+=+e.carts||0; s.orders+=+e.orders||0; s.cancellations+=+e.cancellations||0; s.buyouts+=+e.buyouts||0;
+    s.ordersRub+=+e.ordersRub||0; s.adspend+=+e.adspend||0;
+  });
+  const ctrBase = (mp==='ozon' && s.uniqueVisitors) ? s.uniqueVisitors : s.impressions;
+  const last=entries[entries.length-1][1];
+  return {
+    trafficBase: mp==='ozon'? s.uniqueVisitors : s.impressions,
+    impressions:s.impressions, clicks:s.clicks,
+    ctr: pct(s.clicks, ctrBase),
+    carts:s.carts, cr1: pct(s.carts, s.clicks),
+    orders:s.orders, cr2: pct(s.orders, s.carts),
+    crf: pct(s.orders, s.clicks),
+    cancellations:s.cancellations, cancelRate: s.orders>0? s.cancellations/s.orders*100 : null,
+    buyoutRate: s.orders>0? s.buyouts/s.orders*100 : null,
+    ordersRub:s.ordersRub, adspend:s.adspend,
+    drr: pct(s.adspend, s.ordersRub),
+    spp: computeSPP(last.priceLK, last.priceCustomer)
+  };
+}
+async function aggregateMonthStats(productId, month, mp){
+  const entries=await monthEntries(productId, month);
+  return aggregateStatsFromEntries(entries, mp);
+}
+async function aggregateRangeStats(productId, from, to, mp){
+  const dm=await getDailyMap(productId);
+  const entries=Object.entries(dm).filter(([d])=>d>=from && d<=to).sort((a,b)=>a[0].localeCompare(b[0]));
+  return aggregateStatsFromEntries(entries, mp);
+}
+function daysBetweenInclusive(from,to){
+  const [y1,m1,d1]=from.split('-').map(Number), [y2,m2,d2]=to.split('-').map(Number);
+  const t1=new Date(y1,m1-1,d1), t2=new Date(y2,m2-1,d2);
+  return Math.round((t2-t1)/86400000)+1;
+}
+
+document.getElementById('cmpModeToggle').addEventListener('click',(e)=>{
+  if(e.target.tagName!=='BUTTON') return;
+  document.querySelectorAll('#cmpModeToggle button').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  const mode=e.target.dataset.mode;
+  document.getElementById('cmpMonthRow').style.display = mode==='month'?'flex':'none';
+  document.getElementById('cmpDaysRow').style.display = mode==='days'?'flex':'none';
+  renderCompareTab();
+});
+function currentCmpMode(){ return document.querySelector('#cmpModeToggle button.active').dataset.mode; }
+
+async function renderCompareTab(){
+  const productId=document.getElementById('cmp_product').value;
+  const wrap=document.getElementById('compareWrap');
+  if(!productId){ wrap.innerHTML='<div class="empty">Выберите товар и оба периода</div>'; return; }
+  const product=state.products.find(p=>p.id===productId);
+  const mode=currentCmpMode();
+  let a,b,labelA,labelB;
+
+  if(mode==='month'){
+    const monthA=document.getElementById('cmp_monthA').value;
+    const monthB=document.getElementById('cmp_monthB').value;
+    if(!monthA || !monthB){ wrap.innerHTML='<div class="empty">Выберите товар и оба периода</div>'; return; }
+    [a,b]=await Promise.all([aggregateMonthStats(productId,monthA,product.mp), aggregateMonthStats(productId,monthB,product.mp)]);
+    labelA=monthA; labelB=monthB;
+  } else {
+    const fromA=document.getElementById('cmp_fromA').value, toA=document.getElementById('cmp_toA').value;
+    const fromB=document.getElementById('cmp_fromB').value, toB=document.getElementById('cmp_toB').value;
+    if(!fromA||!toA||!fromB||!toB){ wrap.innerHTML='<div class="empty">Выберите товар и оба периода</div>'; return; }
+    if(fromA>toA || fromB>toB){ wrap.innerHTML='<div class="empty">Дата «с» не может быть позже даты «по»</div>'; return; }
+    const nA=daysBetweenInclusive(fromA,toA), nB=daysBetweenInclusive(fromB,toB);
+    if(nA>31 || nB>31){ wrap.innerHTML=`<div class="empty">Каждый период должен быть не длиннее 31 дня (сейчас: A — ${nA} дн., B — ${nB} дн.)</div>`; return; }
+    [a,b]=await Promise.all([aggregateRangeStats(productId,fromA,toA,product.mp), aggregateRangeStats(productId,fromB,toB,product.mp)]);
+    labelA=`${fromA} – ${toA}`; labelB=`${fromB} – ${toB}`;
+  }
+  if(!a || !b){ wrap.innerHTML='<div class="empty">Нет данных за один или оба периода</div>'; return; }
+
+  const trafficLabel = product.mp==='ozon' ? 'Уникальные посетители' : 'Показы';
+  const rowDefs=[
+    {label:'Трафик ('+trafficLabel+')', av:a.trafficBase, bv:b.trafficBase, fmtFn:fmt, opts:{decimals:0},
+      rec:'Трафик снизился — проверьте позиции в поиске/каталоге, не отключилась ли реклама, нет ли сезонного спада спроса.'},
+    {label:'Клики', av:a.clicks, bv:b.clicks, fmtFn:fmt, opts:{decimals:0},
+      rec:'Клики упали — сверьте с CTR ниже: если CTR не изменился, дело в трафике; если упал — в самой карточке.'},
+    {label:'CTR', av:a.ctr, bv:b.ctr, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%'},
+      rec:'CTR снизился — проверьте главное фото, цену на фоне конкурентов и позицию в выдаче.'},
+    {label:'Корзины', av:a.carts, bv:b.carts, fmtFn:fmt, opts:{decimals:0},
+      rec:'Добавления в корзину снизились — проверьте CTR и конверсию клик→корзина ниже, чтобы понять, трафик это или карточка.'},
+    {label:'CR клик→корзина', av:a.cr1, bv:b.cr1, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%'},
+      rec:'Конверсия в корзину упала — проверьте фото, цену, отзывы и наличие товара (см. «Точки роста»).'},
+    {label:'Заказы, шт', av:a.orders, bv:b.orders, fmtFn:fmt, opts:{decimals:0},
+      rec:'Заказы снизились — сопоставьте с трафиком и конверсиями выше, чтобы понять, на каком этапе узкое место.'},
+    {label:'CR корзина→заказ', av:a.cr2, bv:b.cr2, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%'},
+      rec:'Конверсия из корзины в заказ упала — проверьте доступность оплаты/доставки и актуальность цены в корзине.'},
+    {label:'CR клик→заказ', av:a.crf, bv:b.crf, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%'},
+      rec:'Итоговая конверсия просела — смотрите строки выше, чтобы понять, на каком именно этапе теряются покупатели.'},
+    {label:'Отмены, шт', av:a.cancellations, bv:b.cancellations, fmtFn:fmt, opts:{decimals:0,goodUp:false},
+      rec:'Отмен стало больше — проверьте остатки на складе и стабильность цены в момент заказа.'},
+    {label:'% выкупа', av:a.buyoutRate, bv:b.buyoutRate, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%'},
+      rec:'Процент выкупа снизился — проверьте соответствие товара фото/описанию и сроки доставки.'},
+    {label:'Заказы, ₽', av:a.ordersRub, bv:b.ordersRub, fmtFn:v=>fmt(v)+' ₽', opts:{decimals:0,suffix:'₽'},
+      rec:'Выручка снизилась — сравните с динамикой трафика и конверсий выше, чтобы понять причину.'},
+    {label:'Реклама, ₽', av:a.adspend, bv:b.adspend, fmtFn:v=>fmt(v)+' ₽', opts:{decimals:0,suffix:'₽',goodUp:false},
+      rec:'Расходы на рекламу выросли — проверьте ставки и эффективность кампаний с наибольшим расходом.'},
+    {label:'ДРР', av:a.drr, bv:b.drr, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%',goodUp:false},
+      rec:'ДРР вырос — реклама стала окупаться хуже, проверьте кампании с наибольшим расходом относительно заказов.'},
+    {label:'СПП (на конец периода)', av:a.spp, bv:b.spp, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%',neutral:true}, rec:null}
+  ];
+
+  const rowsHtml=rowDefs.map(r=>{
+    const aTxt = r.av!=null? r.fmtFn(r.av) : '—';
+    const bTxt = r.bv!=null? r.fmtFn(r.bv) : '—';
+    let badge='<span class="delta-na">—</span>', recText='';
+    if(r.av!=null && r.bv!=null){
+      const diff=r.bv-r.av;
+      badge=cellBadge(diff, r.opts);
+      if(r.rec){
+        const goodUp = r.opts.goodUp!==false;
+        const isBad = goodUp ? diff<0 : diff>0;
+        if(isBad && Math.abs(diff)>=0.05) recText=r.rec;
+      }
+    }
+    return `<tr><td class="txt">${r.label}</td><td>${aTxt}</td><td>${bTxt}</td><td>${badge}</td><td class="txt">${recText}</td></tr>`;
+  }).join('');
+  wrap.innerHTML=`<div class="table-scroll"><table><thead><tr><th>Показатель</th><th>${labelA}</th><th>${labelB}</th><th>Δ (B − A)</th><th>Рекомендации</th></tr></thead>
+    <tbody>${rowsHtml}</tbody></table></div>`;
+}
+document.getElementById('cmp_product').addEventListener('change', renderCompareTab);
+document.getElementById('cmp_monthA').addEventListener('change', renderCompareTab);
+document.getElementById('cmp_monthB').addEventListener('change', renderCompareTab);
+['cmp_fromA','cmp_toA','cmp_fromB','cmp_toB'].forEach(id=>document.getElementById(id).addEventListener('change', renderCompareTab));
+
+/* ---------------- НАВИГАЦИЯ ---------------- */
+let selectedProductId=null;
+function syncProductSelector(mpId, productId){
+  if(!selectedProductId) return;
+  const p=state.products.find(x=>x.id===selectedProductId);
+  if(!p) return;
+  document.getElementById(mpId).value=p.mp;
+  fillFilteredProductSelect(mpId, productId);
+  document.getElementById(productId).value=selectedProductId;
+}
+['daily_product','plan_product','funnel_product','cmp_product','imp_product'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', ()=>{
+    const v=document.getElementById(id).value;
+    if(v) selectedProductId=v;
+  });
+});
+
+document.getElementById('tabs').addEventListener('click',(e)=>{
+  if(e.target.tagName!=='BUTTON') return;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  document.querySelectorAll('.tabpane').forEach(p=>p.style.display='none');
+  document.getElementById('tab-'+e.target.dataset.tab).style.display='block';
+  if(e.target.dataset.tab==='overview'){ renderOverviewTab(); }
+  if(e.target.dataset.tab==='plan'){ syncProductSelector('plan_product_mp','plan_product'); renderPlanTab(); }
+  if(e.target.dataset.tab==='daily'){ syncProductSelector('daily_mp','daily_product'); loadDailyForm(); renderDailyTab(); }
+  if(e.target.dataset.tab==='funnel'){ syncProductSelector('funnel_product_mp','funnel_product'); renderFunnelTab(); }
+  if(e.target.dataset.tab==='compare'){ syncProductSelector('cmp_product_mp','cmp_product'); renderCompareTab(); }
+  if(e.target.dataset.tab==='import'){ syncProductSelector('imp_product_mp','imp_product'); resetImportPreview(); }
+});
+
+/* ---------------- ИМПОРТ ДАННЫХ ИЗ ФАЙЛА ---------------- */
+const TEMPLATE_COLUMNS={
+  wb:['Дата','Цена в ЛК','Цена для покупателя','Показы','Клики','Корзины','Заказы, шт','Заказы, руб','Выкупили, шт','Отмены, шт','АРК, факт руб','Поиск, факт руб','Акция (да/нет)','Что изменили'],
+  ozon:['Дата','Цена в ЛК','Цена с Ozon картой','Цена для покупателя','Показы','Уникальные посетители','Клики','Корзины','Заказы, шт','Заказы, руб','Выкупили, шт','Отмены, шт','Рекламные расходы, руб','Акция (да/нет)','Что изменили'],
+  ym:['Дата','Цена в ЛК','Цена для покупателя','Показы','Клики','Корзины','Заказы, шт','Заказы, руб','Выкупили, шт','Отмены, шт','БПР, факт руб','БПК, факт руб','Полки, факт руб','Акция (да/нет)','Что изменили']
+};
+const TEMPLATE_EXAMPLE={
+  wb:['ПРИМЕР — удалите строку',7400,3849,1200,55,6,2,7698,2,0,120,80,'да','Заменили главное фото'],
+  ozon:['ПРИМЕР — удалите строку',3200,3050,2990,4000,900,60,5,2,5980,2,0,150,'нет',''],
+  ym:['ПРИМЕР — удалите строку',5100,4850,1500,40,4,1,4850,1,0,90,60,30,'нет','']
+};
+
+function parseNum(v){
+  if(v===undefined||v===null||v==='') return 0;
+  if(typeof v==='number') return v;
+  const n=parseFloat(String(v).replace(',','.').replace(/\s/g,''));
+  return isNaN(n)?0:n;
+}
+function parseImportDate(v){
+  if(v instanceof Date && !isNaN(v)) return dateToISO(v);
+  if(typeof v==='number'){ // excel serial date
+    const d=XLSX.SSF? XLSX.SSF.parse_date_code(v) : null;
+    if(d) return `${d.y}-${pad2(d.m)}-${pad2(d.d)}`;
+    return null;
+  }
+  const s=String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m1=s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if(m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
+  return null;
+}
+
+function buildTemplateWorkbook(mp){
+  const cols=TEMPLATE_COLUMNS[mp];
+  const example=TEMPLATE_EXAMPLE[mp];
+  const ws=XLSX.utils.aoa_to_sheet([cols, example]);
+  ws['!cols']=cols.map(()=>({wch:16}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Данные');
+
+  const instructions=[
+    ['Как заполнять'],
+    ['1. Не меняйте порядок и названия столбцов.'],
+    ['2. Удалите строку-пример (первая строка данных) перед заполнением — если забудете, она просто будет пропущена при загрузке.'],
+    ['3. Дата — в формате ГГГГ-ММ-ДД или ДД.ММ.ГГГГ.'],
+    ['4. Пустая ячейка в числовом поле считается нулём.'],
+    ['5. «Акция» — впишите «да» или «нет», можно оставить пустым.'],
+    ['6. «Что изменили» — необязательное текстовое поле, тип правки потом можно указать вручную при редактировании дня в дашборде.'],
+    ['7. Строки с датами, которые уже есть в истории товара, при загрузке заменят прежние данные за эти дни — остальные добавятся как новые дни.']
+  ];
+  const ws2=XLSX.utils.aoa_to_sheet(instructions);
+  ws2['!cols']=[{wch:90}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Инструкция');
+  return wb;
+}
+
+document.getElementById('downloadTemplateBtn').addEventListener('click', ()=>{
+  const productId=document.getElementById('imp_product').value;
+  const product=state.products.find(p=>p.id===productId);
+  if(!product){ alert('Выберите товар'); return; }
+  const wb=buildTemplateWorkbook(product.mp);
+  const safeName=product.name.replace(/[^\wа-яА-ЯёЁ\-]+/g,'_').slice(0,40);
+  XLSX.writeFile(wb, `шаблон_${MP_LABEL[product.mp]}_${safeName}.xlsx`);
+});
+
+let pendingImport=null;
+
+function resetImportPreview(){
+  pendingImport=null;
+  document.getElementById('importPreviewWrap').innerHTML='';
+  document.getElementById('importFileInput').value='';
+}
+
+function mapRowToEntry(mp, cols, rowArr){
+  const get=(name)=>{ const idx=cols.indexOf(name); return idx>=0? rowArr[idx] : undefined; };
+  const dateRaw=get('Дата');
+  const date=parseImportDate(dateRaw);
+  if(!date){
+    const isExamplePlaceholder = typeof dateRaw==='string' && dateRaw.toLowerCase().includes('пример');
+    return {error: isExamplePlaceholder? 'пропущена строка-пример' : `не удалось распознать дату "${dateRaw}"`};
+  }
+  const priceLK=parseNum(get('Цена в ЛК'));
+  const priceCustomer=parseNum(get('Цена для покупателя'));
+  const orders=parseNum(get('Заказы, шт'));
+  const entry={
+    priceLK, priceCustomer,
+    impressions:parseNum(get('Показы')),
+    clicks:parseNum(get('Клики')),
+    carts:parseNum(get('Корзины')),
+    orders,
+    ordersRub: orders>0? parseNum(get('Заказы, руб')) : 0,
+    buyouts:parseNum(get('Выкупили, шт')),
+    cancellations:parseNum(get('Отмены, шт')),
+    changeNote:(get('Что изменили')||'').toString().trim(),
+    changeTypes:[]
+  };
+  const promoRaw=(get('Акция (да/нет)')||'').toString().trim().toLowerCase();
+  entry.promo = promoRaw==='да' ? 'yes' : promoRaw==='нет' ? 'no' : null;
+
+  if(mp==='ozon'){
+    entry.priceOzonCard=parseNum(get('Цена с Ozon картой'));
+    entry.uniqueVisitors=parseNum(get('Уникальные посетители'));
+    entry.adspend=parseNum(get('Рекламные расходы, руб'));
+  } else if(mp==='wb'){
+    entry.adspend_ark=parseNum(get('АРК, факт руб'));
+    entry.adspend_search=parseNum(get('Поиск, факт руб'));
+    entry.adspend=entry.adspend_ark+entry.adspend_search;
+  } else if(mp==='ym'){
+    entry.adspend_bpr=parseNum(get('БПР, факт руб'));
+    entry.adspend_bpk=parseNum(get('БПК, факт руб'));
+    entry.adspend_polki=parseNum(get('Полки, факт руб'));
+    entry.adspend=entry.adspend_bpr+entry.adspend_bpk+entry.adspend_polki;
+  }
+  return {date, entry};
+}
+
+document.getElementById('parseImportBtn').addEventListener('click', async ()=>{
+  const productId=document.getElementById('imp_product').value;
+  const product=state.products.find(p=>p.id===productId);
+  const wrap=document.getElementById('importPreviewWrap');
+  const file=document.getElementById('importFileInput').files[0];
+  if(!product){ alert('Выберите товар'); return; }
+  if(!file){ alert('Выберите файл .xlsx'); return; }
+
+  const buf=await file.arrayBuffer();
+  const wb=XLSX.read(buf, {type:'array', cellDates:true});
+  const sheet=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(sheet, {header:1, raw:true});
+  if(rows.length<2){ wrap.innerHTML='<div class="empty">В файле нет данных</div>'; return; }
+  const cols=rows[0].map(c=>String(c).trim());
+  const dataRows=rows.slice(1).filter(r=>r.some(c=>c!==undefined && c!==''));
+
+  const existingDm=await getDailyMap(productId);
+  const good=[], bad=[];
+  dataRows.forEach((r,i)=>{
+    const res=mapRowToEntry(product.mp, cols, r);
+    if(res.error){ bad.push({row:i+2, error:res.error}); }
+    else good.push(res);
+  });
+
+  const newCount=good.filter(g=>!existingDm[g.date]).length;
+  const overwriteCount=good.length-newCount;
+
+  let html=`<div class="note" style="margin-bottom:10px;">Готово к загрузке: ${good.length} дн. (новых — ${newCount}, будет перезаписано — ${overwriteCount}). Пропущено строк: ${bad.length}.</div>`;
+  if(bad.length>0){
+    html+='<div class="rec warn"><div class="dot"></div><div>'+bad.map(b=>`строка ${b.row}: ${b.error}`).join('<br>')+'</div></div>';
+  }
+  if(good.length>0){
+    const preview=[...good].sort((a,b)=>a.date.localeCompare(b.date));
+    html+=`<div class="table-scroll"><table><thead><tr><th>Дата</th><th>Статус</th><th>Заказы шт</th><th>Заказы ₽</th><th>Реклама ₽</th></tr></thead><tbody>
+      ${preview.map(g=>`<tr><td>${g.date}</td><td class="txt">${existingDm[g.date]?'<span class="badge warn" style="background:var(--warn-bg);color:var(--warn);">перезапись</span>':'<span class="badge" style="background:var(--pos-bg);color:var(--pos);">новый</span>'}</td><td>${fmt(g.entry.orders)}</td><td>${fmt(g.entry.ordersRub)} ₽</td><td>${fmt(g.entry.adspend)} ₽</td></tr>`).join('')}
+    </tbody></table></div>
+    <button class="btn" id="confirmImportBtn" style="margin-top:12px;">Импортировать ${good.length} дн.</button>`;
+  }
+  wrap.innerHTML=html;
+  pendingImport={productId, good};
+
+  const confirmBtn=document.getElementById('confirmImportBtn');
+  if(confirmBtn){
+    confirmBtn.addEventListener('click', async ()=>{
+      confirmBtn.disabled=true; confirmBtn.textContent='Импортирую…';
+      const dm=await getDailyMap(pendingImport.productId);
+      pendingImport.good.forEach(g=>{ dm[g.date]=g.entry; });
+      const ok=await storeSet('daily:'+pendingImport.productId, dm);
+      if(!ok){ alert('Сбой при сохранении — попробуйте ещё раз'); confirmBtn.disabled=false; confirmBtn.textContent=`Импортировать ${pendingImport.good.length} дн.`; return; }
+      const maxDate=Object.keys(dm).sort().slice(-1)[0];
+      const latest=dm[maxDate];
+      const p=state.products.find(x=>x.id===pendingImport.productId);
+      if(p && latest){
+        p.currentPriceLK=latest.priceLK||p.currentPriceLK;
+        p.currentPriceCustomer=latest.priceCustomer||p.currentPriceCustomer;
+        await storeSet('product:'+p.id, p);
+        await loadProducts();
+      }
+      wrap.innerHTML=`<div class="rec ok"><div class="dot"></div><div>Импортировано дней: ${pendingImport.good.length}. Откройте вкладку «Ежедневные данные», чтобы увидеть их в истории.</div></div>`;
+      document.getElementById('importFileInput').value='';
+      pendingImport=null;
+    });
+  }
+});
+
+(async function init(){
+  document.getElementById('plan_mp_month').value=monthNow();
+  document.getElementById('plan_product_month').value=monthNow();
+  document.getElementById('funnel_month').value=monthNow();
+  document.getElementById('daily_history_month').value=monthNow();
+  document.getElementById('cmp_monthB').value=monthNow();
+  await loadProducts();
+  refreshAllProductSelects();
+  renderOverviewTab();
+})();
+</script>
+</body>
+</html>
