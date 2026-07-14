@@ -2427,6 +2427,7 @@ document.getElementById('tabs').addEventListener('click',(e)=>{
   if(e.target.dataset.tab==='funnel'){ syncProductSelector('funnel_product_mp','funnel_product'); renderFunnelTab(); }
   if(e.target.dataset.tab==='compare'){ syncProductSelector('cmp_product_mp','cmp_product'); renderCompareTab(); }
   if(e.target.dataset.tab==='import'){ syncProductSelector('imp_product_mp','imp_product'); resetImportPreview(); }
+  if(e.target.dataset.tab==='products'){ renderProductsTable(); }
 });
 
 /* ---------------- ИМПОРТ ДАННЫХ ИЗ ФАЙЛА ---------------- */
