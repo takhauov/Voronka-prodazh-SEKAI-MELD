@@ -181,8 +181,7 @@
   <div class="sub">Ручной учёт по товарам на WB, Ozon и Яндекс Маркете</div>
 
   <nav id="tabs">
-    <button data-tab="overview" class="active">Обзор</button>
-    <button data-tab="plan">План и факт</button>
+    <button data-tab="plan" class="active">План и факт</button>
     <button data-tab="daily">Ежедневные данные</button>
     <button data-tab="funnel">Воронка и точки роста</button>
     <button data-tab="compare">Сравнение периодов</button>
@@ -191,30 +190,7 @@
     <button data-tab="help">Справка</button>
   </nav>
 
-  <!-- ПЛАН И ФАКТ -->
-  <!-- ОБЗОР -->
-  <div id="tab-overview" class="tabpane">
-    <div class="panel">
-      <h2>Зоны риска</h2>
-      <p class="hint">Товары, где Run-rate ниже 95% от плана или сработали «Точки роста» за текущий месяц</p>
-      <div id="riskWrap"><div class="empty">Загрузка…</div></div>
-    </div>
-    <div class="panel">
-      <h2>Рейтинг товаров</h2>
-      <p class="hint">За текущий месяц. Нажмите на заголовок столбца, чтобы отсортировать</p>
-      <div class="row" style="margin-bottom:6px;">
-        <div class="field"><label>Площадка</label><select id="overview_mp_filter">
-          <option value="all">Все площадки</option>
-          <option value="wb">Wildberries</option>
-          <option value="ozon">Ozon</option>
-          <option value="ym">Яндекс Маркет</option>
-        </select></div>
-      </div>
-      <div id="rankingWrap"><div class="empty">Загрузка…</div></div>
-    </div>
-  </div>
-
-  <div id="tab-plan" class="tabpane" style="display:none;">
+  <div id="tab-plan" class="tabpane">
     <div class="panel">
       <div class="row">
         <div class="segmented" id="planModeToggle">
@@ -441,12 +417,6 @@
 
   <!-- СПРАВКА -->
   <div id="tab-help" class="tabpane" style="display:none;">
-    <div class="panel">
-      <h2>Обзор</h2>
-      <p class="hint">Первое, что стоит открывать в начале дня</p>
-      <p><b>Зоны риска</b> — список товаров, у которых за текущий месяц темп продаж (Run-rate) ниже 95% от плана, или сработала хотя бы одна «Точка роста» (например, низкий CTR или много отмен). Пусто здесь — хороший знак.</p>
-      <p><b>Рейтинг товаров</b> — сводная таблица по всем товарам сразу: выручка за месяц, % выполнения плана, ДРР, тренд конверсии. Можно отфильтровать по площадке и отсортировать кликом по заголовку столбца — удобно сравнить товары между собой или внутри одной площадки.</p>
-    </div>
     <div class="panel">
       <h2>План и факт</h2>
       <p><b>По площадке</b> — общие цифры плана/факта по всем товарам одного маркетплейса сразу.</p>
@@ -998,126 +968,6 @@ async function computeWeeklyDynamicsKpi(productId){
     deltaHtml=`<div class="delta ${cls}">${diffPct>0?'+':''}${fmt1(diffPct)}% к пред. неделе</div>`;
   }
   return `<div class="kpi"><div class="label">Темп за 7 дней</div><div class="value">${fmt1(last7Rate)} шт/день</div>${deltaHtml}</div>`;
-}
-
-let overviewSortCol='revenue', overviewSortDir='desc';
-
-document.getElementById('overview_mp_filter').addEventListener('change', ()=>renderOverviewRanking(overviewRows));
-
-async function renderOverviewTab(){
-  const riskWrap=document.getElementById('riskWrap');
-  const rankWrap=document.getElementById('rankingWrap');
-  if(state.products.length===0){ riskWrap.innerHTML='<div class="empty">Пока нет товаров</div>'; rankWrap.innerHTML=''; return; }
-  riskWrap.innerHTML='<div class="empty">Загрузка…</div>';
-  rankWrap.innerHTML='<div class="empty">Загрузка…</div>';
-
-  const month=monthNow();
-  const dim=daysInMonth(month);
-  const daysElapsed=Math.max(1,new Date().getDate());
-
-  const rows=[];
-  for(const p of state.products){
-    const entries=await monthEntries(p.id, month);
-    const f=await productMonthFact(p.id, month);
-    const planFact=await planFactFor(p, month);
-    const planMap=await getPlanMap(p);
-    const plan=planMap[month]||{planRub:0,planUnits:0};
-    const actualUnitsPerDay=planFact.factUnits/daysElapsed;
-    const runRateUnits=Math.round(actualUnitsPerDay*dim);
-    const runRateRub=Math.round(runRateUnits*(p.currentPriceLK||0));
-    const runRatePct = plan.planRub>0 ? runRateRub/plan.planRub*100 : null;
-    const drrMonth = f.factRub>0 ? f.adSpend/f.factRub*100 : null;
-
-    const sums={impressions:0,uniqueVisitors:0,clicks:0,carts:0,orders:0,cancellations:0,buyouts:0};
-    entries.forEach(([,e])=>{ sums.impressions+=+e.impressions||0; sums.uniqueVisitors+=+e.uniqueVisitors||0; sums.clicks+=+e.clicks||0; sums.carts+=+e.carts||0; sums.orders+=+e.orders||0; sums.cancellations+=+e.cancellations||0; sums.buyouts+=+e.buyouts||0; });
-    const ctrBase=(p.mp==='ozon'&&sums.uniqueVisitors)?sums.uniqueVisitors:sums.impressions;
-    const ctr=pct(sums.clicks, ctrBase);
-    const cr1=pct(sums.carts, sums.clicks);
-    const cr2=pct(sums.orders, sums.carts);
-    const buyoutRate=sums.orders>0? sums.buyouts/sums.orders*100 : null;
-    const cancelRate=sums.orders>0? sums.cancellations/sums.orders*100 : null;
-    const th=getThresholds(p);
-    const flags=[];
-    if(ctr!==null && ctr<th.ctr) flags.push('Низкая кликабельность');
-    if(cr1!==null && cr1<th.cr1) flags.push('Не доходят до корзины');
-    if(cr2!==null && cr2<th.cr2) flags.push('Бросают корзину');
-    if(buyoutRate!==null && buyoutRate<th.buyout) flags.push('Низкий выкуп');
-    if(cancelRate!==null && cancelRate>th.cancel) flags.push('Много отмен');
-
-    let trendDirVal=null;
-    if(entries.length>=4){
-      const {prev,recent}=splitHalves(entries);
-      const prevClicks=sumField(prev,'clicks'), prevOrders=sumField(prev,'orders');
-      const recentClicks=sumField(recent,'clicks'), recentOrders=sumField(recent,'orders');
-      if(prevClicks>=10 && recentClicks>=10){
-        const prevCrf=prevOrders/prevClicks*100, recentCrf=recentOrders/recentClicks*100;
-        trendDirVal=trendDir(prevCrf, recentCrf, 0.1);
-      }
-    }
-    rows.push({product:p, factRub:f.factRub, planRub:plan.planRub, runRatePct, drrMonth, flags, trendDirVal});
-  }
-
-  const riskRows=rows.filter(r=> (r.runRatePct!==null && r.runRatePct<95) || r.flags.length>0)
-    .sort((a,b)=>{
-      const aScore=(a.runRatePct!==null && a.runRatePct<95?1:0)+a.flags.length;
-      const bScore=(b.runRatePct!==null && b.runRatePct<95?1:0)+b.flags.length;
-      return bScore-aScore;
-    });
-  if(riskRows.length===0){
-    riskWrap.innerHTML='<div class="rec ok"><div class="dot"></div><div>Явных проблем не найдено — все товары в норме по плану и точкам роста.</div></div>';
-  } else {
-    riskWrap.innerHTML=riskRows.map(r=>{
-      const parts=[];
-      if(r.runRatePct!==null && r.runRatePct<95) parts.push(`Run-rate ${fmt1(r.runRatePct)}% от плана`);
-      if(r.flags.length>0) parts.push(r.flags.join(', '));
-      return `<div class="rec warn"><div class="dot"></div><div><b>[${MP_LABEL[r.product.mp]}] ${r.product.name}</b>: ${parts.join(' · ')}</div></div>`;
-    }).join('');
-  }
-
-  renderOverviewRanking(rows);
-}
-
-let overviewRows=[];
-function renderOverviewRanking(rows){
-  overviewRows=rows;
-  const rankWrap=document.getElementById('rankingWrap');
-  const mpFilter=document.getElementById('overview_mp_filter').value;
-  const filtered = mpFilter==='all' ? rows : rows.filter(r=>r.product.mp===mpFilter);
-  const sorted=[...filtered].sort((a,b)=>{
-    let av,bv;
-    if(overviewSortCol==='plan'){ av=a.runRatePct??-1; bv=b.runRatePct??-1; }
-    else if(overviewSortCol==='drr'){ av=a.drrMonth??-1; bv=b.drrMonth??-1; }
-    else { av=a.factRub; bv=b.factRub; }
-    return overviewSortDir==='desc'? bv-av : av-bv;
-  });
-  const trendArrow=d=> d==='up'?'<span class="delta good">▲</span>':d==='down'?'<span class="delta bad">▼</span>':d==='flat'?'<span class="delta flat">≈</span>':'—';
-  const rowsHtml=sorted.map(r=>`<tr>
-    <td class="txt"><span class="badge ${r.product.mp}">${MP_LABEL[r.product.mp]}</span></td>
-    <td class="txt">${r.product.name}</td>
-    <td>${fmt(r.factRub)} ₽</td>
-    <td>${r.runRatePct!==null? fmt1(r.runRatePct)+'%':'—'}</td>
-    <td>${r.drrMonth!==null? fmt1(r.drrMonth)+'%':'—'}</td>
-    <td>${trendArrow(r.trendDirVal)}</td>
-  </tr>`).join('');
-  const arrow=(col)=> overviewSortCol===col ? (overviewSortDir==='desc'?' ▼':' ▲') : '';
-  if(sorted.length===0){
-    rankWrap.innerHTML='<div class="empty">Нет товаров на этой площадке</div>';
-    return;
-  }
-  rankWrap.innerHTML=`<div class="table-scroll"><table><thead><tr>
-    <th>Площадка</th>
-    <th>Товар</th>
-    <th data-sortcol="revenue" style="cursor:pointer;">Выручка (мес.)${arrow('revenue')}</th>
-    <th data-sortcol="plan" style="cursor:pointer;">% плана (Run-rate)${arrow('plan')}</th>
-    <th data-sortcol="drr" style="cursor:pointer;">ДРР${arrow('drr')}</th>
-    <th>Тренд конверсии</th>
-  </tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
-  rankWrap.querySelectorAll('[data-sortcol]').forEach(th=>th.addEventListener('click', ()=>{
-    const col=th.dataset.sortcol;
-    if(overviewSortCol===col) overviewSortDir = overviewSortDir==='desc'?'asc':'desc';
-    else { overviewSortCol=col; overviewSortDir='desc'; }
-    renderOverviewRanking(overviewRows);
-  }));
 }
 
 async function renderPlanTab(){
@@ -2267,19 +2117,22 @@ async function renderRecs(productId, month, entries){
 
   let drrPrev=null, drrRecent=null, crPrev=null, crRecent=null;
   if(prev.length>=2 && recent.length>=2){
+    const prevRange=`${prev[0][0]} – ${prev[prev.length-1][0]}`;
+    const recentRange=`${recent[0][0]} – ${recent[recent.length-1][0]}`;
+    const periodNote=` (первая половина месяца ${prevRange} → вторая половина ${recentRange})`;
     const revPrev=sumField(prev,'ordersRub'), revRecent=sumField(recent,'ordersRub');
     const adPrev=sumField(prev,'adspend'), adRecent=sumField(recent,'adspend');
     drrPrev=revPrev>0?adPrev/revPrev*100:0; drrRecent=revRecent>0?adRecent/revRecent*100:0;
     const ordersPrev=sumField(prev,'orders'), ordersRecent=sumField(recent,'orders');
     if(drrRecent > drrPrev*1.15 && ordersRecent <= ordersPrev*1.05){
-      recs.push({level:'warn', text:`ДРР выросла с ${fmt1(drrPrev)}% до ${fmt1(drrRecent)}%, а заказы почти не изменились (${fmt(ordersPrev)} → ${fmt(ordersRecent)} шт). Вероятно, снизилась эффективность части кампаний или выросла ставка за клик из-за конкуренции. Проверьте CTR по кампаниям, отключите наименее эффективные, пересмотрите ставки по ключевым запросам.`});
+      recs.push({level:'warn', text:`ДРР выросла с ${fmt1(drrPrev)}% до ${fmt1(drrRecent)}%${periodNote}, а заказы почти не изменились (${fmt(ordersPrev)} → ${fmt(ordersRecent)} шт). Вероятно, снизилась эффективность части кампаний или выросла ставка за клик из-за конкуренции. Проверьте CTR по кампаниям, отключите наименее эффективные, пересмотрите ставки по ключевым запросам.`});
     }
     const clicksPrev=sumField(prev,'clicks'), clicksRecent=sumField(recent,'clicks');
     crPrev=clicksPrev>0?ordersPrev/clicksPrev*100:0; crRecent=clicksRecent>0?ordersRecent/clicksRecent*100:0;
     if(crPrev>0 && crRecent < crPrev*0.9){
-      recs.push({level:'warn', text:`Конверсия в заказ снизилась с ${fmt1(crPrev)}% до ${fmt1(crRecent)}%. Смотрите раздел «Точки роста» ниже — там разобрано, на каком именно этапе (корзина или оформление) теряются покупатели, с гипотезами и рекомендациями.`});
+      recs.push({level:'warn', text:`Конверсия в заказ снизилась с ${fmt1(crPrev)}% до ${fmt1(crRecent)}%${periodNote}. Смотрите раздел «Точки роста» выше — там разобрано, на каком именно этапе (корзина или оформление) теряются покупатели, с гипотезами и рекомендациями.`});
     } else if(crPrev>0 && crRecent > crPrev*1.1){
-      recs.push({level:'ok', text:`Конверсия в заказ выросла с ${fmt1(crPrev)}% до ${fmt1(crRecent)}%.`});
+      recs.push({level:'ok', text:`Конверсия в заказ выросла с ${fmt1(crPrev)}% до ${fmt1(crRecent)}%${periodNote}.`});
     }
   }
 
@@ -2444,7 +2297,6 @@ document.getElementById('tabs').addEventListener('click', async (e)=>{
   document.querySelectorAll('.tabpane').forEach(p=>p.style.display='none');
   document.getElementById('tab-'+e.target.dataset.tab).style.display='block';
   if(productsReadyPromise) await productsReadyPromise;
-  if(e.target.dataset.tab==='overview'){ renderOverviewTab(); }
   if(e.target.dataset.tab==='plan'){ syncProductSelector('plan_product_mp','plan_product'); renderPlanTab(); }
   if(e.target.dataset.tab==='daily'){ syncProductSelector('daily_mp','daily_product'); loadDailyForm(); renderDailyTab(); }
   if(e.target.dataset.tab==='funnel'){ syncProductSelector('funnel_product_mp','funnel_product'); renderFunnelTab(); }
@@ -2649,7 +2501,7 @@ async function startApp(){
   productsReadyPromise=loadProducts();
   await productsReadyPromise;
   refreshAllProductSelects();
-  renderOverviewTab();
+  renderPlanTab();
 }
 
 function showLogin(){
