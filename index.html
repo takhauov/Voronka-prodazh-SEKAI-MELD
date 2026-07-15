@@ -2471,17 +2471,18 @@ function parseNum(v){
   const n=parseFloat(String(v).replace(',','.').replace(/\s/g,''));
   return isNaN(n)?0:n;
 }
-function excelDateToISO(d){
-  // SheetJS (cellDates:true) кодирует дату из Excel как полночь по UTC, а не по местному времени —
-  // поэтому здесь именно UTC-компоненты, в отличие от dateToISO() для остальных дат в приложении
+function excelSerialToISO(serial){
+  // Считаем календарную дату напрямую по формуле (дни с 30.12.1899 → миллисекунды UTC),
+  // не полагаясь на то, как именно SheetJS конструирует объект Date из ячейки — это и было источником сдвига на день
+  const ms = (serial - 25569) * 86400 * 1000;
+  const d = new Date(ms);
   return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())}`;
 }
 function parseImportDate(v){
-  if(v instanceof Date && !isNaN(v)) return excelDateToISO(v);
-  if(typeof v==='number'){ // excel serial date
-    const d=XLSX.SSF? XLSX.SSF.parse_date_code(v) : null;
-    if(d) return `${d.y}-${pad2(d.m)}-${pad2(d.d)}`;
-    return null;
+  if(typeof v==='number'){ return excelSerialToISO(v); }
+  if(v instanceof Date && !isNaN(v)){
+    // запасной путь на случай, если ячейка всё же придёт как объект Date, а не как число
+    return excelSerialToISO(Math.round((v.getTime()/86400000) + 25569));
   }
   const s=String(v).trim();
   if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
@@ -2583,7 +2584,7 @@ document.getElementById('parseImportBtn').addEventListener('click', async ()=>{
   if(!file){ alert('Выберите файл .xlsx'); return; }
 
   const buf=await file.arrayBuffer();
-  const wb=XLSX.read(buf, {type:'array', cellDates:true});
+  const wb=XLSX.read(buf, {type:'array'});
   const sheet=wb.Sheets[wb.SheetNames[0]];
   const rows=XLSX.utils.sheet_to_json(sheet, {header:1, raw:true});
   if(rows.length<2){ wrap.innerHTML='<div class="empty">В файле нет данных</div>'; return; }
