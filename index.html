@@ -1516,9 +1516,9 @@ async function renderDailyTab(){
 
   const rows=[
     {section:'Цена'},
-    {label:'Цена в ЛК, ₽', get:e=>e?.priceLK, fmt:v=>v!=null?fmt(v):''},
-    {label:'Цена для покупателя, ₽', get:e=>e?.priceCustomer, fmt:v=>v!=null?fmt(v):''},
-    isOzon?{label:'Цена с Ozon картой, ₽', get:e=>e?.priceOzonCard, fmt:v=>v?fmt(v):''}:null,
+    {label:'Цена в ЛК, ₽', get:e=>e?.priceLK, fmt:v=>v!=null?fmt(v):'', editField:'priceLK'},
+    {label:'Цена для покупателя, ₽', get:e=>e?.priceCustomer, fmt:v=>v!=null?fmt(v):'', editField:'priceCustomer'},
+    isOzon?{label:'Цена с Ozon картой, ₽', get:e=>e?.priceOzonCard, fmt:v=>v?fmt(v):'', editField:'priceOzonCard'}:null,
     {label:'СПП, %', get:e=>e?.spp, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
     {section:'Трафик'},
     {label:'Показы', get:e=>e?.impressions, fmt:v=>v!=null?fmt(v):''},
@@ -1534,12 +1534,12 @@ async function renderDailyTab(){
     {label:'Выкупили, шт', get:e=>e?.buyouts, fmt:v=>v!=null?fmt(v):''},
     {label:'Отмены, шт', get:e=>e?.cancellations, fmt:v=>v!=null?fmt(v):''},
     {section:'Реклама и финансы'},
-    {label:'Заказы, ₽', get:e=>e?.ordersRub, fmt:v=>v!=null?fmt(v)+' ₽':''},
+    {label:'Заказы, ₽', get:e=>e?.ordersRub, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'ordersRub'},
     {label:'Реклама, ₽', get:e=>e?.adspend, fmt:v=>v!=null?fmt(v)+' ₽':''},
     {label:'ДРР, %', get:e=>e?.drr, fmt:v=>v!=null?fmt1(v)+'%':''},
     {label:'CPC, ₽', get:e=>e?.cpc, fmt:v=>v!=null?fmt1(v)+' ₽':''},
     {label:'CPO, ₽', get:e=>e?.cpo, fmt:v=>v!=null?fmt(v)+' ₽':''},
-    ...bidLabels.map((label,i)=>({label, get:e=>e?.adBids?.[i]?.value, fmt:v=>v!=null?v:'', isText:true})),
+    ...bidLabels.map((label,i)=>({label, get:e=>e?.adBids?.[i]?.value, fmt:v=>v!=null?v:'', isEditableBid:true, bidIndex:i})),
     {section:'Акции'},
     {label:'Участие в акции', get:e=>e? (e.promo==='yes'?'Участвую':e.promo==='no'?'Не участвую':'') : null, fmt:v=>v||'', isText:true},
     {section:'Изменения'},
@@ -1576,6 +1576,15 @@ async function renderDailyTab(){
         const safe=(val||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `<td class="txt"><textarea class="note-edit-input" data-notedate="${d}" rows="2" style="width:120px;resize:vertical;border:none;background:transparent;font-family:inherit;font-size:11.5px;color:inherit;white-space:normal;overflow-wrap:break-word;padding:2px;">${safe}</textarea></td>`;
       }
+      if(r.editField){
+        if(!e) return `<td></td>`;
+        return `<td><input type="number" class="num-edit-input" data-notedate="${d}" data-editfield="${r.editField}" value="${val??''}" style="width:90px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:right;padding:2px;"></td>`;
+      }
+      if(r.isEditableBid){
+        if(!e) return `<td></td>`;
+        const safe=(val??'').toString().replace(/"/g,'&quot;');
+        return `<td><input type="text" class="bid-edit-input" data-notedate="${d}" data-bidindex="${r.bidIndex}" value="${safe}" style="width:90px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:right;padding:2px;"></td>`;
+      }
       if(r.isText) return `<td class="txt">${r.fmt(val)}</td>`;
       let out=r.fmt(val);
       if(r.delta){
@@ -1604,6 +1613,35 @@ async function renderDailyTab(){
         dm2[d].changeNote = inp.value.trim();
         const ok=await storeSet('daily:'+productId, dm2);
         if(!ok) alert('Не удалось сохранить заметку — попробуйте ещё раз');
+      }
+    });
+  });
+  wrap.querySelectorAll('.num-edit-input').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const d=inp.dataset.notedate;
+      const field=inp.dataset.editfield;
+      const dm2=await getDailyMap(productId);
+      if(dm2[d]){
+        const oldVal=dm2[d][field];
+        dm2[d][field] = inp.value===''? 0 : +inp.value;
+        const ok=await storeSet('daily:'+productId, dm2);
+        if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); dm2[d][field]=oldVal; inp.value=oldVal??''; return; }
+        await renderDailyTab();
+      }
+    });
+  });
+  wrap.querySelectorAll('.bid-edit-input').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const d=inp.dataset.notedate;
+      const idx=+inp.dataset.bidindex;
+      const dm2=await getDailyMap(productId);
+      if(dm2[d]){
+        if(!dm2[d].adBids) dm2[d].adBids=[];
+        if(!dm2[d].adBids[idx]) dm2[d].adBids[idx]={label:`Ставка ${idx+1}`,value:null};
+        const oldVal=dm2[d].adBids[idx].value;
+        dm2[d].adBids[idx].value = inp.value.trim()===''? null : inp.value.trim();
+        const ok=await storeSet('daily:'+productId, dm2);
+        if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); dm2[d].adBids[idx].value=oldVal; inp.value=oldVal??''; }
       }
     });
   });
