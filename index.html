@@ -395,6 +395,18 @@
       </div>
       <div id="importPreviewWrap" style="margin-top:14px;"></div>
     </div>
+    <div class="panel">
+      <h2>3. Исправить «Выкупили»/«Отмены» после старого импорта</h2>
+      <p class="hint">Если раньше при импорте пустая колонка «Выкупили» или «Отмены» превращалась в 0 (это было исправлено) — здесь можно задним числом вернуть эти дни в состояние «неизвестно», не перезагружая файл заново. Затронет только дни, где сейчас стоит 0 — дни с другими значениями не тронет.</p>
+      <div class="row">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;"><input type="checkbox" id="fix_buyouts_cb"> Выкупили</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;"><input type="checkbox" id="fix_cancels_cb"> Отмены</label>
+        <div class="field"><label>Не позже даты (необязательно)</label><input type="date" id="fix_until_date"></div>
+        <button class="btn secondary" id="fixZerosBtn">Проверить и исправить</button>
+      </div>
+      <p class="hint">Если заполнить «Не позже даты» — тронет только дни до этой даты включительно (например, конец импортированного периода), чтобы не задеть настоящие нули, введённые уже вручную после обновления</p>
+      <div class="note" id="fixZerosNote"></div>
+    </div>
   </div>
 
   <!-- ТОВАРЫ -->
@@ -2199,7 +2211,8 @@ function aggregateStatsFromEntries(entries, mp){
     s.ordersRub+=+e.ordersRub||0; s.adspend+=+e.adspend||0;
   });
   const ctrBase = (mp==='ozon' && s.uniqueVisitors) ? s.uniqueVisitors : s.impressions;
-  const last=entries[entries.length-1][1];
+  const sppValues=entries.map(([,e])=>computeSPP(e.priceLK, e.priceCustomer)).filter(v=>v!==null);
+  const sppAvg=sppValues.length? sppValues.reduce((a,b)=>a+b,0)/sppValues.length : null;
   return {
     trafficBase: mp==='ozon'? s.uniqueVisitors : s.impressions,
     impressions:s.impressions, clicks:s.clicks,
@@ -2211,7 +2224,7 @@ function aggregateStatsFromEntries(entries, mp){
     buyoutRate: s.orders>0? s.buyouts/s.orders*100 : null,
     ordersRub:s.ordersRub, adspend:s.adspend,
     drr: pct(s.adspend, s.ordersRub),
-    spp: computeSPP(last.priceLK, last.priceCustomer)
+    spp: sppAvg
   };
 }
 async function aggregateMonthStats(productId, month, mp){
@@ -2294,7 +2307,7 @@ async function renderCompareTab(){
       rec:'Расходы на рекламу выросли — проверьте ставки и эффективность кампаний с наибольшим расходом.'},
     {label:'ДРР', av:a.drr, bv:b.drr, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%',goodUp:false},
       rec:'ДРР вырос — реклама стала окупаться хуже, проверьте кампании с наибольшим расходом относительно заказов.'},
-    {label:'СПП (на конец периода)', av:a.spp, bv:b.spp, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%',neutral:true}, rec:null}
+    {label:'СПП (среднее за период)', av:a.spp, bv:b.spp, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%',neutral:true}, rec:null}
   ];
 
   const rowsHtml=rowDefs.map(r=>{
@@ -2479,6 +2492,44 @@ function mapRowToEntry(mp, cols, rowArr){
   }
   return {date, entry};
 }
+
+document.getElementById('fixZerosBtn').addEventListener('click', async ()=>{
+  const noteEl=document.getElementById('fixZerosNote');
+  const productId=document.getElementById('imp_product').value;
+  const product=state.products.find(p=>p.id===productId);
+  if(!product){ alert('Выберите товар'); return; }
+  const fixBuyouts=document.getElementById('fix_buyouts_cb').checked;
+  const fixCancels=document.getElementById('fix_cancels_cb').checked;
+  if(!fixBuyouts && !fixCancels){ alert('Отметьте хотя бы одно поле — «Выкупили» и/или «Отмены»'); return; }
+  const untilDate=document.getElementById('fix_until_date').value;
+
+  const dm=await getDailyMap(productId);
+  const targetDates=Object.keys(dm).filter(d=>!dm[d].draft && (!untilDate || d<=untilDate));
+  let affectedBuyouts=0, affectedCancels=0;
+  targetDates.forEach(d=>{
+    if(fixBuyouts && dm[d].buyouts===0) affectedBuyouts++;
+    if(fixCancels && dm[d].cancellations===0) affectedCancels++;
+  });
+  const totalAffected=affectedBuyouts+affectedCancels;
+  if(totalAffected===0){ noteEl.textContent='Дней с нулём по выбранным полям (в указанных рамках) не найдено — исправлять нечего.'; return; }
+
+  const parts=[];
+  if(fixBuyouts) parts.push(`«Выкупили»: ${affectedBuyouts} дн.`);
+  if(fixCancels) parts.push(`«Отмены»: ${affectedCancels} дн.`);
+  const rangeNote=untilDate ? ` (до ${untilDate} включительно)` : ' (по всей истории товара)';
+  if(!confirm(`Будет сброшено в «неизвестно» по товару «${product.name}»${rangeNote}: ${parts.join(', ')}. Дни, где значение не равно 0, не тронутся. Продолжить?`)) return;
+
+  const btn=document.getElementById('fixZerosBtn');
+  btn.disabled=true; btn.textContent='Исправляю…';
+  targetDates.forEach(d=>{
+    if(fixBuyouts && dm[d].buyouts===0) dm[d].buyouts=null;
+    if(fixCancels && dm[d].cancellations===0) dm[d].cancellations=null;
+  });
+  const ok=await storeSet('daily:'+productId, dm);
+  btn.disabled=false; btn.textContent='Проверить и исправить';
+  if(!ok){ alert('Не удалось сохранить — сбой хранилища. Попробуйте ещё раз.'); return; }
+  noteEl.textContent=`Готово. Исправлено${rangeNote}: ${parts.join(', ')}.`;
+});
 
 document.getElementById('parseImportBtn').addEventListener('click', async ()=>{
   const productId=document.getElementById('imp_product').value;
