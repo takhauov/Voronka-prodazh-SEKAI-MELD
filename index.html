@@ -238,6 +238,7 @@
       <div class="row" style="margin-top:10px;">
         <div class="field"><label>Показы</label><input id="d_impr" type="number" min="0"></div>
         <div class="field" id="d_uniqVisitorsWrap" style="display:none;"><label>Уникальные посетители</label><input id="d_uniqVisitors" type="number" min="0"></div>
+        <div class="field" id="d_searchPosWrap" style="display:none;"><label>Позиция в поиске и каталоге</label><input id="d_searchPos" type="number" min="0"></div>
         <div class="field"><label>Клики</label><input id="d_clicks" type="number" min="0"></div>
         <div class="field"><label>Корзины</label><input id="d_carts" type="number" min="0"></div>
         <div class="field"><label>Заказы, шт</label><input id="d_orders" type="number" min="0"></div>
@@ -1179,6 +1180,7 @@ async function loadDailyForm(){
   const isWb = selProduct?.mp==='wb';
   const isYm = selProduct?.mp==='ym';
   document.getElementById('d_uniqVisitorsWrap').style.display = isOzon? 'flex':'none';
+  document.getElementById('d_searchPosWrap').style.display = isOzon? 'flex':'none';
   document.getElementById('d_ozonCardWrap').style.display = isOzon? 'flex':'none';
   document.getElementById('d_adspend_ozon_wrap').style.display = isOzon? 'flex':'none';
   document.getElementById('d_adspend_ark_wrap').style.display = isWb? 'flex':'none';
@@ -1197,6 +1199,7 @@ async function loadDailyForm(){
     document.getElementById('d_priceCustomer').value='';
     document.getElementById('d_priceOzonCard').value='';
     document.getElementById('d_uniqVisitors').value='';
+    document.getElementById('d_searchPos').value='';
     document.getElementById('d_spp_preview').value='';
     document.querySelectorAll('.d_changeType_cb').forEach(cb=>{ cb.checked=false; });
     setPromoCheckboxes(null);
@@ -1220,6 +1223,7 @@ async function loadDailyForm(){
     document.getElementById('d_priceOzonCard').value=existing.priceOzonCard||'';
     document.getElementById('d_impr').value=existing.impressions||'';
     document.getElementById('d_uniqVisitors').value=existing.uniqueVisitors||'';
+    document.getElementById('d_searchPos').value=existing.searchPosition??'';
     document.getElementById('d_clicks').value=existing.clicks||'';
     document.getElementById('d_carts').value=existing.carts||'';
     document.getElementById('d_orders').value=existing.orders||'';
@@ -1256,6 +1260,7 @@ async function loadDailyForm(){
     document.getElementById('d_priceCustomer').value=dailyPrefill.customer||'';
     document.getElementById('d_priceOzonCard').value=dailyPrefill.ozonCard||'';
     document.getElementById('d_uniqVisitors').value='';
+    document.getElementById('d_searchPos').value='';
     document.querySelectorAll('.d_changeType_cb').forEach(cb=>{ cb.checked=false; });
     setPromoCheckboxes(product?.currentPromo||null);
     ['d_impr','d_clicks','d_carts','d_orders','d_ordersRub','d_buyouts','d_adspend','d_adspend_ark','d_adspend_search','d_adspend_bpr','d_adspend_bpk','d_adspend_polki','d_change'].forEach(id=>document.getElementById(id).value='');
@@ -1341,6 +1346,7 @@ document.getElementById('saveDailyBtn').addEventListener('click', async ()=>{
   if(isOzon){
     entry.uniqueVisitors=+document.getElementById('d_uniqVisitors').value||0;
     entry.priceOzonCard=effectiveOzonCard;
+    entry.searchPosition = document.getElementById('d_searchPos').value===''? null : +document.getElementById('d_searchPos').value;
   }
 
   const dm=await getDailyMap(productId);
@@ -1524,6 +1530,7 @@ async function renderDailyTab(){
     {section:'Трафик'},
     {label:'Показы', get:e=>e?.impressions, fmt:v=>v!=null?fmt(v):''},
     isOzon?{label:'Уникальные посетители', get:e=>e?.uniqueVisitors, fmt:v=>v!=null?fmt(v):''}:null,
+    isOzon?{label:'Позиция в поиске и каталоге', get:e=>e?.searchPosition, fmt:v=>v!=null?fmt(v):'', editField:'searchPosition'}:null,
     {label:'Клики', get:e=>e?.clicks, fmt:v=>v!=null?fmt(v):''},
     {label:'CTR, %', get:e=>e?.ctr, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
     {section:'Воронка'},
@@ -1624,7 +1631,8 @@ async function renderDailyTab(){
       const dm2=await getDailyMap(productId);
       if(dm2[d]){
         const oldVal=dm2[d][field];
-        dm2[d][field] = inp.value===''? 0 : +inp.value;
+        const emptyAsNull = field==='searchPosition';
+        dm2[d][field] = inp.value==='' ? (emptyAsNull? null : 0) : +inp.value;
         const ok=await storeSet('daily:'+productId, dm2);
         if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); dm2[d][field]=oldVal; inp.value=oldVal??''; return; }
         await renderDailyTab();
@@ -2409,12 +2417,12 @@ document.getElementById('tabs').addEventListener('click', async (e)=>{
 /* ---------------- ИМПОРТ ДАННЫХ ИЗ ФАЙЛА ---------------- */
 const TEMPLATE_COLUMNS={
   wb:['Дата','Цена в ЛК','Цена для покупателя','Показы','Клики','Корзины','Заказы, шт','Заказы, руб','Выкупили, шт','Отмены, шт','АРК, факт руб','Поиск, факт руб','Акция (да/нет)','Что изменили'],
-  ozon:['Дата','Цена в ЛК','Цена с Ozon картой','Цена для покупателя','Показы','Уникальные посетители','Клики','Корзины','Заказы, шт','Заказы, руб','Выкупили, шт','Отмены, шт','Рекламные расходы, руб','Акция (да/нет)','Что изменили'],
+  ozon:['Дата','Цена в ЛК','Цена с Ozon картой','Цена для покупателя','Показы','Уникальные посетители','Позиция в поиске и каталоге','Клики','Корзины','Заказы, шт','Заказы, руб','Выкупили, шт','Отмены, шт','Рекламные расходы, руб','Акция (да/нет)','Что изменили'],
   ym:['Дата','Цена в ЛК','Цена для покупателя','Показы','Клики','Корзины','Заказы, шт','Заказы, руб','Выкупили, шт','Отмены, шт','БПР, факт руб','БПК, факт руб','Полки, факт руб','Акция (да/нет)','Что изменили']
 };
 const TEMPLATE_EXAMPLE={
   wb:['ПРИМЕР — удалите строку',7400,3849,1200,55,6,2,7698,2,0,120,80,'да','Заменили главное фото'],
-  ozon:['ПРИМЕР — удалите строку',3200,3050,2990,4000,900,60,5,2,5980,2,0,150,'нет',''],
+  ozon:['ПРИМЕР — удалите строку',3200,3050,2990,4000,900,15,60,5,2,5980,2,0,150,'нет',''],
   ym:['ПРИМЕР — удалите строку',5100,4850,1500,40,4,1,4850,1,0,90,60,30,'нет','']
 };
 
@@ -2518,6 +2526,7 @@ function mapRowToEntry(mp, cols, rowArr){
   if(mp==='ozon'){
     entry.priceOzonCard=parseNum(get('Цена с Ozon картой'));
     entry.uniqueVisitors=parseNum(get('Уникальные посетители'));
+    entry.searchPosition=parseNumOrNull(get('Позиция в поиске и каталоге'));
     entry.adspend=parseNum(get('Рекламные расходы, руб'));
   } else if(mp==='wb'){
     entry.adspend_ark=parseNum(get('АРК, факт руб'));
