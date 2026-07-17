@@ -58,6 +58,14 @@
   .segmented button.active{background:var(--ink);color:#fff;}
 
   .table-scroll{overflow-x:auto;}
+  #dailyTableWrap.table-scroll{
+    width:100vw;
+    position:relative;
+    left:50%;
+    margin-left:-50vw;
+    padding:0 max(16px, calc((100vw - 1280px)/2 + 16px));
+    box-sizing:border-box;
+  }
   table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
   th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.02em;color:var(--ink-2);font-weight:500;padding:7px 7px;border-bottom:1px solid var(--border);white-space:nowrap;}
   th.group{text-align:center;background:var(--bg);font-size:9.5px;letter-spacing:.04em;}
@@ -217,79 +225,21 @@
   <!-- ЕЖЕДНЕВНЫЕ ДАННЫЕ -->
   <div id="tab-daily" class="tabpane" style="display:none;">
     <div class="panel">
-      <h2>Внести данные за день</h2>
-      <p class="hint">Выберите дату вручную. Цена в ЛК вносится «на сегодня», но для расчёта суммы вчерашних заказов используется цена, действовавшая на момент этих заказов</p>
+      <h2>Ежедневные данные</h2>
+      <p class="hint">Все показатели редактируются прямо в таблице «История по товару» ниже. При открытии товара день за сегодня появляется сам (с ценой/ставками/акцией, подтянутыми с прошлого дня) — остаётся дозаполнить показатели воронки</p>
       <div class="row">
         <div class="field"><label>Площадка</label><select id="daily_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
         <div class="field" style="min-width:220px;"><label>Товар</label><select id="daily_product"></select></div>
-        <div class="field"><label>Дата</label><input id="daily_date" type="date"></div>
       </div>
-      <div id="editBanner" style="display:none;margin-top:10px;padding:8px 12px;background:var(--info-bg);color:var(--info);border-radius:8px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;">
-        <span id="editBannerText"></span>
-        <button class="btn secondary" id="cancelEditBtn" style="padding:5px 10px;">Новая запись</button>
-      </div>
-      <div class="row" style="margin-top:10px;">
-        <div class="field"><label>Цена в ЛК, ₽</label><input id="d_priceLK" type="number" min="0"></div>
-        <div class="field"><label>СПП площадки</label><input id="d_spp_preview" disabled></div>
-        <div class="field"><label>Цена для покупателя, ₽</label><input id="d_priceCustomer" type="number" min="0"></div>
-        <div class="field" id="d_ozonCardWrap" style="display:none;"><label>Цена с Ozon картой, ₽</label><input id="d_priceOzonCard" type="number" min="0"></div>
-      </div>
-      <div class="note" id="priceLogicNote"></div>
-      <div class="row" style="margin-top:10px;">
-        <div class="field"><label>Показы</label><input id="d_impr" type="number" min="0"></div>
-        <div class="field" id="d_uniqVisitorsWrap" style="display:none;"><label>Уникальные посетители</label><input id="d_uniqVisitors" type="number" min="0"></div>
-        <div class="field" id="d_searchPosWrap" style="display:none;"><label>Позиция в поиске и каталоге</label><input id="d_searchPos" type="number" min="0"></div>
-        <div class="field"><label>Клики</label><input id="d_clicks" type="number" min="0"></div>
-        <div class="field"><label>Корзины</label><input id="d_carts" type="number" min="0"></div>
-        <div class="field"><label>Заказы, шт</label><input id="d_orders" type="number" min="0"></div>
-        <div class="field"><label>Заказы, ₽</label><input id="d_ordersRub" type="number" min="0"></div>
-        <div class="field"><label>Выкупили, шт</label><input id="d_buyouts" type="number" min="0"></div>
-        <div class="field"><label>Отмены, шт</label><input id="d_cancels" type="number" min="0"></div>
-        <div class="field" id="d_adspend_ozon_wrap" style="display:none;"><label>Рекламные расходы, ₽</label><input id="d_adspend" type="number" min="0"></div>
-        <div class="field" id="d_adspend_ark_wrap" style="display:none;"><label>АРК, факт ₽</label><input id="d_adspend_ark" type="number" min="0"></div>
-        <div class="field" id="d_adspend_search_wrap" style="display:none;"><label>Поиск, факт ₽</label><input id="d_adspend_search" type="number" min="0"></div>
-        <div class="field" id="d_adspend_bpr_wrap" style="display:none;"><label>БПР, факт ₽</label><input id="d_adspend_bpr" type="number" min="0"></div>
-        <div class="field" id="d_adspend_bpk_wrap" style="display:none;"><label>БПК, факт ₽</label><input id="d_adspend_bpk" type="number" min="0"></div>
-        <div class="field" id="d_adspend_polki_wrap" style="display:none;"><label>Полки, факт ₽</label><input id="d_adspend_polki" type="number" min="0"></div>
-      </div>
-      <p class="hint">«Отмены» по умолчанию подставлены нулём — просто сохраните, если это верно. «Выкупили» вводится вручную каждый раз, дефолта нет. Для обоих: если очистить поле совсем (не 0, а пусто) — день сохранится без этого показателя, и он не будет участвовать в «Точках роста», пока не заполнится снова</p>
-      <div class="row" style="margin-top:10px;">
-        <div class="field" style="min-width:340px;">
-          <label>Тип изменения (можно несколько)</label>
-          <div class="checkgroup">
-            <label><input type="checkbox" class="d_changeType_cb" value="photo_main"> Главное фото/обложка</label>
-            <label><input type="checkbox" class="d_changeType_cb" value="title"> Заголовок</label>
-            <label><input type="checkbox" class="d_changeType_cb" value="photo_order"> Доп. фото / порядок фото</label>
-            <label><input type="checkbox" class="d_changeType_cb" value="description"> Описание/характеристики</label>
-            <label><input type="checkbox" class="d_changeType_cb" value="price"> Цена</label>
-            <label><input type="checkbox" class="d_changeType_cb" value="ads"> Реклама/ставка</label>
-            <label><input type="checkbox" class="d_changeType_cb" value="other"> Другое</label>
-          </div>
-        </div>
-        <div class="field" style="min-width:280px;flex:1;"><label>Что именно изменили (необязательно)</label><input id="d_change" placeholder="Например, заменили главное фото"></div>
-      </div>
-    </div>
-    <div class="panel">
-      <h2>Рекламные ставки</h2>
-      <p class="hint">Не влияет на расчёты. Названия можно переименовать под свои кампании. Работают как цена: значение за этот день — прежнее, новое значение уйдёт в черновик на завтра</p>
-      <div id="bidsWrap"></div>
-    </div>
-    <div class="panel">
-      <h2>Акции</h2>
-      <p class="hint">Не влияет на расчёты. Запоминает выбор с предыдущего дня, можно поменять. Сохраняется вместе с днём — кнопкой ниже</p>
-      <div class="checkgroup">
-        <label><input type="checkbox" id="promo_yes"> Участвую</label>
-        <label><input type="checkbox" id="promo_no"> Не участвую</label>
-      </div>
-      <button class="btn" id="saveDailyBtn" style="margin-top:14px;">Сохранить день</button>
     </div>
     <div class="panel">
       <h2>Аномалии по сравнению с прошлым днём</h2>
-      <p class="hint">Сверяет последний внесённый день с предыдущим календарным днём и подсвечивает резкие скачки</p>
+      <p class="hint">Сверяет последний внесённый день с предыдущим календарным днём и подсвечивает резкие скачки (показы, CTR, конверсии, рекламные расходы)</p>
       <div id="anomaliesWrap"><div class="empty">Выберите товар</div></div>
     </div>
     <div class="panel">
       <h2>История по товару</h2>
+      <p class="hint">Все показатели, кроме расчётных (СПП, CTR, конверсии, ДРР, CPC, CPO), редактируются прямо в таблице — правите значение и уходите из ячейки, сохраняется автоматически. В «Тип изменения» можно выбрать несколько значений сразу, зажав Ctrl (на Mac — Cmd) при клике</p>
       <div class="row" style="margin-bottom:6px;">
         <div class="field"><label>Месяц</label><input id="daily_history_month" type="month"></div>
       </div>
@@ -330,7 +280,7 @@
     </div>
     <div class="panel">
       <h2>Точки роста</h2>
-      <p class="hint">Разбор по каждому этапу воронки отдельно. Показаны только показатели ниже порога — если пункта здесь нет, он в норме. Выкупы и отмены не участвуют в оценке, если не заполнялись больше недели</p>
+      <p class="hint">Разбор по каждому этапу воронки отдельно. Показаны только показатели ниже порога — если пункта здесь нет, он в норме. Выкупы и отмены не участвуют в оценке, если не заполнялись больше недели. % выкупа не учитывает заказы младше 7 дней — им ещё физически не хватило времени дойти до покупателя</p>
       <div id="growthWrap"><div class="empty">Нет данных за выбранный период</div></div>
     </div>
     <div class="panel">
@@ -442,19 +392,22 @@
     </div>
     <div class="panel">
       <h2>Ежедневные данные</h2>
-      <p>Основной раздел для ежедневного ввода. Данные по воронке вносятся за вчерашний день. Текущая цена и изменения в ЛК — на текущий день.</p>
-      <p><b>Цена в ЛК / для покупателя / с Ozon картой</b> — при первом заполнении подставляется прежняя цена автоматически. Если цена изменилась — впишите новую и отметьте тип изменения «Цена»: в этот день сохранится прежняя цена (она и правда действовала в этот день), а новая автоматически появится в черновике на завтра.</p>
-      <p><b>Черновик</b> — фиксирует цену и изменения в ЛК на текущий день. На следующий день остаётся дозаполнить показатели воронки, когда будут данные.</p>
-      <p><b>Рекламные ставки и Акции</b> — справочная информация, на расчёты не влияет, но переносится изо дня в день автоматически, чтобы зафиксировать текущие значения. Изменение ставки можно зафиксировать с помощью ручного ввода.</p>
-      <p><b>Выкупили / Отмены</b> — для «Отмены» по умолчанию подставляется 0, менять не нужно, если это верно; «Выкупили» вводится вручную каждый раз, без дефолта. Для обоих полей: если оставить поле пустым (не 0, а именно пусто) — день сохранится без этого показателя как «неизвестно», а не как ноль. Если показатель не заполняется больше недели подряд — он перестаёт участвовать в «Точках роста» (там появится отдельная пометка), чтобы не считать проценты по устаревшим данным.</p>
-      <p><b>Аномалии</b> — сравнивает последний полностью заполненный день с днём перед ним и предупреждает о резких скачках (показы, CTR, конверсии, рекламные расходы).</p>
-      <p><b>История по товару</b> — вся история день за днём, с цветовой подсветкой изменений показателей. Строку «Что изменили» можно поправить от руки прямо в таблице.</p>
+      <p>Основной раздел для ежедневного ввода. Данные по воронке вносятся за вчерашний день. Отдельной формы ввода нет — всё редактируется прямо в таблице «История по товару» ниже.</p>
+      <p><b>Как появляется сегодняшний день</b> — при выборе товара дашборд сам проверяет, есть ли уже запись за сегодня, и если нет — создаёт её, подтягивая цену, ставки и акцию с последнего известного дня (если пропустили несколько дней подряд — достроит сразу всю цепочку). Ничего печатать для этого не нужно; повторные заходы в тот же день ничего не задваивают.</p>
+      <p><b>Цена в ЛК / для покупателя / с Ozon картой</b> — уже стоит в строке за сегодня, подтянутая с прошлого дня. Если цена изменилась — просто впишите новую прямо в ячейку за сегодня, это обычная правка конкретного дня.</p>
+      <p><b>Черновик</b> — день, в котором ещё не заполнены показатели воронки (показы, клики, корзины, заказы), даже если цена/ставки/акция/комментарий уже стоят. Как только вписываете хотя бы один из этих четырёх показателей — день перестаёт быть черновиком и участвует в анализе.</p>
+      <p><b>Заказы, ₽</b> — при вводе «Заказы, шт» сумма в рублях сама посчитается как штуки × цена в ЛК этого же дня. Дальше можно поправить вручную, если нужно нестандартное значение.</p>
+      <p><b>Рекламные ставки и Акции</b> — справочная информация, на расчёты не влияет, но переносится изо дня в день автоматически вместе с созданием нового дня.</p>
+      <p><b>Тип изменения</b> — можно выбрать сразу несколько значений, зажав Ctrl (на Mac — Cmd) при клике. <b>Комментарий</b> рядом — отдельное необязательное текстовое поле.</p>
+      <p><b>Выкупили / Отмены</b> — для «Отмены» по умолчанию подставляется 0 при создании нового дня, менять не нужно, если это верно; «Выкупили» — без дефолта. Для обоих полей: если оставить пустым (не 0, а именно пусто) — сохранится как «неизвестно», а не как ноль. Если показатель не заполняется больше недели подряд — он перестаёт участвовать в «Точках роста».</p>
+      <p><b>Аномалии</b> — сравнивает последний полностью заполненный (не черновой) день с днём перед ним и предупреждает о резких скачках (показы, CTR, конверсии, рекламные расходы, для Ozon — ещё и позиция в поиске).</p>
+      <p><b>История по товару</b> — вся история день за днём, с цветовой подсветкой изменений показателей. Расчётные показатели (СПП, CTR, конверсии, ДРР, CPC, CPO) остаются только для просмотра, всё остальное редактируется прямо в ячейках.</p>
     </div>
     <div class="panel">
       <h2>Воронка и точки роста</h2>
       <p><b>Воронка за месяц</b> — показы → клики → корзины → заказы → выкупы, с процентом перехода на каждом этапе.</p>
       <p><b>Диагноз воронки</b> — один общий вывод о том, что сейчас главная проблема (или что всё в порядке), плюс вероятные причины с примерной значимостью каждой. Сравнивает последние 2 недели фактических (не черновых) дней — неделю перед этим с самой последней неделей, а не половины выбранного месяца, поэтому работает даже в начале месяца.</p>
-      <p><b>Точки роста</b> — подробный разбор по каждому этапу воронки отдельно: показывается только то, что ниже нормы, с причинами и что проверить. Пороги нормы можно настроить под конкретный товар на вкладке «Товары».</p>
+      <p><b>Точки роста</b> — подробный разбор по каждому этапу воронки отдельно: показывается только то, что ниже нормы, с причинами и что проверить. Пороги нормы можно настроить под конкретный товар на вкладке «Товары». % выкупа считается без учёта заказов младше 7 дней — время на доставку, иначе процент был бы искусственно занижен свежими, ещё не доехавшими заказами.</p>
       <p><b>Рекомендации</b> — про темп плана, ДРР и динамику конверсии, с конкретными цифрами.</p>
       <p><b>Журнал изменений</b> — оценивает, помогло ли конкретное изменение карточки: сравнивает нужный показатель до/после, с поправкой на то, сколько дней нужно подождать для честной оценки этого типа правки.</p>
     </div>
@@ -497,7 +450,6 @@ const CHANGE_ANALYSIS={
 };
 const state={ products:[] };
 let drrChart=null, crChart=null;
-let dailyPrefill={lk:null, customer:null, isEdit:false};
 
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function pad2(n){ return String(n).padStart(2,'0'); }
@@ -648,8 +600,7 @@ function fillFilteredProductSelect(mpId, productId){
 }
 document.getElementById('daily_mp').addEventListener('change', ()=>{
   fillFilteredProductSelect('daily_mp','daily_product');
-  document.getElementById('daily_date').value='';
-  loadDailyForm(); renderDailyTab();
+  onDailyProductChange();
 });
 document.getElementById('plan_product_mp').addEventListener('change', ()=>{ fillFilteredProductSelect('plan_product_mp','plan_product'); renderPlanTab(); });
 document.getElementById('funnel_product_mp').addEventListener('change', ()=>{ fillFilteredProductSelect('funnel_product_mp','funnel_product'); renderFunnelTab(); });
@@ -1115,7 +1066,7 @@ async function renderPlanTab(){
 
   const trafficPlanTotal = computeTrafficPlan(product, planUnits);
   const th=getThresholds(product);
-  const trafficLabel = product.mp==='ozon' ? 'уник. посетителей' : 'показов';
+  const trafficLabel = 'показов';
   let trafficPlanKpi='';
   if(trafficPlanTotal!==null){
     const trafficPlanPerDay = trafficPlanTotal/dim;
@@ -1148,289 +1099,48 @@ async function renderPlanTab(){
     </div>${stockWarning}</div>`;
 }
 
-/* ---------------- ЕЖЕДНЕВНЫЕ ДАННЫЕ ---------------- */
-function suggestOrdersRub(){
-  const qty=+document.getElementById('d_orders').value||0;
-  const basisPrice = (dailyPrefill.isEdit && !dailyPrefill.isDraft) ? (+document.getElementById('d_priceLK').value||0) : (dailyPrefill.lk||+document.getElementById('d_priceLK').value||0);
-  document.getElementById('d_ordersRub').value = qty>0 ? Math.round(qty*basisPrice) : 0;
-}
-document.getElementById('d_orders').addEventListener('input', suggestOrdersRub);
+/* ---------------- ЕЖЕДНЕВНЫЕ ДАННЫЕ (редактирование прямо в таблице истории, без отдельной формы) ---------------- */
 
-function updateDailySppPreview(){
-  const lk=document.getElementById('d_priceLK').value, cu=document.getElementById('d_priceCustomer').value;
-  const spp=computeSPP(lk,cu);
-  document.getElementById('d_spp_preview').value = spp!==null? fmt1(spp)+'%':'';
-}
-document.getElementById('d_priceLK').addEventListener('input', ()=>{ updateDailySppPreview(); suggestOrdersRub(); });
-document.getElementById('d_priceCustomer').addEventListener('input', updateDailySppPreview);
-
-function getPromoValue(){
-  if(document.getElementById('promo_yes').checked) return 'yes';
-  if(document.getElementById('promo_no').checked) return 'no';
-  return null;
-}
-function setPromoCheckboxes(value){
-  document.getElementById('promo_yes').checked = value==='yes';
-  document.getElementById('promo_no').checked = value==='no';
-}
-document.getElementById('promo_yes').addEventListener('change', ()=>{ if(document.getElementById('promo_yes').checked) document.getElementById('promo_no').checked=false; });
-document.getElementById('promo_no').addEventListener('change', ()=>{ if(document.getElementById('promo_no').checked) document.getElementById('promo_yes').checked=false; });
-
-function renderBidsForm(product, sourceBids){
-  const bidCount = bidCountForMp(product?.mp);
-  const src = sourceBids || product?.adBids;
-  const bids = (src && src.length===bidCount) ? src : Array.from({length:bidCount},(_,i)=>({label:`Ставка ${i+1}`,value:null}));
-  document.getElementById('bidsWrap').innerHTML = bids.map((b,i)=>`
-    <div class="bidrow">
-      <input data-bidlabel="${i}" value="${b.label}" placeholder="Название ставки">
-      <input data-bidvalue="${i}" type="text" value="${b.value??''}" placeholder="Значение (число, текст или знак)">
-    </div>`).join('');
-}
-
-let loadFormToken=0;
-async function loadDailyForm(){
-  const myToken=++loadFormToken;
-  const productId=document.getElementById('daily_product').value;
-  const date=document.getElementById('daily_date').value;
-  const noteEl=document.getElementById('priceLogicNote');
-  const selProduct = state.products.find(p=>p.id===productId);
-  const isOzon = selProduct?.mp==='ozon';
-  const isWb = selProduct?.mp==='wb';
-  const isYm = selProduct?.mp==='ym';
-  document.getElementById('d_uniqVisitorsWrap').style.display = isOzon? 'flex':'none';
-  document.getElementById('d_searchPosWrap').style.display = isOzon? 'flex':'none';
-  document.getElementById('d_ozonCardWrap').style.display = isOzon? 'flex':'none';
-  document.getElementById('d_adspend_ozon_wrap').style.display = isOzon? 'flex':'none';
-  document.getElementById('d_adspend_ark_wrap').style.display = isWb? 'flex':'none';
-  document.getElementById('d_adspend_search_wrap').style.display = isWb? 'flex':'none';
-  document.getElementById('d_adspend_bpr_wrap').style.display = isYm? 'flex':'none';
-  document.getElementById('d_adspend_bpk_wrap').style.display = isYm? 'flex':'none';
-  document.getElementById('d_adspend_polki_wrap').style.display = isYm? 'flex':'none';
-  if(!productId){ noteEl.textContent=''; document.getElementById('bidsWrap').innerHTML=''; return; }
-  const product=selProduct;
-  if(!date){
-    renderBidsForm(product);
-    noteEl.textContent='Данные сохранены. Выберите дату, чтобы внести следующую запись.';
-    document.getElementById('editBanner').style.display='none';
-    document.getElementById('saveDailyBtn').textContent='Сохранить день';
-    document.getElementById('d_priceLK').value='';
-    document.getElementById('d_priceCustomer').value='';
-    document.getElementById('d_priceOzonCard').value='';
-    document.getElementById('d_uniqVisitors').value='';
-    document.getElementById('d_searchPos').value='';
-    document.getElementById('d_spp_preview').value='';
-    document.querySelectorAll('.d_changeType_cb').forEach(cb=>{ cb.checked=false; });
-    setPromoCheckboxes(null);
-    ['d_impr','d_clicks','d_carts','d_orders','d_ordersRub','d_buyouts','d_cancels','d_adspend','d_adspend_ark','d_adspend_search','d_adspend_bpr','d_adspend_bpk','d_adspend_polki','d_change'].forEach(id=>document.getElementById(id).value='');
-    return;
-  }
+// Создаёт цепочку черновиков от последнего известного дня до сегодняшнего, если их ещё нет.
+// Ничего не делает, если черновик на сегодня уже существует (повторные заходы в тот же день безопасны).
+async function ensureTodayDraft(productId){
   const dm=await getDailyMap(productId);
-  if(myToken!==loadFormToken) return;
-  const existing=dm[date];
+  const dates=Object.keys(dm).sort();
+  if(dates.length===0) return; // нет истории вообще — первый день вносится вручную через историю
+  const today=todayISO();
+  let cursorDate=dates[dates.length-1];
+  if(cursorDate>=today) return;
 
-  const banner=document.getElementById('editBanner');
-  const saveBtn=document.getElementById('saveDailyBtn');
-  const changeTypesOf = e => e?.changeTypes || (e?.changeType ? [e.changeType] : []);
-  if(existing){
-    dailyPrefill={lk:existing.priceLK, customer:existing.priceCustomer, ozonCard:existing.priceOzonCard, isEdit:true, isDraft:!!existing.draft,
-      stagedChangeTypes: existing.changeTypes || (existing.changeType?[existing.changeType]:[]), stagedChangeNote: existing.changeNote||'',
-      stagedBids: (existing.adBids && existing.adBids.length) ? existing.adBids : (product?.adBids||null)};
-    renderBidsForm(product, dailyPrefill.stagedBids);
-    document.getElementById('d_priceLK').value=existing.priceLK||'';
-    document.getElementById('d_priceCustomer').value=existing.priceCustomer||'';
-    document.getElementById('d_priceOzonCard').value=existing.priceOzonCard||'';
-    document.getElementById('d_impr').value=existing.impressions||'';
-    document.getElementById('d_uniqVisitors').value=existing.uniqueVisitors||'';
-    document.getElementById('d_searchPos').value=existing.searchPosition??'';
-    document.getElementById('d_clicks').value=existing.clicks||'';
-    document.getElementById('d_carts').value=existing.carts||'';
-    document.getElementById('d_orders').value=existing.orders||'';
-    document.getElementById('d_ordersRub').value=existing.ordersRub||'';
-    document.getElementById('d_buyouts').value=existing.buyouts??'';
-    document.getElementById('d_cancels').value=existing.cancellations??'';
-    document.getElementById('d_adspend').value=existing.adspend||'';
-    document.getElementById('d_adspend_ark').value=existing.adspend_ark||'';
-    document.getElementById('d_adspend_search').value=existing.adspend_search||'';
-    document.getElementById('d_adspend_bpr').value=existing.adspend_bpr||'';
-    document.getElementById('d_adspend_bpk').value=existing.adspend_bpk||'';
-    document.getElementById('d_adspend_polki').value=existing.adspend_polki||'';
-    document.getElementById('d_change').value = existing.draft ? '' : (existing.changeNote||'');
-    const checked = existing.draft ? [] : changeTypesOf(existing);
-    document.querySelectorAll('.d_changeType_cb').forEach(cb=>{ cb.checked = checked.includes(cb.value); });
-    setPromoCheckboxes(existing.promo||null);
-    if(existing.draft){
-      noteEl.textContent='Цена (и отметка об изменении, если она была) уже зафиксированы за этот день — впишите показатели воронки и сохраните. Галочки ниже пустые специально: если сегодня произошло ещё одно изменение — отметьте его здесь, оно уйдёт в черновик на завтра, а не задвоится с уже зафиксированным.';
-      banner.style.display='flex';
-      banner.style.background='var(--warn-bg)'; banner.style.color='var(--warn)';
-      document.getElementById('editBannerText').textContent=`Черновик за ${date} — нужно дополнить`;
-      saveBtn.textContent='Заполнить день';
-    } else {
-      noteEl.textContent='Редактируется уже сохранённый день — цена ниже сохранится как есть, без переноса на будущее.';
-      banner.style.display='flex';
-      banner.style.background='var(--info-bg)'; banner.style.color='var(--info)';
-      document.getElementById('editBannerText').textContent=`Редактирование записи за ${date}`;
-      saveBtn.textContent='Сохранить изменения';
+  let changed=false;
+  while(cursorDate<today){
+    const nextDate=datePlusDays(cursorDate,1);
+    if(!dm[nextDate]){
+      const src=dm[cursorDate];
+      dm[nextDate]={
+        priceLK:src.priceLK||0, priceCustomer:src.priceCustomer||0, priceOzonCard:src.priceOzonCard||0,
+        impressions:0, uniqueVisitors:0, searchPosition:null, clicks:0, carts:0, orders:0, ordersRub:0,
+        buyouts:0, cancellations:0, adspend:0, adspend_ark:0, adspend_search:0, adspend_bpr:0, adspend_bpk:0, adspend_polki:0,
+        changeNote:'', changeTypes:[], promo:src.promo??null,
+        adBids: src.adBids ? src.adBids.map(b=>({...b})) : [],
+        draft:true
+      };
+      changed=true;
     }
-  } else {
-    dailyPrefill={lk:product?.currentPriceLK||null, customer:product?.currentPriceCustomer||null, ozonCard:product?.currentPriceOzonCard||null, isEdit:false, stagedBids:product?.adBids||null};
-    renderBidsForm(product, dailyPrefill.stagedBids);
-    document.getElementById('d_priceLK').value=dailyPrefill.lk||'';
-    document.getElementById('d_priceCustomer').value=dailyPrefill.customer||'';
-    document.getElementById('d_priceOzonCard').value=dailyPrefill.ozonCard||'';
-    document.getElementById('d_uniqVisitors').value='';
-    document.getElementById('d_searchPos').value='';
-    document.querySelectorAll('.d_changeType_cb').forEach(cb=>{ cb.checked=false; });
-    setPromoCheckboxes(product?.currentPromo||null);
-    ['d_impr','d_clicks','d_carts','d_orders','d_ordersRub','d_buyouts','d_adspend','d_adspend_ark','d_adspend_search','d_adspend_bpr','d_adspend_bpk','d_adspend_polki','d_change'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('d_cancels').value='0';
-    noteEl.textContent = dailyPrefill.lk ? 'Цена подставлена из последнего сохранённого значения. Если сегодня цена изменилась или отмечено изменение в карточке — для заказов этого дня всё равно используется прежняя цена, а на завтра дашборд сам подготовит черновик с новой ценой и пометкой об изменении — просто дополните его показателями воронки, когда дойдёт очередь.' : 'Это первая запись по товару — введите текущую цену.';
-    banner.style.display='none';
-    saveBtn.textContent='Сохранить день';
+    cursorDate=nextDate;
   }
-  updateDailySppPreview();
+  if(changed){
+    const ok=await storeSet('daily:'+productId, dm);
+    if(!ok) console.error('Не удалось автоматически создать день на сегодня — сбой хранилища');
+  }
 }
-document.getElementById('daily_product').addEventListener('change', ()=>{
-  document.getElementById('daily_date').value='';
-  loadDailyForm(); renderDailyTab();
-});
-document.getElementById('daily_date').addEventListener('change', loadDailyForm);
-document.getElementById('cancelEditBtn').addEventListener('click', async ()=>{
-  document.getElementById('daily_date').value='';
-  await loadDailyForm();
-});
 
-document.getElementById('saveDailyBtn').addEventListener('click', async ()=>{
+async function onDailyProductChange(){
   const productId=document.getElementById('daily_product').value;
-  if(!productId){ alert('Выберите товар'); return; }
-  const date=document.getElementById('daily_date').value;
-  if(!date){ alert('Выберите дату'); return; }
-  const product=state.products.find(p=>p.id===productId);
-  const isOzon = product?.mp==='ozon';
-  const isWb = product?.mp==='wb';
-  const isYm = product?.mp==='ym';
-  const typedLK=+document.getElementById('d_priceLK').value||0;
-  const typedCustomer=+document.getElementById('d_priceCustomer').value||0;
-  const typedOzonCard=+document.getElementById('d_priceOzonCard').value||0;
-
-  const isTrueEdit = dailyPrefill.isEdit && !dailyPrefill.isDraft;
-  let effectiveLK, effectiveCustomer, effectiveOzonCard;
-  if(isTrueEdit){
-    effectiveLK=typedLK; effectiveCustomer=typedCustomer; effectiveOzonCard=typedOzonCard;
-  } else {
-    effectiveLK = dailyPrefill.lk || typedLK;
-    effectiveCustomer = dailyPrefill.customer || typedCustomer;
-    effectiveOzonCard = dailyPrefill.ozonCard || typedOzonCard;
-  }
-
-  let adspendTotal=0, adspendBreakdown={};
-  if(isOzon){
-    adspendTotal=+document.getElementById('d_adspend').value||0;
-  } else if(isWb){
-    const ark=+document.getElementById('d_adspend_ark').value||0;
-    const search=+document.getElementById('d_adspend_search').value||0;
-    adspendTotal=ark+search;
-    adspendBreakdown={adspend_ark:ark, adspend_search:search};
-  } else if(isYm){
-    const bpr=+document.getElementById('d_adspend_bpr').value||0;
-    const bpk=+document.getElementById('d_adspend_bpk').value||0;
-    const polki=+document.getElementById('d_adspend_polki').value||0;
-    adspendTotal=bpr+bpk+polki;
-    adspendBreakdown={adspend_bpr:bpr, adspend_bpk:bpk, adspend_polki:polki};
-  }
-
-  const changeTypes=[...document.querySelectorAll('.d_changeType_cb:checked')].map(cb=>cb.value);
-  const changeNoteTyped=document.getElementById('d_change').value.trim();
-  const hasChangeInfo = changeNoteTyped!=='' || changeTypes.length>0;
-  // форма для черновика показывает пустые галочки/заметку — значит, любое заполненное поле здесь уже новое
-  const hasNewChangeInfo = hasChangeInfo;
-
-  const entry={
-    priceLK: effectiveLK,
-    priceCustomer: effectiveCustomer,
-    impressions:+document.getElementById('d_impr').value||0,
-    clicks:+document.getElementById('d_clicks').value||0,
-    carts:+document.getElementById('d_carts').value||0,
-    orders:+document.getElementById('d_orders').value||0,
-    ordersRub:(+document.getElementById('d_orders').value||0)>0 ? (+document.getElementById('d_ordersRub').value||0) : 0,
-    buyouts: document.getElementById('d_buyouts').value===''? null : +document.getElementById('d_buyouts').value,
-    cancellations: document.getElementById('d_cancels').value===''? null : +document.getElementById('d_cancels').value,
-    adspend: adspendTotal,
-    ...adspendBreakdown,
-    // на этот день всегда сохраняется то, что уже было зафиксировано ранее (для черновика) или введено вручную (при настоящем редактировании)
-    changeNote: isTrueEdit ? changeNoteTyped : (dailyPrefill.stagedChangeNote||''),
-    changeTypes: isTrueEdit ? changeTypes : (dailyPrefill.stagedChangeTypes||[]),
-    promo: getPromoValue()
-  };
-  if(isOzon){
-    entry.uniqueVisitors=+document.getElementById('d_uniqVisitors').value||0;
-    entry.priceOzonCard=effectiveOzonCard;
-    entry.searchPosition = document.getElementById('d_searchPos').value===''? null : +document.getElementById('d_searchPos').value;
-  }
-
-  const dm=await getDailyMap(productId);
-  const bidCount=bidCountForMp(product?.mp);
-  const typedBids=Array.from({length:bidCount},(_,i)=>({
-    label: document.querySelector(`[data-bidlabel="${i}"]`)?.value.trim() || `Ставка ${i+1}`,
-    value: document.querySelector(`[data-bidvalue="${i}"]`)?.value.trim() || null
-  }));
-  const stagedBidsArr = dailyPrefill.stagedBids;
-  const effectiveBids = isTrueEdit ? typedBids : ((stagedBidsArr && stagedBidsArr.length===bidCount) ? stagedBidsArr : typedBids);
-  entry.adBids=effectiveBids;
-  dm[date]=entry;
-
-  // цена и ставки переносятся на завтра всегда (обычный ежедневный перенос), заметка об изменении — только если она новая
-  if(!isTrueEdit){
-    const nextDate=datePlusDays(date,1);
-    const nextExisting=dm[nextDate];
-    const draftEntry = (nextExisting && !nextExisting.draft) ? nextExisting : (nextExisting ? {...nextExisting} : {
-      priceLK:0, priceCustomer:0, impressions:0, clicks:0, carts:0, orders:0, ordersRub:0,
-      buyouts:0, cancellations:0, adspend:0, changeNote:'', changeTypes:[], promo:null, adBids:typedBids, draft:true
-    });
-    if(!nextExisting || nextExisting.draft){
-      draftEntry.priceLK = typedLK || effectiveLK;
-      draftEntry.priceCustomer = typedCustomer || effectiveCustomer;
-      if(isOzon) draftEntry.priceOzonCard = typedOzonCard || effectiveOzonCard;
-      draftEntry.adBids = typedBids;
-      draftEntry.promo = entry.promo;
-      if(hasNewChangeInfo){ draftEntry.changeNote=changeNoteTyped; draftEntry.changeTypes=changeTypes; }
-      draftEntry.draft=true;
-      dm[nextDate]=draftEntry;
-    }
-  }
-
-  const ok=await storeSet('daily:'+productId, dm);
-  if(!ok){
-    alert('Не удалось сохранить день — сбой хранилища. Данные из формы никуда не делись, попробуйте нажать «Сохранить» ещё раз.');
-    return;
-  }
-
-  if(product){
-    if(!isTrueEdit){
-      product.currentPriceLK=typedLK||effectiveLK;
-      product.currentPriceCustomer=typedCustomer||effectiveCustomer;
-      if(isOzon) product.currentPriceOzonCard=typedOzonCard||effectiveOzonCard;
-      product.adBids=typedBids;
-    } else {
-      const maxDate=Object.keys(dm).sort().slice(-1)[0];
-      if(date===maxDate){
-        product.currentPriceLK=typedLK;
-        product.currentPriceCustomer=typedCustomer;
-        if(isOzon) product.currentPriceOzonCard=typedOzonCard;
-        product.adBids=typedBids;
-      }
-    }
-    product.currentPromo=entry.promo;
-    const productCacheOk=await storeSet('product:'+productId, product);
-    if(!productCacheOk){
-      alert('День сохранён, но не удалось обновить карточку товара (текущую цену/ставки на будущее) — сбой хранилища. Проверьте это при следующем вводе.');
-    }
-    await loadProducts();
-  }
-
-  document.getElementById('daily_date').value='';
-  await loadDailyForm();
-  renderDailyTab();
-});
+  if(productId) await ensureTodayDraft(productId);
+  await renderAnomalies();
+  await renderDailyTab();
+}
+document.getElementById('daily_product').addEventListener('change', onDailyProductChange);
 
 function deltaHtml(curr, prev, {goodUp=true, decimals=1, suffix='', neutral=false}={}){
   if(prev===null||prev===undefined||curr===null||curr===undefined) return '<span class="delta-na">—</span>';
@@ -1501,6 +1211,9 @@ async function renderAnomalies(){
     const times=(curr.adspend/prev.adspend).toFixed(1);
     anomalies.push(`Рекламные расходы выросли в ${times} раза — с ${fmt(prev.adspend)} ₽ до ${fmt(curr.adspend)} ₽. Проверьте: не подняли ли ставки вручную, не запустилась ли лишняя кампания, не выросла ли конкуренция по ставкам за клик.`);
   }
+  if(product?.mp==='ozon' && curr.searchPosition!=null && prev.searchPosition!=null && prev.searchPosition>0 && curr.searchPosition >= prev.searchPosition*1.5){
+    anomalies.push(`Позиция в поиске и каталоге резко ухудшилась — с ${fmt(prev.searchPosition)} до ${fmt(curr.searchPosition)}. Проверьте: не изменился ли алгоритм ранжирования, не выросла ли ставка конкурентов, не упал ли рейтинг/остатки, не отключилась ли реклама.`);
+  }
   if(anomalies.length===0){
     wrap.innerHTML=`<div class="rec ok"><div class="dot"></div><div>За ${lastDate} резких отклонений от ${dayBefore(lastDate)} не найдено.</div></div>`;
   } else {
@@ -1531,7 +1244,25 @@ async function renderDailyTab(){
   const product=state.products.find(p=>p.id===productId);
   const isOzon = product?.mp==='ozon';
   const dm=await getDailyMap(productId);
-  if(Object.keys(dm).length===0){ wrap.innerHTML='<div class="empty">Пока нет данных — внесите первый день выше</div>'; return; }
+  if(Object.keys(dm).length===0){
+    wrap.innerHTML=`<div class="empty">У этого товара пока нет ни одной записи.<br><button class="btn" id="createFirstDayBtn" style="margin-top:10px;">Создать первый день (сегодня)</button></div>`;
+    document.getElementById('createFirstDayBtn').addEventListener('click', async ()=>{
+      const today=todayISO();
+      const bidCount=bidCountForMp(product?.mp);
+      dm[today]={
+        priceLK:0, priceCustomer:0, priceOzonCard:0,
+        impressions:0, uniqueVisitors:0, searchPosition:null, clicks:0, carts:0, orders:0, ordersRub:0,
+        buyouts:0, cancellations:0, adspend:0, adspend_ark:0, adspend_search:0, adspend_bpr:0, adspend_bpk:0, adspend_polki:0,
+        changeNote:'', changeTypes:[], promo:null,
+        adBids: Array.from({length:bidCount},(_,i)=>({label:`Ставка ${i+1}`,value:null})),
+        draft:true
+      };
+      const ok=await storeSet('daily:'+productId, dm);
+      if(!ok){ alert('Не удалось создать день — сбой хранилища, попробуйте ещё раз'); return; }
+      renderDailyTab();
+    });
+    return;
+  }
 
   const month=document.getElementById('daily_history_month').value || monthNow();
   document.getElementById('daily_history_month').value=month;
@@ -1552,36 +1283,36 @@ async function renderDailyTab(){
     isOzon?{label:'Цена с Ozon картой, ₽', get:e=>e?.priceOzonCard, fmt:v=>v?fmt(v):'', editField:'priceOzonCard'}:null,
     {label:'СПП, %', get:e=>e?.spp, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
     {section:'Трафик'},
-    {label:'Показы', get:e=>e?.impressions, fmt:v=>v!=null?fmt(v):''},
-    isOzon?{label:'Уникальные посетители', get:e=>e?.uniqueVisitors, fmt:v=>v!=null?fmt(v):''}:null,
+    {label:'Показы', get:e=>e?.impressions, fmt:v=>v!=null?fmt(v):'', editField:'impressions'},
+    isOzon?{label:'Уникальные посетители', get:e=>e?.uniqueVisitors, fmt:v=>v!=null?fmt(v):'', editField:'uniqueVisitors'}:null,
     isOzon?{label:'Позиция в поиске и каталоге', get:e=>e?.searchPosition, fmt:v=>v!=null?fmt(v):'', editField:'searchPosition'}:null,
-    {label:'Клики', get:e=>e?.clicks, fmt:v=>v!=null?fmt(v):''},
+    {label:'Клики', get:e=>e?.clicks, fmt:v=>v!=null?fmt(v):'', editField:'clicks'},
     {label:'CTR, %', get:e=>e?.ctr, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
     {section:'Воронка'},
-    {label:'Корзины', get:e=>e?.carts, fmt:v=>v!=null?fmt(v):''},
+    {label:'Корзины', get:e=>e?.carts, fmt:v=>v!=null?fmt(v):'', editField:'carts'},
     {label:'CR клик→корзина, %', get:e=>e?.cr1, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
-    {label:'Заказы, шт', get:e=>e?.orders, fmt:v=>v!=null?fmt(v):''},
+    {label:'Заказы, шт', get:e=>e?.orders, fmt:v=>v!=null?fmt(v):'', editField:'orders'},
     {label:'CR корзина→заказ, %', get:e=>e?.cr2, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
     {label:'CR клик→заказ, %', get:e=>e?.crf, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
-    {label:'Выкупили, шт', get:e=>e?.buyouts, fmt:v=>v!=null?fmt(v):''},
-    {label:'Отмены, шт', get:e=>e?.cancellations, fmt:v=>v!=null?fmt(v):''},
+    {label:'Выкупили, шт', get:e=>e?.buyouts, fmt:v=>v!=null?fmt(v):'', editField:'buyouts'},
+    {label:'Отмены, шт', get:e=>e?.cancellations, fmt:v=>v!=null?fmt(v):'', editField:'cancellations'},
     {section:'Реклама и финансы'},
     {label:'Заказы, ₽', get:e=>e?.ordersRub, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'ordersRub'},
-    {label:'Реклама, ₽', get:e=>e?.adspend, fmt:v=>v!=null?fmt(v)+' ₽':''},
+    {label:'Реклама, ₽', get:e=>e?.adspend, fmt:v=>v!=null?fmt(v)+' ₽':'', editField: isOzon?'adspend':null},
+    product.mp==='wb'?{label:'АРК, факт ₽', get:e=>e?.adspend_ark, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_ark'}:null,
+    product.mp==='wb'?{label:'Поиск, факт ₽', get:e=>e?.adspend_search, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_search'}:null,
+    product.mp==='ym'?{label:'БПР, факт ₽', get:e=>e?.adspend_bpr, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_bpr'}:null,
+    product.mp==='ym'?{label:'БПК, факт ₽', get:e=>e?.adspend_bpk, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_bpk'}:null,
+    product.mp==='ym'?{label:'Полки, факт ₽', get:e=>e?.adspend_polki, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_polki'}:null,
     {label:'ДРР, %', get:e=>e?.drr, fmt:v=>v!=null?fmt1(v)+'%':''},
     {label:'CPC, ₽', get:e=>e?.cpc, fmt:v=>v!=null?fmt1(v)+' ₽':''},
     {label:'CPO, ₽', get:e=>e?.cpo, fmt:v=>v!=null?fmt(v)+' ₽':''},
     ...bidLabels.map((label,i)=>({label, get:e=>e?.adBids?.[i]?.value, fmt:v=>v!=null?v:'', isEditableBid:true, bidIndex:i})),
     {section:'Акции'},
-    {label:'Участие в акции', get:e=>e? (e.promo==='yes'?'Участвую':e.promo==='no'?'Не участвую':'') : null, fmt:v=>v||'', isText:true},
+    {label:'Участие в акции', get:e=>e?.promo??'', fmt:v=>v==='yes'?'Участвую':v==='no'?'Не участвую':'', isEditablePromo:true},
     {section:'Изменения'},
-    {label:'Что изменили', get:e=>{
-      if(!e) return null;
-      const types=e.changeTypes || (e.changeType?[e.changeType]:[]);
-      const typeLabels=types.map(t=>CHANGE_TYPES[t]?.label).filter(Boolean).join(', ');
-      if(typeLabels && e.changeNote) return `${typeLabels}: ${e.changeNote}`;
-      return typeLabels || e.changeNote || null;
-    }, fmt:v=>v||'', isText:true, isEditableNote:true},
+    {label:'Тип изменения', get:e=>e?.changeTypes || (e?.changeType?[e.changeType]:[]), isEditableChangeType:true},
+    {label:'Комментарий', get:e=>e?.changeNote, fmt:v=>v||'', isText:true, isEditableComment:true},
     {section:''},
     {label:'', get:()=>null, isAction:true}
   ].filter(Boolean);
@@ -1597,20 +1328,35 @@ async function renderDailyTab(){
     if(r.isAction){
       return `<tr><td class="sticky txt">Действия</td>${dates.map(d=>{
         const has=!!enrichedByDate[d];
-        return `<td>${has?`<button class="btn secondary" data-editdaily="${d}" style="padding:2px 6px;font-size:11px;">✎</button> <button class="btn danger" data-deldaily="${d}" style="padding:2px 6px;font-size:11px;">×</button>`:''}</td>`;
+        return `<td>${has?`<button class="btn danger" data-deldaily="${d}" style="padding:2px 6px;font-size:11px;">× Удалить день</button>`:''}</td>`;
       }).join('')}</tr>`;
     }
     const cells=dates.map(d=>{
       const e=enrichedByDate[d]||null;
       const val=r.get(e);
-      if(r.isEditableNote){
+      if(r.isEditableChangeType){
         if(!e) return `<td></td>`;
-        const safe=(val||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        return `<td class="txt"><textarea class="note-edit-input" data-notedate="${d}" rows="2" style="width:120px;resize:vertical;border:none;background:transparent;font-family:inherit;font-size:11.5px;color:inherit;white-space:normal;overflow-wrap:break-word;padding:2px;">${safe}</textarea></td>`;
+        const selected=val||[];
+        const displayText=selected.length? selected.map(t=>CHANGE_TYPES[t]?.label).filter(Boolean).join(', ') : '—';
+        return `<td><div class="changetype-display" data-notedate="${d}" tabindex="0" style="cursor:pointer;min-height:16px;padding:2px;font-size:11px;color:inherit;white-space:normal;">${displayText}</div></td>`;
+      }
+      if(r.isEditableComment){
+        if(!e) return `<td></td>`;
+        const safe=(val||'').replace(/"/g,'&quot;');
+        return `<td><input type="text" class="comment-edit-input" data-notedate="${d}" value="${safe}" style="width:160px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;padding:2px;"></td>`;
+      }
+      if(r.isEditablePromo){
+        if(!e) return `<td></td>`;
+        const cur=val||'';
+        return `<td><select class="promo-edit-input" data-notedate="${d}" style="border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;padding:2px;">
+          <option value=""${cur===''?' selected':''}>—</option>
+          <option value="yes"${cur==='yes'?' selected':''}>Участвую</option>
+          <option value="no"${cur==='no'?' selected':''}>Не участвую</option>
+        </select></td>`;
       }
       if(r.editField){
         if(!e) return `<td></td>`;
-        return `<td><input type="number" class="num-edit-input" data-notedate="${d}" data-editfield="${r.editField}" value="${val??''}" style="width:90px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:left;padding:2px;"></td>`;
+        return `<td><input type="number" class="num-edit-input" data-notedate="${d}" data-editfield="${r.editField}" value="${val??''}" style="width:76px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:left;padding:2px;"></td>`;
       }
       if(r.isEditableBid){
         if(!e) return `<td></td>`;
@@ -1637,17 +1383,59 @@ async function renderDailyTab(){
     wrap.innerHTML=`<table class="daytable"><thead><tr><th class="sticky">Показатель</th>${theadCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
   }
 
-  wrap.querySelectorAll('.note-edit-input').forEach(inp=>{
+  const FUNNEL_FIELDS=['impressions','clicks','carts','orders'];
+  wrap.querySelectorAll('.changetype-display').forEach(div=>{
+    div.addEventListener('click', ()=>{
+      const d=div.dataset.notedate;
+      const e=enrichedByDate[d];
+      const selected=(e?.changeTypes)||[];
+      const optionsHtml=Object.keys(CHANGE_TYPES).map(key=>`<option value="${key}"${selected.includes(key)?' selected':''}>${CHANGE_TYPES[key].label}</option>`).join('');
+      const sel=document.createElement('select');
+      sel.multiple=true;
+      sel.size=Object.keys(CHANGE_TYPES).length;
+      sel.dataset.notedate=d;
+      sel.style.cssText='width:150px;font-family:inherit;font-size:11px;color:inherit;border:1px solid var(--border);background:var(--surface);padding:2px;';
+      sel.innerHTML=optionsHtml;
+      div.replaceWith(sel);
+      sel.focus();
+      sel.addEventListener('blur', async ()=>{
+        const newTypes=[...sel.selectedOptions].map(o=>o.value);
+        const dm2=await getDailyMap(productId);
+        if(dm2[d]){
+          dm2[d].changeTypes=newTypes;
+          const ok=await storeSet('daily:'+productId, dm2);
+          if(!ok) alert('Не удалось сохранить — попробуйте ещё раз');
+        }
+        renderDailyTab();
+      }, {once:true});
+    });
+  });
+  wrap.querySelectorAll('.comment-edit-input').forEach(inp=>{
     inp.addEventListener('change', async ()=>{
       const d=inp.dataset.notedate;
       const dm2=await getDailyMap(productId);
       if(dm2[d]){
         dm2[d].changeNote = inp.value.trim();
         const ok=await storeSet('daily:'+productId, dm2);
-        if(!ok) alert('Не удалось сохранить заметку — попробуйте ещё раз');
+        if(!ok) alert('Не удалось сохранить комментарий — попробуйте ещё раз');
       }
     });
   });
+  wrap.querySelectorAll('.promo-edit-input').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      const d=sel.dataset.notedate;
+      const dm2=await getDailyMap(productId);
+      if(dm2[d]){
+        const oldVal=dm2[d].promo;
+        dm2[d].promo = sel.value===''? null : sel.value;
+        const ok=await storeSet('daily:'+productId, dm2);
+        if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); dm2[d].promo=oldVal; sel.value=oldVal??''; return; }
+        scheduleDailyTableRerender();
+      }
+    });
+  });
+  const AD_BREAKDOWN_WB=['adspend_ark','adspend_search'];
+  const AD_BREAKDOWN_YM=['adspend_bpr','adspend_bpk','adspend_polki'];
   wrap.querySelectorAll('.num-edit-input').forEach(inp=>{
     inp.addEventListener('change', async ()=>{
       const d=inp.dataset.notedate;
@@ -1655,8 +1443,17 @@ async function renderDailyTab(){
       const dm2=await getDailyMap(productId);
       if(dm2[d]){
         const oldVal=dm2[d][field];
-        const emptyAsNull = field==='searchPosition';
+        const emptyAsNull = ['searchPosition','buyouts','cancellations'].includes(field);
         dm2[d][field] = inp.value==='' ? (emptyAsNull? null : 0) : +inp.value;
+        if(AD_BREAKDOWN_WB.includes(field)){
+          dm2[d].adspend = (+dm2[d].adspend_ark||0) + (+dm2[d].adspend_search||0);
+        } else if(AD_BREAKDOWN_YM.includes(field)){
+          dm2[d].adspend = (+dm2[d].adspend_bpr||0) + (+dm2[d].adspend_bpk||0) + (+dm2[d].adspend_polki||0);
+        }
+        if(field==='orders'){
+          dm2[d].ordersRub = Math.round((+dm2[d].orders||0) * (+dm2[d].priceLK||0));
+        }
+        if(FUNNEL_FIELDS.includes(field) && dm2[d].draft) delete dm2[d].draft;
         const ok=await storeSet('daily:'+productId, dm2);
         if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); dm2[d][field]=oldVal; inp.value=oldVal??''; return; }
         scheduleDailyTableRerender();
@@ -1678,15 +1475,10 @@ async function renderDailyTab(){
       }
     });
   });
-  wrap.querySelectorAll('[data-editdaily]').forEach(b=>b.addEventListener('click', async ()=>{
-    document.getElementById('daily_date').value=b.dataset.editdaily;
-    await loadDailyForm();
-    document.getElementById('daily_date').scrollIntoView({behavior:'smooth', block:'center'});
-    document.getElementById('d_priceLK').focus();
-  }));
+
   wrap.querySelectorAll('[data-deldaily]').forEach(b=>b.addEventListener('click', async ()=>{
     const dm2=await getDailyMap(productId); delete dm2[b.dataset.deldaily]; await storeSet('daily:'+productId,dm2);
-    renderDailyTab(); loadDailyForm();
+    renderDailyTab();
   }));
 }
 document.getElementById('daily_history_month').addEventListener('change', renderDailyTab);
@@ -2153,9 +1945,15 @@ async function renderGrowthPoints(product, productId, month, entries, sums){
   const BUYOUT_STALE = buyoutStaleDays>7;
   const CANCEL_STALE = cancelStaleDays>7;
 
+  // окно «дозревания» — заказы младше 7 дней ещё физически не успели превратиться в выкуп/отмену,
+  // поэтому в знаменатель % выкупа их не берём, чтобы не занижать процент искусственно
+  const BUYOUT_MATURITY_DAYS=7;
+  const buyoutMaturityCutoff=dateMinusDays(refDate, BUYOUT_MATURITY_DAYS);
+
   let ordersForBuyout=0, buyoutsSum=0, ordersForCancel=0, cancelSum=0;
-  entries.forEach(([,e])=>{
-    if(e.buyouts!==null && e.buyouts!==undefined){ buyoutsSum+=+e.buyouts; ordersForBuyout+=+e.orders||0; }
+  entries.forEach(([d,e])=>{
+    if(e.buyouts!==null && e.buyouts!==undefined) buyoutsSum+=+e.buyouts;
+    if(d<=buyoutMaturityCutoff) ordersForBuyout+=+e.orders||0;
     if(e.cancellations!==null && e.cancellations!==undefined){ cancelSum+=+e.cancellations; ordersForCancel+=+e.orders||0; }
   });
   const buyoutRate = (!BUYOUT_STALE && ordersForBuyout>0) ? buyoutsSum/ordersForBuyout*100 : null;
@@ -2451,7 +2249,7 @@ document.getElementById('tabs').addEventListener('click', async (e)=>{
   document.getElementById('tab-'+e.target.dataset.tab).style.display='block';
   if(productsReadyPromise) await productsReadyPromise;
   if(e.target.dataset.tab==='plan'){ syncProductSelector('plan_product_mp','plan_product'); renderPlanTab(); }
-  if(e.target.dataset.tab==='daily'){ syncProductSelector('daily_mp','daily_product'); loadDailyForm(); renderDailyTab(); }
+  if(e.target.dataset.tab==='daily'){ syncProductSelector('daily_mp','daily_product'); onDailyProductChange(); }
   if(e.target.dataset.tab==='funnel'){ syncProductSelector('funnel_product_mp','funnel_product'); renderFunnelTab(); }
   if(e.target.dataset.tab==='compare'){ syncProductSelector('cmp_product_mp','cmp_product'); renderCompareTab(); }
   if(e.target.dataset.tab==='import'){ syncProductSelector('imp_product_mp','imp_product'); resetImportPreview(); }
