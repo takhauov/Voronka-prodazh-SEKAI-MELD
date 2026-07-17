@@ -985,6 +985,14 @@ async function computeWeeklyDynamicsKpi(productId){
   return `<div class="kpi"><div class="label">Темп за 7 дней</div><div class="value">${fmt1(last7Rate)} шт/день</div>${deltaHtml}</div>`;
 }
 
+function computeTrafficPlan(product, planUnits){
+  const th=getThresholds(product);
+  if(!planUnits || !th.ctr || !th.cr1 || !th.cr2) return null;
+  const ctrF=th.ctr/100, cr1F=th.cr1/100, cr2F=th.cr2/100;
+  if(ctrF<=0 || cr1F<=0 || cr2F<=0) return null;
+  return planUnits / cr2F / cr1F / ctrF;
+}
+
 async function renderPlanTab(){
   const mode=currentPlanMode();
   const editorWrap=document.getElementById('planEditorWrap');
@@ -1105,6 +1113,15 @@ async function renderPlanTab(){
   }
   const weeklyKpi = isCurrentMonth ? await computeWeeklyDynamicsKpi(productId) : '';
 
+  const trafficPlanTotal = computeTrafficPlan(product, planUnits);
+  const th=getThresholds(product);
+  const trafficLabel = product.mp==='ozon' ? 'уник. посетителей' : 'показов';
+  let trafficPlanKpi='';
+  if(trafficPlanTotal!==null){
+    const trafficPlanPerDay = trafficPlanTotal/dim;
+    trafficPlanKpi=`<div class="kpi"><div class="label">План по трафику</div><div class="value">${fmt(Math.round(trafficPlanTotal))} ${trafficLabel}</div><div class="delta flat">~${fmt(Math.round(trafficPlanPerDay))}/день, при CTR ${th.ctr}% · CR корзина ${th.cr1}% · CR заказ ${th.cr2}%</div></div>`;
+  }
+
   let stockWarning='';
   if(plan.stockQty!==undefined && plan.stockQty!==''){
     const {available, arrivalCounted, arrivalNote}=computeAvailableStock(month, plan.stockQty, plan.arrivalDate, plan.arrivalQty);
@@ -1127,6 +1144,7 @@ async function renderPlanTab(){
       <div class="kpi"><div class="label">ДРР за месяц</div><div class="value">${drrMonth!==null? fmt1(drrMonth)+'%' : '—'}</div></div>
       ${runRateKpi}
       ${weeklyKpi}
+      ${trafficPlanKpi}
     </div>${stockWarning}</div>`;
 }
 
@@ -1499,6 +1517,12 @@ function cellBadge(diff, {suffix='', decimals=1, goodUp=true, neutral=false}={})
   return `<span class="cellbadge ${cls}">${sign}${Math.abs(diff).toFixed(decimals)}${suffix}</span>`;
 }
 
+let dailyTableRerenderTimer=null;
+function scheduleDailyTableRerender(){
+  if(dailyTableRerenderTimer) clearTimeout(dailyTableRerenderTimer);
+  dailyTableRerenderTimer=setTimeout(()=>{ dailyTableRerenderTimer=null; renderDailyTab(); }, 1800);
+}
+
 async function renderDailyTab(){
   await renderAnomalies();
   const productId=document.getElementById('daily_product').value;
@@ -1635,7 +1659,7 @@ async function renderDailyTab(){
         dm2[d][field] = inp.value==='' ? (emptyAsNull? null : 0) : +inp.value;
         const ok=await storeSet('daily:'+productId, dm2);
         if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); dm2[d][field]=oldVal; inp.value=oldVal??''; return; }
-        await renderDailyTab();
+        scheduleDailyTableRerender();
       }
     });
   });
@@ -1730,6 +1754,9 @@ async function renderFunnelTab(){
     let dropPct='';
     if(s.name==='Выкупы'){
       dropPct = ordersV>0 ? fmt1(s.v/ordersV*100)+'%' : '';
+    } else if(s.name==='Клики'){
+      const ctrBase = (product.mp==='ozon' && sums.uniqueVisitors) ? sums.uniqueVisitors : stages[i-1].v;
+      dropPct = ctrBase>0 ? fmt1(s.v/ctrBase*100)+'%' : '';
     } else if(i>0 && stages[i-1].v>0){
       dropPct = fmt1(s.v/stages[i-1].v*100)+'%';
     }
@@ -2136,7 +2163,7 @@ async function renderGrowthPoints(product, productId, month, entries, sums){
   const th=getThresholds(product);
 
   let html='';
-  html+=growthCard('Низкая кликабельность', ctr!==null? fmt1(ctr)+'%':'—', ctr!==null && ctr<th.ctr, [
+  html+=growthCard('Низкая кликабельность', ctr!==null? `${fmt1(ctr)}% / ${th.ctr}%`:'—', ctr!==null && ctr<th.ctr, [
     'Главное фото/обложка не выделяется среди конкурентов в выдаче',
     'Цена в карточке выше, чем у аналогичных товаров рядом',
     'Низкий рейтинг или недостаточно отзывов',
@@ -2147,7 +2174,7 @@ async function renderGrowthPoints(product, productId, month, entries, sums){
     'Поработать над количеством и качеством отзывов',
     'Проверить, что заголовок закрывает частотные поисковые запросы'
   ]);
-  html+=growthCard('Не доходят до корзины', cr1!==null? fmt1(cr1)+'%':'—', cr1!==null && cr1<th.cr1, [
+  html+=growthCard('Не доходят до корзины', cr1!==null? `${fmt1(cr1)}% / ${th.cr1}%`:'—', cr1!==null && cr1<th.cr1, [
     'Карточка не раскрывает преимущества товара — мало доп. фото или инфографики',
     'Цена при переходе оказывается выше, чем ожидалось по обложке',
     'Недостаточно отзывов/рейтинга, чтобы решиться на добавление в корзину',
@@ -2158,7 +2185,7 @@ async function renderGrowthPoints(product, productId, month, entries, sums){
     'Ответить в описании на вопросы, которые чаще всего задают в разделе «Вопросы и ответы»',
     'Добавить видео в карточку, если его ещё нет'
   ]);
-  html+=growthCard('Бросают корзину, не доходят до заказа', cr2!==null? fmt1(cr2)+'%':'—', cr2!==null && cr2<th.cr2, [
+  html+=growthCard('Бросают корзину, не доходят до заказа', cr2!==null? `${fmt1(cr2)}% / ${th.cr2}%`:'—', cr2!==null && cr2<th.cr2, [
     'Долгий или дорогой способ доставки',
     'Цена в корзине оказалась выше, чем ожидал покупатель',
     'Конкуренты предлагают тот же товар дешевле или с более быстрой доставкой',
@@ -2169,7 +2196,7 @@ async function renderGrowthPoints(product, productId, month, entries, sums){
     'Рассмотреть участие в акции, чтобы ускорить решение о покупке',
     'Проверить, что товара физически достаточно на складе МП'
   ]);
-  html+=BUYOUT_STALE ? staleFieldCard('Низкий процент выкупа', buyoutStaleDays) : growthCard('Низкий процент выкупа', buyoutRate!==null? fmt1(buyoutRate)+'%':'—', buyoutRate!==null && buyoutRate<th.buyout, [
+  html+=BUYOUT_STALE ? staleFieldCard('Низкий процент выкупа', buyoutStaleDays) : growthCard('Низкий процент выкупа', buyoutRate!==null? `${fmt1(buyoutRate)}% / ${th.buyout}%`:'—', buyoutRate!==null && buyoutRate<th.buyout, [
     'Фото/описание создают ожидания, которые не совпадают с реальным товаром',
     'Брак или повреждение при хранении/доставке',
     'Долгая доставка — покупатель передумал или купил в другом месте'
@@ -2178,7 +2205,7 @@ async function renderGrowthPoints(product, productId, month, entries, sums){
     'Проверить качество упаковки, чтобы товар не терял вид при хранении и перевозке',
     'Посмотреть отзывы и причины возвратов — что покупатели пишут чаще всего'
   ]);
-  html+=CANCEL_STALE ? staleFieldCard('Много отмен', cancelStaleDays) : growthCard('Много отмен', cancelRate!==null? fmt1(cancelRate)+'%':'—', cancelRate!==null && cancelRate>th.cancel, [
+  html+=CANCEL_STALE ? staleFieldCard('Много отмен', cancelStaleDays) : growthCard('Много отмен', cancelRate!==null? `${fmt1(cancelRate)}% / ${th.cancel}%`:'—', cancelRate!==null && cancelRate>th.cancel, [
     'Товар физически закончился на складе МП, а заказ всё равно оформился',
     'Цена изменилась после оформления заказа',
     'Покупатель передумал или оформил заказ по ошибке (дубль)',
@@ -2221,6 +2248,23 @@ async function renderRecs(productId, month, entries){
   } else if(plan.planUnits>0){
     const p2=factUnits/plan.planUnits*100;
     recs.push({level: p2>=100?'ok':'warn', text:`План на месяц выполнен на ${fmt1(p2)}%.`});
+  }
+
+  const trafficPlanTotal=computeTrafficPlan(product, plan.planUnits);
+  if(trafficPlanTotal!==null){
+    const trafficBaseLabel = product.mp==='ozon' ? 'уникальных посетителей' : 'показов';
+    const sumTrafficField = product.mp==='ozon' ? 'uniqueVisitors' : 'impressions';
+    const factTrafficSoFar=sumField(entries, sumTrafficField);
+    const actualTrafficPerDay = daysElapsed>0 ? factTrafficSoFar/daysElapsed : 0;
+    const neededTrafficPerDay = isCurrentMonth ? trafficPlanTotal/dim : null;
+    if(neededTrafficPerDay!==null){
+      if(actualTrafficPerDay < neededTrafficPerDay*0.85){
+        const trafficGapPct=Math.round((1-actualTrafficPerDay/neededTrafficPerDay)*100);
+        recs.push({level:'warn', text:`Трафика недостаточно для выполнения плана при текущих пороговых конверсиях: нужно ~${fmt(Math.round(neededTrafficPerDay))} ${trafficBaseLabel}/день, факт — ${fmt(Math.round(actualTrafficPerDay))}/день (на ${trafficGapPct}% меньше). Даже при хорошей конверсии просто не хватает охвата — усильте рекламу/продвижение или проверьте позиции в поиске.`});
+      } else {
+        recs.push({level:'ok', text:`Трафика достаточно для плана при текущих пороговых конверсиях: нужно ~${fmt(Math.round(neededTrafficPerDay))} ${trafficBaseLabel}/день, факт — ${fmt(Math.round(actualTrafficPerDay))}/день. Если план всё равно не выполняется — смотрите не на охват, а на конверсии (раздел «Точки роста»).`});
+      }
+    }
   }
 
   let drrPrev=null, drrRecent=null, crPrev=null, crRecent=null;
