@@ -58,23 +58,17 @@
   .segmented button.active{background:var(--ink);color:#fff;}
 
   .table-scroll{overflow-x:auto;}
-  #dailyTableWrap.table-scroll{
-    width:100vw;
-    position:relative;
-    left:50%;
-    margin-left:-50vw;
-    padding:0 max(16px, calc((100vw - 1280px)/2 + 16px));
-    box-sizing:border-box;
-  }
   table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
   th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.02em;color:var(--ink-2);font-weight:500;padding:7px 7px;border-bottom:1px solid var(--border);white-space:nowrap;}
   th.group{text-align:center;background:var(--bg);font-size:9.5px;letter-spacing:.04em;}
   td{padding:7px 7px;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:12px;white-space:nowrap;text-align:left;}
   td.txt{font-family:var(--font-body);white-space:normal;}
   tr:last-child td{border-bottom:none;}
-  tbody tr:nth-child(even){background:#FAFAF9;}
+  table:not(.daytable) tbody tr:nth-child(even){background:#FAFAF9;}
   td.sticky, th.sticky{position:sticky;left:0;background:var(--surface);z-index:2;box-shadow:2px 0 5px rgba(0,0,0,0.05);}
-  tbody tr:nth-child(even) td.sticky{background:#FAFAF9;}
+  table:not(.daytable) tbody tr:nth-child(even) td.sticky{background:#FAFAF9;}
+  table.daytable tr.row-editable{background:#FCF9E8;}
+  table.daytable tr.row-editable td.sticky{background:#FCF9E8;}
   .badge{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;}
   .badge.wb{background:var(--wb-bg);color:var(--wb-ink);}
   .badge.ozon{background:var(--ozon-bg);color:var(--ozon-ink);}
@@ -233,17 +227,17 @@
       </div>
     </div>
     <div class="panel">
-      <h2>Аномалии по сравнению с прошлым днём</h2>
-      <p class="hint">Сверяет последний внесённый день с предыдущим календарным днём и подсвечивает резкие скачки (показы, CTR, конверсии, рекламные расходы)</p>
-      <div id="anomaliesWrap"><div class="empty">Выберите товар</div></div>
-    </div>
-    <div class="panel">
       <h2>История по товару</h2>
       <p class="hint">Все показатели, кроме расчётных (СПП, CTR, конверсии, ДРР, CPC, CPO), редактируются прямо в таблице — правите значение и уходите из ячейки, сохраняется автоматически. В «Тип изменения» можно выбрать несколько значений сразу, зажав Ctrl (на Mac — Cmd) при клике</p>
       <div class="row" style="margin-bottom:6px;">
         <div class="field"><label>Месяц</label><input id="daily_history_month" type="month"></div>
       </div>
       <div class="table-scroll" id="dailyTableWrap"><div class="empty">Выберите товар</div></div>
+    </div>
+    <div class="panel">
+      <h2>Аномалии по сравнению с прошлым днём</h2>
+      <p class="hint">Сверяет последний внесённый день с предыдущим календарным днём и подсвечивает резкие скачки (показы, CTR, конверсии, рекламные расходы)</p>
+      <div id="anomaliesWrap"><div class="empty">Выберите товар</div></div>
     </div>
   </div>
 
@@ -1374,7 +1368,8 @@ async function renderDailyTab(){
       }
       return `<td>${out}</td>`;
     }).join('');
-    return `<tr><td class="sticky txt">${r.label}</td>${cells}</tr>`;
+    const isEditableRow = !!(r.editField || r.isEditableBid || r.isEditableChangeType || r.isEditableComment || r.isEditablePromo);
+    return `<tr class="${isEditableRow?'row-editable':''}"><td class="sticky txt">${r.label}</td>${cells}</tr>`;
   }).join('');
 
   if(!hasAnyDataThisMonth){
