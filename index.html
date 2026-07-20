@@ -66,9 +66,13 @@
   tr:last-child td{border-bottom:none;}
   table:not(.daytable) tbody tr:nth-child(even){background:#FAFAF9;}
   td.sticky, th.sticky{position:sticky;left:0;background:var(--surface);z-index:2;box-shadow:2px 0 5px rgba(0,0,0,0.05);}
+  table.daytable td.sticky, table.daytable th.sticky{min-width:190px;max-width:190px;white-space:normal;}
+  td.sticky2, th.sticky2{position:sticky;left:190px;background:var(--surface);z-index:2;box-shadow:2px 0 5px rgba(0,0,0,0.05);font-weight:600;min-width:100px;}
   table:not(.daytable) tbody tr:nth-child(even) td.sticky{background:#FAFAF9;}
   table.daytable tr.row-editable{background:#FCF9E8;}
-  table.daytable tr.row-editable td.sticky{background:#FCF9E8;}
+  table.daytable tr.row-editable td.sticky, table.daytable tr.row-editable td.sticky2{background:#FCF9E8;}
+  table.daytable tr.row-highlight{background:#F5E9A8;}
+  table.daytable tr.row-highlight td.sticky, table.daytable tr.row-highlight td.sticky2{background:#F5E9A8;}
   .badge{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;}
   .badge.wb{background:var(--wb-bg);color:var(--wb-ink);}
   .badge.ozon{background:var(--ozon-bg);color:var(--ozon-ink);}
@@ -938,7 +942,9 @@ function computeTrafficPlan(product, planUnits){
   return planUnits / cr2F / cr1F / ctrF;
 }
 
+let planRenderToken=0;
 async function renderPlanTab(){
+  const myToken=++planRenderToken;
   const mode=currentPlanMode();
   const editorWrap=document.getElementById('planEditorWrap');
   const summaryWrap=document.getElementById('planSummaryWrap');
@@ -981,6 +987,7 @@ async function renderPlanTab(){
       const runRatePctMp = planRub>0 ? runRateRubRounded/planRub*100 : null;
       runRateKpiMp=`<div class="kpi"><div class="label">Run-rate (прогноз на месяц)</div><div class="value">${fmt(runRateUnitsRounded)} шт / ${fmt(runRateRubRounded)} ₽</div>${runRatePctMp!==null?`<div class="delta ${runRatePctMp>=95?'good':'bad'}">${fmt1(runRatePctMp)}% от плана</div>`:''}</div>`;
     }
+    if(myToken!==planRenderToken || currentPlanMode()!=='mp') return;
     summaryWrap.innerHTML = `<div class="panel"><h2>${MP_LABEL[mp]} — ${month}</h2>
       <div class="kpis">
         <div class="kpi"><div class="label">План, ₽</div><div class="value">${fmt(planRub)} ₽</div></div>
@@ -1078,6 +1085,7 @@ async function renderPlanTab(){
     }
   }
 
+  if(myToken!==planRenderToken || currentPlanMode()!=='product') return;
   summaryWrap.innerHTML = `<div class="panel"><h2>Факт по плану</h2>
     <div class="kpis">
       <div class="kpi"><div class="label">Факт, ₽</div><div class="value">${fmt(factRub)} ₽</div>${planRub? `<div class="bar"><div style="width:${Math.min(100,factRub/planRub*100)}%"></div></div>`:''}</div>
@@ -1102,14 +1110,16 @@ async function ensureTodayDraft(productId){
   const dates=Object.keys(dm).sort();
   if(dates.length===0) return; // нет истории вообще — первый день вносится вручную через историю
   const today=todayISO();
-  let cursorDate=dates[dates.length-1];
-  if(cursorDate>=today) return;
+  let cursorDate=dates[0];
 
   let changed=false;
+  let lastKnownEntry=dm[cursorDate];
   while(cursorDate<today){
     const nextDate=datePlusDays(cursorDate,1);
-    if(!dm[nextDate]){
-      const src=dm[cursorDate];
+    if(dm[nextDate]){
+      lastKnownEntry=dm[nextDate];
+    } else {
+      const src=lastKnownEntry;
       dm[nextDate]={
         priceLK:src.priceLK||0, priceCustomer:src.priceCustomer||0, priceOzonCard:src.priceOzonCard||0,
         impressions:0, uniqueVisitors:0, searchPosition:null, clicks:0, carts:0, orders:0, ordersRub:0,
@@ -1118,13 +1128,14 @@ async function ensureTodayDraft(productId){
         adBids: src.adBids ? src.adBids.map(b=>({...b})) : [],
         draft:true
       };
+      lastKnownEntry=dm[nextDate];
       changed=true;
     }
     cursorDate=nextDate;
   }
   if(changed){
     const ok=await storeSet('daily:'+productId, dm);
-    if(!ok) console.error('Не удалось автоматически создать день на сегодня — сбой хранилища');
+    if(!ok) console.error('Не удалось автоматически создать/восстановить день — сбой хранилища');
   }
 }
 
@@ -1272,33 +1283,33 @@ async function renderDailyTab(){
 
   const rows=[
     {section:'Цена'},
-    {label:'Цена в ЛК, ₽', get:e=>e?.priceLK, fmt:v=>v!=null?fmt(v):'', editField:'priceLK'},
-    {label:'Цена для покупателя, ₽', get:e=>e?.priceCustomer, fmt:v=>v!=null?fmt(v):'', editField:'priceCustomer'},
-    isOzon?{label:'Цена с Ozon картой, ₽', get:e=>e?.priceOzonCard, fmt:v=>v?fmt(v):'', editField:'priceOzonCard'}:null,
-    {label:'СПП, %', get:e=>e?.spp, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
+    {label:'Цена в ЛК, ₽', get:e=>e?.priceLK, fmt:v=>v!=null?fmt(v):'', editField:'priceLK', agg:'avg'},
+    {label:'Цена для покупателя, ₽', get:e=>e?.priceCustomer, fmt:v=>v!=null?fmt(v):'', editField:'priceCustomer', agg:'avg'},
+    isOzon?{label:'Цена с Ozon картой, ₽', get:e=>e?.priceOzonCard, fmt:v=>v?fmt(v):'', editField:'priceOzonCard', agg:'avg'}:null,
+    {label:'СПП, %', get:e=>e?.spp, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, agg:'avg'},
     {section:'Трафик'},
-    {label:'Показы', get:e=>e?.impressions, fmt:v=>v!=null?fmt(v):'', editField:'impressions'},
+    {label:'Показы', get:e=>e?.impressions, fmt:v=>v!=null?fmt(v):'', editField:'impressions', agg:'sum'},
     isOzon?{label:'Уникальные посетители', get:e=>e?.uniqueVisitors, fmt:v=>v!=null?fmt(v):'', editField:'uniqueVisitors'}:null,
     isOzon?{label:'Позиция в поиске и каталоге', get:e=>e?.searchPosition, fmt:v=>v!=null?fmt(v):'', editField:'searchPosition'}:null,
-    {label:'Клики', get:e=>e?.clicks, fmt:v=>v!=null?fmt(v):'', editField:'clicks'},
-    {label:'CTR, %', get:e=>e?.ctr, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
+    {label:'Клики', get:e=>e?.clicks, fmt:v=>v!=null?fmt(v):'', editField:'clicks', agg:'sum'},
+    {label:'CTR, %', get:e=>e?.ctr, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, agg:'avg'},
     {section:'Воронка'},
-    {label:'Корзины', get:e=>e?.carts, fmt:v=>v!=null?fmt(v):'', editField:'carts'},
-    {label:'CR клик→корзина, %', get:e=>e?.cr1, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
-    {label:'Заказы, шт', get:e=>e?.orders, fmt:v=>v!=null?fmt(v):'', editField:'orders'},
-    {label:'CR корзина→заказ, %', get:e=>e?.cr2, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
-    {label:'CR клик→заказ, %', get:e=>e?.crf, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}},
-    {label:'Выкупили, шт', get:e=>e?.buyouts, fmt:v=>v!=null?fmt(v):'', editField:'buyouts'},
-    {label:'Отмены, шт', get:e=>e?.cancellations, fmt:v=>v!=null?fmt(v):'', editField:'cancellations'},
+    {label:'Корзины', get:e=>e?.carts, fmt:v=>v!=null?fmt(v):'', editField:'carts', agg:'sum'},
+    {label:'CR клик→корзина, %', get:e=>e?.cr1, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, agg:'avg'},
+    {label:'Заказы, шт', get:e=>e?.orders, fmt:v=>v!=null?fmt(v):'', editField:'orders', highlight:true, agg:'sum'},
+    {label:'CR корзина→заказ, %', get:e=>e?.cr2, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, agg:'avg'},
+    {label:'CR клик→заказ, %', get:e=>e?.crf, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, agg:'avg'},
+    {label:'Выкупили, шт', get:e=>e?.buyouts, fmt:v=>v!=null?fmt(v):'', editField:'buyouts', agg:'sum'},
+    {label:'Отмены, шт', get:e=>e?.cancellations, fmt:v=>v!=null?fmt(v):'', editField:'cancellations', agg:'sum'},
     {section:'Реклама и финансы'},
-    {label:'Заказы, ₽', get:e=>e?.ordersRub, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'ordersRub'},
-    {label:'Реклама, ₽', get:e=>e?.adspend, fmt:v=>v!=null?fmt(v)+' ₽':'', editField: isOzon?'adspend':null},
-    product.mp==='wb'?{label:'АРК, факт ₽', get:e=>e?.adspend_ark, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_ark'}:null,
-    product.mp==='wb'?{label:'Поиск, факт ₽', get:e=>e?.adspend_search, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_search'}:null,
-    product.mp==='ym'?{label:'БПР, факт ₽', get:e=>e?.adspend_bpr, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_bpr'}:null,
-    product.mp==='ym'?{label:'БПК, факт ₽', get:e=>e?.adspend_bpk, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_bpk'}:null,
-    product.mp==='ym'?{label:'Полки, факт ₽', get:e=>e?.adspend_polki, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_polki'}:null,
-    {label:'ДРР, %', get:e=>e?.drr, fmt:v=>v!=null?fmt1(v)+'%':''},
+    {label:'Заказы, ₽', get:e=>e?.ordersRub, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'ordersRub', highlight:true, agg:'sum'},
+    {label:'Реклама, ₽', get:e=>e?.adspend, fmt:v=>v!=null?fmt(v)+' ₽':'', editField: isOzon?'adspend':null, agg:'sum'},
+    product.mp==='wb'?{label:'АРК, факт ₽', get:e=>e?.adspend_ark, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_ark', agg:'sum'}:null,
+    product.mp==='wb'?{label:'Поиск, факт ₽', get:e=>e?.adspend_search, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_search', agg:'sum'}:null,
+    product.mp==='ym'?{label:'БПР, факт ₽', get:e=>e?.adspend_bpr, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_bpr', agg:'sum'}:null,
+    product.mp==='ym'?{label:'БПК, факт ₽', get:e=>e?.adspend_bpk, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_bpk', agg:'sum'}:null,
+    product.mp==='ym'?{label:'Полки, факт ₽', get:e=>e?.adspend_polki, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_polki', agg:'sum'}:null,
+    {label:'ДРР, %', get:e=>e?.drr, fmt:v=>v!=null?fmt1(v)+'%':'', agg:'avg'},
     {label:'CPC, ₽', get:e=>e?.cpc, fmt:v=>v!=null?fmt1(v)+' ₽':''},
     {label:'CPO, ₽', get:e=>e?.cpo, fmt:v=>v!=null?fmt(v)+' ₽':''},
     ...bidLabels.map((label,i)=>({label, get:e=>e?.adBids?.[i]?.value, fmt:v=>v!=null?v:'', isEditableBid:true, bidIndex:i})),
@@ -1306,24 +1317,28 @@ async function renderDailyTab(){
     {label:'Участие в акции', get:e=>e?.promo??'', fmt:v=>v==='yes'?'Участвую':v==='no'?'Не участвую':'', isEditablePromo:true},
     {section:'Изменения'},
     {label:'Тип изменения', get:e=>e?.changeTypes || (e?.changeType?[e.changeType]:[]), isEditableChangeType:true},
-    {label:'Комментарий', get:e=>e?.changeNote, fmt:v=>v||'', isText:true, isEditableComment:true},
-    {section:''},
-    {label:'', get:()=>null, isAction:true}
+    {label:'Комментарий', get:e=>e?.changeNote, fmt:v=>v||'', isText:true, isEditableComment:true}
   ].filter(Boolean);
 
   const theadCells=dates.map(d=>{
     const isDraft=enrichedByDate[d]?.draft;
     return `<th title="${d}${isDraft?' — черновик, нужно дополнить':''}">${d.slice(8,10)}.${d.slice(5,7)}${isDraft?' 🕓':''}</th>`;
   }).join('');
+  function computeAggregateRaw(r){
+    if(!r.agg) return null;
+    const vals=dates.map(d=>{
+      const e=enrichedByDate[d];
+      if(!e) return null;
+      const v=r.get(e);
+      return (v===null||v===undefined||isNaN(v))? null : v;
+    }).filter(v=>v!==null);
+    if(vals.length===0) return null;
+    const sum=vals.reduce((a,b)=>a+b,0);
+    return r.agg==='avg' ? sum/vals.length : sum;
+  }
   const bodyRows=rows.map(r=>{
     if(r.section!==undefined){
-      return `<tr class="section-row"><td class="sticky">${r.section}</td>${dates.map(()=>'<td></td>').join('')}</tr>`;
-    }
-    if(r.isAction){
-      return `<tr><td class="sticky txt">Действия</td>${dates.map(d=>{
-        const has=!!enrichedByDate[d];
-        return `<td>${has?`<button class="btn danger" data-deldaily="${d}" style="padding:2px 6px;font-size:11px;">× Удалить день</button>`:''}</td>`;
-      }).join('')}</tr>`;
+      return `<tr class="section-row"><td class="sticky">${r.section}</td><td class="sticky2"></td>${dates.map(()=>'<td></td>').join('')}</tr>`;
     }
     const cells=dates.map(d=>{
       const e=enrichedByDate[d]||null;
@@ -1354,8 +1369,8 @@ async function renderDailyTab(){
       }
       if(r.isEditableBid){
         if(!e) return `<td></td>`;
-        const safe=(val??'').toString().replace(/"/g,'&quot;');
-        return `<td><input type="text" class="bid-edit-input" data-notedate="${d}" data-bidindex="${r.bidIndex}" value="${safe}" style="width:90px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:left;padding:2px;"></td>`;
+        const safe=(val??'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return `<td class="txt"><textarea class="bid-edit-input" data-notedate="${d}" data-bidindex="${r.bidIndex}" rows="1" style="width:100px;min-width:80px;resize:both;overflow:hidden;border:none;background:transparent;font-family:inherit;font-size:11.5px;color:inherit;white-space:normal;overflow-wrap:break-word;padding:2px;">${safe}</textarea></td>`;
       }
       if(r.isText) return `<td class="txt">${r.fmt(val)}</td>`;
       let out=r.fmt(val);
@@ -1369,13 +1384,18 @@ async function renderDailyTab(){
       return `<td>${out}</td>`;
     }).join('');
     const isEditableRow = !!(r.editField || r.isEditableBid || r.isEditableChangeType || r.isEditableComment || r.isEditablePromo);
-    return `<tr class="${isEditableRow?'row-editable':''}"><td class="sticky txt">${r.label}</td>${cells}</tr>`;
+    const rowClass = r.highlight ? 'row-highlight' : (isEditableRow ? 'row-editable' : '');
+    const aggRaw = computeAggregateRaw(r);
+    const aggText = aggRaw!==null ? r.fmt(aggRaw) : '';
+    const aggIsHighDrr = r.label==='ДРР, %' && aggRaw!==null && aggRaw>15;
+    const aggCell = `<td class="sticky2 txt"${aggIsHighDrr?' style="color:var(--neg);"':''}>${aggText}</td>`;
+    return `<tr class="${rowClass}"><td class="sticky txt">${r.label}</td>${aggCell}${cells}</tr>`;
   }).join('');
 
   if(!hasAnyDataThisMonth){
     wrap.innerHTML=`<div class="empty">Нет данных за ${month} — выберите другой месяц</div>`;
   } else {
-    wrap.innerHTML=`<table class="daytable"><thead><tr><th class="sticky">Показатель</th>${theadCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+    wrap.innerHTML=`<table class="daytable"><thead><tr><th class="sticky">Показатель</th><th class="sticky2">Итого / Среднее</th>${theadCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
   }
 
   const FUNNEL_FIELDS=['impressions','clicks','carts','orders'];
@@ -1458,6 +1478,8 @@ async function renderDailyTab(){
     });
   });
   wrap.querySelectorAll('.bid-edit-input').forEach(inp=>{
+    inp.style.height=inp.scrollHeight+'px';
+    inp.addEventListener('input', ()=>{ inp.style.height='auto'; inp.style.height=inp.scrollHeight+'px'; });
     inp.addEventListener('change', async ()=>{
       const d=inp.dataset.notedate;
       const idx=+inp.dataset.bidindex;
@@ -1472,11 +1494,6 @@ async function renderDailyTab(){
       }
     });
   });
-
-  wrap.querySelectorAll('[data-deldaily]').forEach(b=>b.addEventListener('click', async ()=>{
-    const dm2=await getDailyMap(productId); delete dm2[b.dataset.deldaily]; await storeSet('daily:'+productId,dm2);
-    renderDailyTab();
-  }));
 }
 document.getElementById('daily_history_month').addEventListener('change', renderDailyTab);
 
