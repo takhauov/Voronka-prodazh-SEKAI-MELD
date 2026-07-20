@@ -243,6 +243,12 @@
       <p class="hint">Сверяет последний внесённый день с предыдущим календарным днём и подсвечивает резкие скачки (показы, CTR, конверсии, рекламные расходы)</p>
       <div id="anomaliesWrap"><div class="empty">Выберите товар</div></div>
     </div>
+    <div class="panel">
+      <h2>Проверка отрицательных значений</h2>
+      <p class="hint">Числовые поля не должны уходить в минус (например, из-за случайной прокрутки колесом мыши над полем) — проверяет всю историю выбранного товара и обнуляет найденные отрицательные значения</p>
+      <button class="btn secondary" id="checkNegativesBtn">Проверить историю товара</button>
+      <div class="note" id="checkNegativesNote"></div>
+    </div>
   </div>
 
   <!-- ВОРОНКА -->
@@ -1387,7 +1393,7 @@ async function renderDailyTab(){
       }
       if(r.editField){
         if(!e) return `<td></td>`;
-        return `<td><input type="number" class="num-edit-input" data-notedate="${d}" data-editfield="${r.editField}" value="${val??''}" style="width:76px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:left;padding:2px;"></td>`;
+        return `<td><input type="number" min="0" class="num-edit-input" data-notedate="${d}" data-editfield="${r.editField}" value="${val??''}" style="width:76px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:left;padding:2px;"></td>`;
       }
       if(r.isEditableBid){
         if(!e) return `<td></td>`;
@@ -1476,6 +1482,7 @@ async function renderDailyTab(){
   const AD_BREAKDOWN_WB=['adspend_ark','adspend_search'];
   const AD_BREAKDOWN_YM=['adspend_bpr','adspend_bpk','adspend_polki'];
   wrap.querySelectorAll('.num-edit-input').forEach(inp=>{
+    inp.addEventListener('wheel', (e)=>{ e.preventDefault(); }, {passive:false});
     inp.addEventListener('change', async ()=>{
       const d=inp.dataset.notedate;
       const field=inp.dataset.editfield;
@@ -1483,7 +1490,10 @@ async function renderDailyTab(){
       if(dm2[d]){
         const oldVal=dm2[d][field];
         const emptyAsNull = ['searchPosition','buyouts','cancellations'].includes(field);
-        dm2[d][field] = inp.value==='' ? (emptyAsNull? null : 0) : +inp.value;
+        let newVal = inp.value==='' ? (emptyAsNull? null : 0) : +inp.value;
+        if(newVal!==null && newVal<0) newVal=0; // подстраховка — отрицательные значения не сохраняем
+        dm2[d][field] = newVal;
+        inp.value = newVal??'';
         if(AD_BREAKDOWN_WB.includes(field)){
           dm2[d].adspend = (+dm2[d].adspend_ark||0) + (+dm2[d].adspend_search||0);
         } else if(AD_BREAKDOWN_YM.includes(field)){
@@ -1518,6 +1528,41 @@ async function renderDailyTab(){
   });
 }
 document.getElementById('daily_history_month').addEventListener('change', renderDailyTab);
+
+document.getElementById('checkNegativesBtn').addEventListener('click', async ()=>{
+  const noteEl=document.getElementById('checkNegativesNote');
+  const productId=document.getElementById('daily_product').value;
+  const product=state.products.find(p=>p.id===productId);
+  if(!product){ alert('Выберите товар'); return; }
+
+  const NUMERIC_FIELDS=['priceLK','priceCustomer','priceOzonCard','impressions','uniqueVisitors','searchPosition',
+    'clicks','carts','orders','ordersRub','buyouts','cancellations','adspend','adspend_ark','adspend_search',
+    'adspend_bpr','adspend_bpk','adspend_polki'];
+
+  const dm=await getDailyMap(productId);
+  const found=[];
+  Object.keys(dm).forEach(d=>{
+    NUMERIC_FIELDS.forEach(f=>{
+      const v=dm[d][f];
+      if(typeof v==='number' && v<0) found.push({date:d, field:f, value:v});
+    });
+  });
+
+  if(found.length===0){ noteEl.textContent=`Проверено — отрицательных значений по товару «${product.name}» не найдено.`; return; }
+
+  const preview=found.slice(0,8).map(f=>`${f.date}: ${f.field} = ${f.value}`).join('; ');
+  const more=found.length>8? ` и ещё ${found.length-8}...` : '';
+  if(!confirm(`Найдено отрицательных значений: ${found.length}.\n${preview}${more}\n\nОбнулить все найденные значения?`)) return;
+
+  const btn=document.getElementById('checkNegativesBtn');
+  btn.disabled=true; btn.textContent='Исправляю…';
+  found.forEach(f=>{ dm[f.date][f.field]=0; });
+  const ok=await storeSet('daily:'+productId, dm);
+  btn.disabled=false; btn.textContent='Проверить историю товара';
+  if(!ok){ alert('Не удалось сохранить исправления — сбой хранилища, попробуйте ещё раз'); return; }
+  noteEl.textContent=`Готово. Исправлено значений: ${found.length}.`;
+  renderDailyTab();
+});
 
 /* ---------------- ВОРОНКА ---------------- */
 async function monthEntries(productId, month){
