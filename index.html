@@ -1289,16 +1289,16 @@ async function renderDailyTab(){
     {label:'СПП, %', get:e=>e?.spp, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, agg:'avg'},
     {section:'Трафик'},
     {label:'Показы', get:e=>e?.impressions, fmt:v=>v!=null?fmt(v):'', editField:'impressions', agg:'sum'},
-    isOzon?{label:'Уникальные посетители', get:e=>e?.uniqueVisitors, fmt:v=>v!=null?fmt(v):'', editField:'uniqueVisitors'}:null,
-    isOzon?{label:'Позиция в поиске и каталоге', get:e=>e?.searchPosition, fmt:v=>v!=null?fmt(v):'', editField:'searchPosition'}:null,
+    isOzon?{label:'Уникальные посетители', get:e=>e?.uniqueVisitors, fmt:v=>v!=null?fmt(v):'', editField:'uniqueVisitors', agg:'sum'}:null,
+    isOzon?{label:'Позиция в поиске и каталоге', get:e=>e?.searchPosition, fmt:v=>v!=null?fmt(v):'', editField:'searchPosition', agg:'avg'}:null,
     {label:'Клики', get:e=>e?.clicks, fmt:v=>v!=null?fmt(v):'', editField:'clicks', agg:'sum'},
-    {label:'CTR, %', get:e=>e?.ctr, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, agg:'avg'},
+    {label:'CTR, %', get:e=>e?.ctr, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, aggType:'ctr'},
     {section:'Воронка'},
     {label:'Корзины', get:e=>e?.carts, fmt:v=>v!=null?fmt(v):'', editField:'carts', agg:'sum'},
-    {label:'CR клик→корзина, %', get:e=>e?.cr1, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, agg:'avg'},
+    {label:'CR клик→корзина, %', get:e=>e?.cr1, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, aggType:'cr1'},
     {label:'Заказы, шт', get:e=>e?.orders, fmt:v=>v!=null?fmt(v):'', editField:'orders', highlight:true, agg:'sum'},
-    {label:'CR корзина→заказ, %', get:e=>e?.cr2, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, agg:'avg'},
-    {label:'CR клик→заказ, %', get:e=>e?.crf, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, agg:'avg'},
+    {label:'CR корзина→заказ, %', get:e=>e?.cr2, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, aggType:'cr2'},
+    {label:'CR клик→заказ, %', get:e=>e?.crf, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, aggType:'crf'},
     {label:'Выкупили, шт', get:e=>e?.buyouts, fmt:v=>v!=null?fmt(v):'', editField:'buyouts', agg:'sum'},
     {label:'Отмены, шт', get:e=>e?.cancellations, fmt:v=>v!=null?fmt(v):'', editField:'cancellations', agg:'sum'},
     {section:'Реклама и финансы'},
@@ -1309,7 +1309,7 @@ async function renderDailyTab(){
     product.mp==='ym'?{label:'БПР, факт ₽', get:e=>e?.adspend_bpr, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_bpr', agg:'sum'}:null,
     product.mp==='ym'?{label:'БПК, факт ₽', get:e=>e?.adspend_bpk, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_bpk', agg:'sum'}:null,
     product.mp==='ym'?{label:'Полки, факт ₽', get:e=>e?.adspend_polki, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_polki', agg:'sum'}:null,
-    {label:'ДРР, %', get:e=>e?.drr, fmt:v=>v!=null?fmt1(v)+'%':'', agg:'avg'},
+    {label:'ДРР, %', get:e=>e?.drr, fmt:v=>v!=null?fmt1(v)+'%':'', aggType:'drr'},
     {label:'CPC, ₽', get:e=>e?.cpc, fmt:v=>v!=null?fmt1(v)+' ₽':''},
     {label:'CPO, ₽', get:e=>e?.cpo, fmt:v=>v!=null?fmt(v)+' ₽':''},
     ...bidLabels.map((label,i)=>({label, get:e=>e?.adBids?.[i]?.value, fmt:v=>v!=null?v:'', isEditableBid:true, bidIndex:i})),
@@ -1325,6 +1325,28 @@ async function renderDailyTab(){
     return `<th title="${d}${isDraft?' — черновик, нужно дополнить':''}">${d.slice(8,10)}.${d.slice(5,7)}${isDraft?' 🕓':''}</th>`;
   }).join('');
   function computeAggregateRaw(r){
+    if(r.aggType){
+      const s={impressions:0,uniqueVisitors:0,clicks:0,carts:0,orders:0,adspend:0,ordersRub:0};
+      let hasAny=false;
+      dates.forEach(d=>{
+        const e=enrichedByDate[d];
+        if(!e) return;
+        hasAny=true;
+        s.impressions+=+e.impressions||0; s.uniqueVisitors+=+e.uniqueVisitors||0;
+        s.clicks+=+e.clicks||0; s.carts+=+e.carts||0; s.orders+=+e.orders||0;
+        s.adspend+=+e.adspend||0; s.ordersRub+=+e.ordersRub||0;
+      });
+      if(!hasAny) return null;
+      if(r.aggType==='ctr'){
+        const base=(product.mp==='ozon'&&s.uniqueVisitors)?s.uniqueVisitors:s.impressions;
+        return base>0? s.clicks/base*100 : null;
+      }
+      if(r.aggType==='cr1') return s.clicks>0? s.carts/s.clicks*100 : null;
+      if(r.aggType==='cr2') return s.carts>0? s.orders/s.carts*100 : null;
+      if(r.aggType==='crf') return s.clicks>0? s.orders/s.clicks*100 : null;
+      if(r.aggType==='drr') return s.ordersRub>0? s.adspend/s.ordersRub*100 : null;
+      return null;
+    }
     if(!r.agg) return null;
     const vals=dates.map(d=>{
       const e=enrichedByDate[d];
