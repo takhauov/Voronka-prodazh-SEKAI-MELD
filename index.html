@@ -30,12 +30,18 @@
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);padding:26px;}
   .wrap{max-width:1280px;margin:0 auto;}
+  .header-bar{background:#16213E;color:#fff;border-radius:var(--radius);padding:18px 22px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .header-bar h1{color:#fff;margin:0 0 4px;}
+  .header-bar .sub{color:#B7C0D6;margin-bottom:0;}
+  .header-bar #userBar{color:#D7DCE8;font-size:12.5px;}
+  .header-bar #logoutBtn{background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.25);}
+  .header-bar #logoutBtn:hover{background:rgba(255,255,255,0.2);}
   h1{font-family:var(--font-display);font-weight:600;font-size:22px;margin:0 0 4px;}
   .sub{color:var(--ink-2);font-size:13px;margin-bottom:18px;}
 
-  nav{display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-wrap:wrap;}
-  nav button{background:transparent;border:none;padding:10px 14px;font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--ink-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
-  nav button.active{color:var(--ink);border-bottom-color:var(--ink);}
+  nav{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  nav button{background:var(--surface);border:1px solid var(--border);padding:9px 16px;border-radius:8px;font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--ink-2);cursor:pointer;}
+  nav button.active{color:#fff;background:#16213E;border-color:#16213E;}
 
   .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:18px;}
   .panel h2{font-family:var(--font-display);font-size:15px;font-weight:600;margin:0 0 2px;}
@@ -76,6 +82,9 @@
   .badge{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;}
   .num-edit-input::-webkit-outer-spin-button, .num-edit-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
   .num-edit-input{-moz-appearance:textfield;appearance:textfield;}
+  .num-edit-input:focus, .bid-edit-input:focus, .comment-edit-input:focus, .promo-edit-input:focus, .stocklabel-input:focus, .stock-cell-input:focus{
+    outline:2px solid var(--accent-bright,#3B82F6); outline-offset:-1px; border-radius:0;
+  }
   .badge.wb{background:var(--wb-bg);color:var(--wb-ink);}
   .badge.ozon{background:var(--ozon-bg);color:var(--ozon-ink);}
   .badge.ym{background:var(--ym-bg);color:var(--ym-ink);}
@@ -181,18 +190,23 @@
 
 <div class="wrap" id="mainApp" style="display:none;">
   <div id="fbStatusBanner" style="display:none;background:var(--neg-bg);color:var(--neg);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;"></div>
-  <div id="userBar" style="display:none;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:8px;font-size:12.5px;color:var(--ink-2);">
-    <span id="userEmailLabel"></span>
-    <button class="btn secondary" id="logoutBtn" style="padding:5px 10px;font-size:12px;">Выйти</button>
+  <div class="header-bar">
+    <div>
+      <h1>Воронка продаж</h1>
+      <div class="sub">Ручной учёт по товарам на WB, Ozon и Яндекс Маркете</div>
+    </div>
+    <div id="userBar" style="display:none;justify-content:flex-end;align-items:center;gap:10px;">
+      <span id="userEmailLabel"></span>
+      <button class="btn secondary" id="logoutBtn" style="padding:5px 10px;font-size:12px;">Выйти</button>
+    </div>
   </div>
-  <h1>Воронка продаж</h1>
-  <div class="sub">Ручной учёт по товарам на WB, Ozon и Яндекс Маркете</div>
 
   <nav id="tabs">
     <button data-tab="plan" class="active">План и факт</button>
     <button data-tab="daily">Ежедневные данные</button>
     <button data-tab="funnel">Воронка и точки роста</button>
     <button data-tab="compare">Сравнение периодов</button>
+    <button data-tab="stock">Остатки и динамика</button>
     <button data-tab="import">Импорт данных</button>
     <button data-tab="products">Товары</button>
     <button data-tab="help">Справка</button>
@@ -360,6 +374,15 @@
     </div>
   </div>
 
+  <!-- ОСТАТКИ И ДИНАМИКА -->
+  <div id="tab-stock" class="tabpane" style="display:none;">
+    <div class="panel">
+      <h2>Остатки и динамика</h2>
+      <p class="hint">Товар и площадка берутся из общего списка на вкладке «Товары» — отдельный список здесь не ведётся. Товары с одной и той же «Группой плана» показаны одной строкой — остаток указывается суммарно на группу, название строки можно поправить прямо здесь. «Продажи, шт/день» считаются автоматически по прошлой календарной неделе (пн–вс перед выбранной неделей ввода) — и только если все 7 её дней полностью заполнены в «Ежедневных данных»; если нет — показывается «неделя не закрыта», без частичного расчёта. Не зависит от того, когда сохранён сам остаток. У каждой площадки — своя кнопка «Сохранить», разные сотрудники могут заполнять свои площадки одновременно без риска перезаписать чужие данные.</p>
+    </div>
+    <div id="stockTabWrap"><div class="empty">Загрузка…</div></div>
+  </div>
+
   <!-- ТОВАРЫ -->
   <div id="tab-products" class="tabpane" style="display:none;">
     <div class="panel">
@@ -420,6 +443,13 @@
       <p>Если есть данные за прошлые периоды — можно скачать Excel-шаблон под конкретную площадку, заполнить и загрузить обратно. Даты, которые уже есть в истории, будут перезаписаны файлом, остальные добавятся как новые.</p>
     </div>
     <div class="panel">
+      <h2>Остатки и динамика</h2>
+      <p>Отдельного списка товаров здесь нет — товар и площадка берутся из общего списка на вкладке «Товары». Все четыре площадки (WB, Ozon, ЯМ, Фулфилмент) показаны карточками сразу, каждая — своя таблица и своя кнопка «Сохранить»: разные сотрудники могут заполнять свои площадки одновременно, не перезаписывая данные друг друга.</p>
+      <p><b>Неделя для ввода</b> — по умолчанию открывается самая ранняя из «следующих нужных» недель среди всех площадок (у каждой площадки счёт ведётся отдельно, одна не «подталкивает» вперёд то, что видят по умолчанию другие). Через выпадающий список можно открыть и поправить любую другую неделю, включая текущую и предыдущую — они доступны сразу, даже если по ним ещё ничего не сохранено.</p>
+      <p><b>Товары с одинаковой «Группой плана»</b> (см. вкладку «Товары») показаны здесь одной строкой — остаток на них вносится суммарно, одним числом, а не по каждой карточке отдельно. Название строки можно поправить прямо здесь же, в первой ячейке — по умолчанию это название группы (или название товара, если группы нет), но можно вписать своё, для этой таблицы это не повлияет на настоящее название товара на других вкладках.</p>
+      <p><b>«Продажи, шт/день»</b> считаются автоматически, не вводятся вручную — строго по <b>прошлой календарной неделе</b> (понедельник–воскресенье перед выбранной неделей ввода), и только если все 7 дней той недели полностью заполнены (не черновые) в «Ежедневных данных». Если неделя закрыта не полностью — показывается «неделя не закрыта» вместо цифры, частично посчитанное значение не показывается. Это не связано с тем, когда сохранён сам остаток — можно сохранить остаток раньше, чем закроется ежедневный мониторинг за нужную неделю, динамика просто появится позже, когда данные будут готовы. Для группы — суммируется по всем товарам, что в неё входят.</p>
+    </div>
+    <div class="panel">
       <h2>Товары</h2>
       <p>Список всех товаров по всем площадкам. Здесь же — кнопка «Пороги» у каждого товара, чтобы настроить свои границы нормы для «Точек роста» (по умолчанию: CTR 3%, конверсия в корзину 10%, в заказ 20%, выкуп 80%, отмены 10%), и кнопка «Группа плана» — для товаров, которые продаются с нескольких карточек одновременно (подробнее — в разделе «План и факт» этой справки).</p>
     </div>
@@ -454,6 +484,14 @@ let drrChart=null, crChart=null;
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function pad2(n){ return String(n).padStart(2,'0'); }
 function dateToISO(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function mondayOf(dateStr){
+  const [y,m,d]=dateStr.split('-').map(Number);
+  const dt=new Date(y,m-1,d);
+  const day=dt.getDay();
+  const diff=(day===0)?6:day-1;
+  dt.setDate(dt.getDate()-diff);
+  return dateToISO(dt);
+}
 function todayISO(){ return dateToISO(new Date()); }
 function yesterdayISO(){ const d=new Date(); d.setDate(d.getDate()-1); return dateToISO(d); }
 function monthNow(){ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
@@ -474,7 +512,7 @@ function pct(a,b){ return (b && b>0)? a/b*100 : null; }
    true  — Firebase (для рабочей версии на GitHub Pages)
    false — window.storage (для быстрых тестов прямо в Claude.ai)
    Перед заливкой на GitHub Pages поставь true. */
-const USE_FIREBASE = true;
+const USE_FIREBASE = false;
 /* ================================================================ */
 
 /* ================== FIREBASE ==================
@@ -622,6 +660,209 @@ function computeSPP(before, after){
   before=+before; after=+after;
   if(!before || before<=0) return null;
   return (1 - after/before)*100;
+}
+
+/* ---------------- ОСТАТКИ И ДИНАМИКА ---------------- */
+const STOCK_CHANNELS=[
+  {ch:'wb', label:'Wildberries'},
+  {ch:'ozon', label:'Ozon'},
+  {ch:'ym', label:'Яндекс Маркет'},
+  {ch:'ff', label:'Фулфилмент'},
+];
+
+function groupMembersFor(p){ return p.planGroup ? state.products.filter(x=>x.planGroup===p.planGroup) : [p]; }
+function buildStockRows(channel){
+  const list = channel==='ff' ? state.products : state.products.filter(p=>p.mp===channel);
+  const seen=new Set();
+  const rowsDef=[];
+  for(const p of list){
+    const rowKey = p.planGroup ? 'group_'+sanitizeGroupKey(p.planGroup) : 'product_'+p.id;
+    if(seen.has(rowKey)) continue;
+    seen.add(rowKey);
+    rowsDef.push({ rowKey, defaultLabel: p.planGroup || p.name, members: groupMembersFor(p) });
+  }
+  return rowsDef;
+}
+async function computeRowVelocityForWeek(members, viewWeekDate){
+  const prevWeekMonday=dateMinusDays(viewWeekDate,7);
+  const days=Array.from({length:7},(_,i)=>datePlusDays(prevWeekMonday,i));
+  for(const m of members){
+    const dm=await getDailyMap(m.id);
+    for(const d of days){
+      const e=dm[d];
+      if(!e || e.draft) return null; // прошлая неделя ещё не закрыта полностью — динамику не считаем
+    }
+  }
+  let totalUnits=0;
+  for(const m of members){
+    const dm=await getDailyMap(m.id);
+    for(const d of days){ totalUnits+=+dm[d].orders||0; }
+  }
+  return totalUnits/7;
+}
+async function getStockLabel(rowKey, defaultLabel){
+  const v=await storeGet('stocklabel:'+rowKey);
+  return (v && v.label) ? v.label : defaultLabel;
+}
+
+function stockChannelKey(channel, weekDate){ return 'stockweek:'+channel+':'+weekDate; }
+function stockWeekIndexKey(channel){ return 'stockweekindex:'+channel; }
+async function getStockWeekIndex(channel){ return (await storeGet(stockWeekIndexKey(channel))) || []; }
+async function addToStockWeekIndex(channel, weekDate){
+  const idx=await getStockWeekIndex(channel);
+  if(!idx.includes(weekDate)){ idx.push(weekDate); await storeSet(stockWeekIndexKey(channel), idx); }
+}
+async function computeChannelNextWeek(channel){
+  const idx=await getStockWeekIndex(channel);
+  const thisMonday=mondayOf(todayISO());
+  if(idx.length===0) return thisMonday;
+  const latest=[...idx].sort().slice(-1)[0];
+  return datePlusDays(latest,7);
+}
+async function computeStockPendingWeek(){
+  // берём самую раннюю из «следующих нужных» недель среди площадок — так одна площадка,
+  // сохранившая раньше остальных, не «утаскивает» вперёд то, что видят по умолчанию другие
+  const nextWeeks=await Promise.all(STOCK_CHANNELS.map(c=>computeChannelNextWeek(c.ch)));
+  return nextWeeks.sort()[0];
+}
+async function stockWeekOptions(){
+  const pending=await computeStockPendingWeek();
+  const thisMonday=mondayOf(todayISO());
+  const prevMonday=dateMinusDays(thisMonday,7);
+  const all=new Set([pending, thisMonday, prevMonday]);
+  for(const c of STOCK_CHANNELS){
+    const idx=await getStockWeekIndex(c.ch);
+    idx.forEach(w=>all.add(w));
+  }
+  return [...all].sort().reverse();
+}
+
+let stockTabWeekDate=null;
+let stockTabDrafts={};
+
+async function initStockDrafts(weekDate){
+  stockTabDrafts={};
+  for(const c of STOCK_CHANNELS){
+    const saved=(await storeGet(stockChannelKey(c.ch, weekDate))) || null;
+    stockTabDrafts[c.ch]={ data: saved? {...saved} : {}, filled: !!saved };
+  }
+}
+
+async function renderStockTab(){
+  const el=document.getElementById('stockTabWrap');
+  const pendingDate=await computeStockPendingWeek();
+  if(!stockTabWeekDate) stockTabWeekDate=pendingDate;
+  const isPending = stockTabWeekDate===pendingDate;
+  await initStockDrafts(stockTabWeekDate);
+  const weekOpts=await stockWeekOptions();
+
+  let html=`<div class="panel">
+    <div class="row" style="justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div class="hint" style="margin:0;text-transform:uppercase;letter-spacing:.03em;font-size:11px;">${isPending?'Текущая неделя для ввода':'Просмотр / правка недели'}</div>
+        <h2 style="margin-top:2px;">${fmtRuDate(stockTabWeekDate)}</h2>
+      </div>
+      <div class="field" style="min-width:220px;">
+        <label>Открыть другую неделю</label>
+        <select id="stockWeekPicker">
+          ${weekOpts.map(w=>`<option value="${w}" ${w===stockTabWeekDate?'selected':''}>${w===pendingDate?'— текущая ('+fmtRuDate(w)+') —':fmtRuDate(w)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  </div>`;
+
+  if(state.products.length===0){
+    html+=`<div class="panel"><div class="empty">Нет товаров — добавьте на вкладке «Товары»</div></div>`;
+  } else {
+    html+=`<div class="row" style="align-items:stretch;flex-wrap:wrap;">`;
+    for(const c of STOCK_CHANNELS){
+      html+=await renderStockChannelCard(c);
+    }
+    html+=`</div>`;
+  }
+  el.innerHTML=html;
+  wireStockTabEvents();
+}
+
+async function renderStockChannelCard(c){
+  const rowsDef=buildStockRows(c.ch);
+  const draft=stockTabDrafts[c.ch];
+  const showVelocity = c.ch!=='ff';
+  let inner='';
+  if(rowsDef.length===0){
+    inner=`<div class="empty">Нет товаров для этой площадки</div>`;
+  } else {
+    const rowsHtml=[];
+    for(const rd of rowsDef){
+      const label=await getStockLabel(rd.rowKey, rd.defaultLabel);
+      const velocity=showVelocity ? await computeRowVelocityForWeek(rd.members, stockTabWeekDate) : null;
+      const stockVal=draft.data[rd.rowKey]??'';
+      const safeLabel=(label||'').replace(/"/g,'&quot;');
+      rowsHtml.push(`<tr>
+        <td class="sticky txt"><input type="text" class="stocklabel-input" data-rowkey="${rd.rowKey}" value="${safeLabel}" style="border:none;background:transparent;font-family:inherit;font-weight:600;font-size:inherit;color:inherit;padding:2px;width:150px;"></td>
+        <td><input type="number" min="0" class="num-edit-input stock-cell-input" data-ch="${c.ch}" data-rowkey="${rd.rowKey}" value="${stockVal}" style="width:70px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;padding:2px;"></td>
+        ${showVelocity? `<td>${velocity!=null? fmt1(velocity)+' шт/день' : '<span title="Считается только когда все 7 дней прошлой календарной недели полностью заполнены">— (неделя не закрыта)</span>'}</td>` : ''}
+      </tr>`);
+    }
+    inner=`<div class="table-scroll"><table class="daytable">
+      <thead><tr><th class="sticky">Товар</th><th>Остаток, шт</th>${showVelocity? '<th>Продажи, шт/день</th>' : ''}</tr></thead>
+      <tbody>${rowsHtml.join('')}</tbody>
+    </table></div>`;
+  }
+  return `<div class="panel" style="flex:1 1 420px;min-width:340px;" data-channel-card="${c.ch}">
+    <div class="row" style="justify-content:space-between;align-items:center;">
+      <h2 style="margin:0;">${c.label}</h2>
+      <span class="badge" style="background:${draft.filled?'var(--pos-bg)':'var(--bg)'};color:${draft.filled?'var(--pos)':'var(--ink-3)'};">${draft.filled?'внесено':'не внесено'}</span>
+    </div>
+    ${inner}
+    <div style="margin-top:12px;text-align:right;">
+      <button class="btn" data-save-channel="${c.ch}">Сохранить ${c.label}</button>
+    </div>
+  </div>`;
+}
+
+function wireStockTabEvents(){
+  const el=document.getElementById('stockTabWrap');
+  el.querySelectorAll('.stocklabel-input').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const rowKey=inp.dataset.rowkey;
+      const ok=await storeSet('stocklabel:'+rowKey, {label: inp.value.trim()});
+      if(!ok) alert('Не удалось сохранить название — попробуйте ещё раз');
+    });
+  });
+  el.querySelectorAll('.stock-cell-input').forEach(inp=>{
+    inp.addEventListener('wheel', (e)=>{ e.preventDefault(); }, {passive:false});
+    inp.addEventListener('focus', ()=>{ if(inp.value==='0') inp.value=''; });
+    inp.addEventListener('input', ()=>{
+      const ch=inp.dataset.ch, rowKey=inp.dataset.rowkey;
+      stockTabDrafts[ch].data[rowKey] = inp.value===''? null : +inp.value;
+    });
+  });
+  el.querySelectorAll('[data-save-channel]').forEach(btn=>{
+    btn.addEventListener('click', ()=>onSaveStockChannel(btn));
+  });
+  const picker=document.getElementById('stockWeekPicker');
+  if(picker) picker.addEventListener('change', (e)=>{ stockTabWeekDate=e.target.value; renderStockTab(); });
+}
+
+async function onSaveStockChannel(btn){
+  const ch=btn.dataset.saveChannel;
+  const weekDate=stockTabWeekDate;
+  const draft=stockTabDrafts[ch];
+  const clean={};
+  Object.entries(draft.data).forEach(([k,v])=>{ if(v!==null && v!==undefined && !isNaN(v) && v>=0) clean[k]=v; });
+  const origText=btn.textContent;
+  btn.disabled=true; btn.textContent='Сохраняю…';
+  const ok=await storeSet(stockChannelKey(ch, weekDate), clean);
+  if(!ok){ btn.disabled=false; btn.textContent=origText; alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+  await addToStockWeekIndex(ch, weekDate);
+  btn.textContent='Сохранено ✓';
+  setTimeout(()=>{ renderStockTab(); }, 500);
+}
+
+function fmtRuDate(iso){
+  const [y,m,d]=iso.split('-');
+  return `${d}.${m}.${y}`;
 }
 
 /* ---------------- ТОВАРЫ ---------------- */
@@ -1472,9 +1713,11 @@ async function renderDailyTab(){
     const sum=vals.reduce((a,b)=>a+b,0);
     return r.agg==='avg' ? sum/vals.length : sum;
   }
+  const SECTION_COLORS={'Цена':'var(--info-bg)','Трафик':'var(--pos-bg)','Воронка':'var(--warn-bg)','Реклама и финансы':'var(--info-bg)','Акции':'var(--pos-bg)','Изменения':'var(--warn-bg)'};
   const bodyRows=rows.map(r=>{
     if(r.section!==undefined){
-      return `<tr class="section-row"><td class="sticky">${r.section}</td><td class="sticky2"></td>${dates.map(()=>'<td></td>').join('')}</tr>`;
+      const bg=SECTION_COLORS[r.section]||'var(--bg)';
+      return `<tr class="section-row" style="background:${bg};"><td class="sticky" style="background:${bg};">${r.section}</td><td class="sticky2" style="background:${bg};"></td>${dates.map(()=>`<td style="background:${bg};"></td>`).join('')}</tr>`;
     }
     const cells=dates.map(d=>{
       const e=enrichedByDate[d]||null;
@@ -2409,6 +2652,7 @@ document.getElementById('tabs').addEventListener('click', async (e)=>{
   if(e.target.dataset.tab==='compare'){ syncProductSelector('cmp_product_mp','cmp_product'); renderCompareTab(); }
   if(e.target.dataset.tab==='import'){ syncProductSelector('imp_product_mp','imp_product'); resetImportPreview(); }
   if(e.target.dataset.tab==='products'){ renderProductsTable(); }
+  if(e.target.dataset.tab==='stock'){ renderStockTab(); }
 });
 
 /* ---------------- ИМПОРТ ДАННЫХ ИЗ ФАЙЛА ---------------- */
