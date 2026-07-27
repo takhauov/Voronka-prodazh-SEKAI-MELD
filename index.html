@@ -74,6 +74,8 @@
   table.daytable tr.row-highlight{background:#F5E9A8;}
   table.daytable tr.row-highlight td.sticky, table.daytable tr.row-highlight td.sticky2{background:#F5E9A8;}
   .badge{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;}
+  .num-edit-input::-webkit-outer-spin-button, .num-edit-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .num-edit-input{-moz-appearance:textfield;appearance:textfield;}
   .badge.wb{background:var(--wb-bg);color:var(--wb-ink);}
   .badge.ozon{background:var(--ozon-bg);color:var(--ozon-ink);}
   .badge.ym{background:var(--ym-bg);color:var(--ym-ink);}
@@ -457,6 +459,14 @@ function yesterdayISO(){ const d=new Date(); d.setDate(d.getDate()-1); return da
 function monthNow(){ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
 function fmt(n){ return Math.round(n||0).toLocaleString('ru-RU'); }
 function fmt1(n){ return n===null||n===undefined? '—' : (Math.round(n*10)/10).toLocaleString('ru-RU'); }
+function progressBarColor(pct){
+  const p=Math.max(0,Math.min(100,pct));
+  const red=[192,57,43], yellow=[232,147,91], green=[31,138,95];
+  let c1,c2,t;
+  if(p<50){ c1=red; c2=yellow; t=p/50; } else { c1=yellow; c2=green; t=(p-50)/50; }
+  const mix=(a,b)=>Math.round(a+(b-a)*t);
+  return `rgb(${mix(c1[0],c2[0])},${mix(c1[1],c2[1])},${mix(c1[2],c2[2])})`;
+}
 function daysInMonth(ym){ const [y,m]=ym.split('-').map(Number); return new Date(y,m,0).getDate(); }
 function pct(a,b){ return (b && b>0)? a/b*100 : null; }
 
@@ -570,6 +580,7 @@ async function loadProducts(){
   list.sort((a,b)=> (a.mp+a.name).localeCompare(b.mp+b.name));
   state.products=list;
 }
+function sanitizeGroupKey(name){ return (name||'').trim().replace(/[\s\/\\'"]+/g,'_'); }
 function planKeyFor(product){ return product?.planGroup ? 'plangroup:'+product.planGroup : 'plan:'+product.id; }
 async function getPlanMap(product){ return (await storeGet(planKeyFor(product))) || {}; }
 function productsInGroup(groupName){ return state.products.filter(p=>p.planGroup && p.planGroup===groupName); }
@@ -624,10 +635,10 @@ async function renderProductsTable(){
     const th=getThresholds(p);
     return `<tr>
       <td class="txt"><span class="badge ${p.mp}">${MP_LABEL[p.mp]}</span></td>
-      <td class="txt">${p.name}${p.planGroup?` <span class="badge" style="background:var(--funnel-bg);color:var(--funnel);">группа: ${p.planGroup}</span>`:''}</td>
+      <td class="txt">${p.name}${p.planGroup?` <span class="badge" style="background:var(--funnel-bg);color:var(--funnel);">группа: ${p.planGroup}</span>`:''}${p.seasonalityGroup?` <span class="badge" style="background:var(--warn-bg);color:var(--warn);">сезон: ${p.seasonalityGroup}</span>`:''}</td>
       <td>${p.currentPriceLK? fmt(p.currentPriceLK)+' ₽' : '—'}</td>
       <td>${p.currentPriceCustomer? fmt(p.currentPriceCustomer)+' ₽' : '—'}</td>
-      <td><button class="btn secondary" data-rename="${p.id}">Переименовать</button> <button class="btn secondary" data-thresh-toggle="${p.id}">Пороги</button> <button class="btn secondary" data-group-toggle="${p.id}">Группа плана</button> <button class="btn danger" data-del="${p.id}">Удалить</button></td>
+      <td><button class="btn secondary" data-rename="${p.id}">Переименовать</button> <button class="btn secondary" data-thresh-toggle="${p.id}">Пороги</button> <button class="btn secondary" data-group-toggle="${p.id}">Группа плана</button> <button class="btn secondary" data-season-toggle="${p.id}">Сезонность</button> <button class="btn danger" data-del="${p.id}">Удалить</button></td>
     </tr>
     <tr class="thresh-row" data-thresh-row="${p.id}" style="display:none;">
       <td colspan="5">
@@ -649,6 +660,16 @@ async function renderProductsTable(){
           <button class="btn secondary" data-group-save="${p.id}">Сохранить группу</button>
         </div>
         <div class="note">Товары с одинаковым названием группы получают общий план, общий остаток и общее поступление на вкладке «План и факт» — при этом ежедневные данные и воронка остаются у каждой карточки своими.</div>
+      </td>
+    </tr>
+    <tr class="season-row" data-season-row="${p.id}" style="display:none;">
+      <td colspan="5">
+        <div class="row" style="padding:8px 0;">
+          <div class="field" style="min-width:260px;"><label>Группа сезонности (пусто — без сезонности, коэф. 1.0 всегда)</label><input type="text" data-seasoninput="${p.id}" value="${p.seasonalityGroup||''}" placeholder="Например, Садовый инструмент"></div>
+          <button class="btn secondary" data-season-load="${p.id}">Показать коэффициенты группы</button>
+        </div>
+        <div id="seasonCoefsWrap_${p.id}" style="margin-top:10px;"></div>
+        <div class="note">Товары с одинаковым названием группы сезонности используют один и тот же набор из 12 значений (по одному на календарный месяц, переиспользуется из года в год). Значения — в процентах отклонения от среднего, как на MPStats (0% = обычный месяц).</div>
       </td>
     </tr>`;
   }).join('');
@@ -675,6 +696,10 @@ async function renderProductsTable(){
   }));
   wrap.querySelectorAll('[data-group-toggle]').forEach(b=>b.addEventListener('click', ()=>{
     const row=wrap.querySelector(`[data-group-row="${b.dataset.groupToggle}"]`);
+    row.style.display = row.style.display==='none' ? 'table-row' : 'none';
+  }));
+  wrap.querySelectorAll('[data-season-toggle]').forEach(b=>b.addEventListener('click', ()=>{
+    const row=wrap.querySelector(`[data-season-row="${b.dataset.seasonToggle}"]`);
     row.style.display = row.style.display==='none' ? 'table-row' : 'none';
   }));
   wrap.querySelectorAll('[data-group-save]').forEach(b=>b.addEventListener('click', async ()=>{
@@ -719,6 +744,48 @@ async function renderProductsTable(){
     renderProductsTable();
     if(migratedMonths>0) alert(`Готово. Заодно перенесли план за ${migratedMonths} мес., которые были введены до объединения карточек, — они уже видны в общем плане группы.`);
   }));
+
+  const MONTH_NAMES=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+  function renderSeasonCoefsInputs(pid, groupName, coefs){
+    const el=document.getElementById(`seasonCoefsWrap_${pid}`);
+    if(!groupName){ el.innerHTML='<div class="note">Группа не указана — коэффициенты не нужны, план считается без поправки на сезон.</div>'; return; }
+    const inputs=MONTH_NAMES.map((name,i)=>`<div class="field" style="min-width:60px;"><label>${name}, %</label><input type="number" step="1" data-seasoncoef="${pid}" data-monthidx="${i+1}" value="${coefs[i+1]??0}" style="width:60px;"></div>`).join('');
+    el.innerHTML=`<div class="row">${inputs}</div><button class="btn secondary" style="margin-top:8px;" data-season-coefs-save="${pid}" data-season-group="${groupName}">Сохранить коэффициенты группы «${groupName}»</button>
+      <div class="note">Вводи как на MPStats — % отклонения от среднего месяца (0 = обычный месяц, -90 = сильно ниже среднего, +220 = сильно выше среднего). Пересчёт в множитель для плана происходит автоматически.</div>`;
+    el.querySelector('[data-season-coefs-save]').addEventListener('click', async (ev)=>{
+      const btn=ev.target;
+      const gName=btn.dataset.seasonGroup;
+      const newCoefs={};
+      el.querySelectorAll('[data-seasoncoef]').forEach(inp=>{ newCoefs[inp.dataset.monthidx]=+inp.value||0; });
+      const originalText=btn.textContent;
+      btn.disabled=true; btn.textContent='Сохраняю…';
+      const ok=await storeSet('seasonality:'+sanitizeGroupKey(gName), newCoefs);
+      btn.disabled=false;
+      if(!ok){ alert('Не удалось сохранить — сбой хранилища. Попробуйте ещё раз.'); return; }
+      btn.textContent='✓ Сохранено';
+      setTimeout(()=>{ btn.textContent=originalText; }, 2000);
+    });
+  }
+  wrap.querySelectorAll('[data-season-load]').forEach(b=>b.addEventListener('click', async ()=>{
+    const pid=b.dataset.seasonLoad;
+    const inp=wrap.querySelector(`[data-seasoninput="${pid}"]`);
+    const groupName=inp.value.trim();
+    const coefs = groupName ? ((await storeGet('seasonality:'+sanitizeGroupKey(groupName))) || {}) : {};
+    renderSeasonCoefsInputs(pid, groupName, coefs);
+  }));
+  wrap.querySelectorAll('[data-seasoninput]').forEach(inp=>{
+    // при изменении имени группы — сохраняем привязку товара к ней сразу, не отдельной кнопкой
+    inp.addEventListener('change', async ()=>{
+      const pid=inp.dataset.seasoninput;
+      const p=state.products.find(x=>x.id===pid);
+      const prevGroup=p.seasonalityGroup;
+      const newGroup=inp.value.trim();
+      p.seasonalityGroup=newGroup||null;
+      const ok=await storeSet('product:'+pid, p);
+      if(!ok){ p.seasonalityGroup=prevGroup; inp.value=prevGroup||''; alert('Не удалось сохранить — сбой хранилища. Попробуйте ещё раз.'); return; }
+      await loadProducts();
+    });
+  });
   wrap.querySelectorAll('[data-thresh-save]').forEach(b=>b.addEventListener('click', async ()=>{
     const id=b.dataset.threshSave;
     const p=state.products.find(x=>x.id===id);
@@ -849,10 +916,33 @@ async function computeAutoPlan(productId, month){
     totalDays+=daysInMonth(m);
   }
   const avgDailyRate=totalUnits/totalDays;
-  const dailyRate=avgDailyRate*(1+growthPct/100);
+
+  // сезонная поправка: если у товара задана группа сезонности — берём соотношение
+  // коэффициента планируемого месяца к средней сезонности тех месяцев, что легли в основу среднего темпа,
+  // чтобы не задваивать сезонность, если базовые месяцы сами были высоким/низким сезоном
+  let seasonRatio=1, seasonNote='';
+  if(product.seasonalityGroup){
+    const pcts=(await storeGet('seasonality:'+sanitizeGroupKey(product.seasonalityGroup))) || {};
+    const hasCoefs=Object.keys(pcts).length>0;
+    if(hasCoefs){
+      const toCoef=pct=>1+(pct||0)/100;
+      const targetIdx=+month.slice(5,7);
+      const targetPct=pcts[targetIdx]??0;
+      const targetCoef=toCoef(targetPct);
+      const basePcts=baseMonths.map(m=>pcts[+m.slice(5,7)]??0);
+      const avgBasePct=basePcts.reduce((a,b)=>a+b,0)/basePcts.length;
+      const avgBaseCoef=toCoef(avgBasePct);
+      seasonRatio = avgBaseCoef>0 ? targetCoef/avgBaseCoef : 1;
+      seasonNote=` Сезонность («${product.seasonalityGroup}»): ${targetPct>=0?'+':''}${fmt1(targetPct)}% на ${month.slice(5,7)} мес. к среднему ${avgBasePct>=0?'+':''}${fmt1(avgBasePct)}% по базовым месяцам → поправка ×${fmt1(seasonRatio)}.`;
+    } else {
+      seasonNote=` Группа сезонности «${product.seasonalityGroup}» указана, но коэффициенты для неё ещё не заполнены (см. вкладку «Товары») — план посчитан без поправки на сезон.`;
+    }
+  }
+
+  const dailyRate=avgDailyRate*(1+growthPct/100)*seasonRatio;
   const dim=daysInMonth(month);
   const desiredUnits=Math.round(dailyRate*dim);
-  const price=product?.currentPriceLK||0;
+  const price=+document.getElementById('plan_planned_price').value||product?.currentPriceLK||0;
 
   const stockQtyRaw=document.getElementById('plan_stock').value;
   const arrivalDate=document.getElementById('plan_arrival_date').value;
@@ -860,7 +950,7 @@ async function computeAutoPlan(productId, month){
   const stockQty=stockQtyRaw?+stockQtyRaw:0;
   const arrivalQty=arrivalQtyRaw?+arrivalQtyRaw:0;
 
-  let noteText=`Средний темп продаж: ${fmt1(avgDailyRate)} шт/день за последние ${baseMonths.length} мес. (${baseMonths.join(', ')}). С ростом ${growthPct}% → ${fmt1(dailyRate)} шт/день × ${dim} дн. в ${month} = расчётный план ${fmt(desiredUnits)} шт.`;
+  let noteText=`Средний темп продаж: ${fmt1(avgDailyRate)} шт/день за последние ${baseMonths.length} мес. (${baseMonths.join(', ')}). С ростом ${growthPct}%${seasonNote} → ${fmt1(dailyRate)} шт/день × ${dim} дн. в ${month} = расчётный план ${fmt(desiredUnits)} шт.`;
   let finalUnits=desiredUnits;
   let arrivalNote=null;
 
@@ -905,7 +995,7 @@ async function computeAutoPlan(productId, month){
   const finalRub=Math.round(finalUnits*price);
   document.getElementById('plan_units').value=finalUnits;
   document.getElementById('plan_rub').value=finalRub;
-  noteEl.textContent=noteText+` Итог: ${fmt(finalUnits)} шт × текущая цена в ЛК ${fmt(price)} ₽ = ${fmt(finalRub)} ₽. Проверьте и сохраните, если согласны.`;
+  noteEl.textContent=noteText+` Итог: ${fmt(finalUnits)} шт × плановая цена ${fmt(price)} ₽ = ${fmt(finalRub)} ₽. Проверьте и сохраните, если согласны.`;
 }
 
 async function computeWeeklyDynamicsKpi(productId){
@@ -979,7 +1069,7 @@ async function renderPlanTab(){
       }
     }
     const remainingPct = planRub>0? Math.max(0,(planRub-factRub)/planRub*100) : null;
-    const rows=rowsData.map(r=>`<tr><td class="txt">${r.name}</td><td>${fmt(r.planRub)} ₽</td><td>${fmt(r.factRub)} ₽</td><td>${fmt(r.planUnits)}</td><td>${fmt(r.factUnits)}</td></tr>`).join('');
+    const rows=rowsData.map(r=>`<tr><td class="txt">${r.name}</td><td>${fmt(r.planRub)} ₽</td><td>${fmt(r.factRub)} ₽</td><td>${r.planRub>0? fmt1(r.factRub/r.planRub*100)+'%' : '—'}</td><td>${fmt(r.planUnits)}</td><td>${fmt(r.factUnits)}</td></tr>`).join('');
     let runRateKpiMp='';
     if(isCurrentMonth){
       const runRateUnitsRounded=Math.round(runRateUnitsTotal);
@@ -991,12 +1081,12 @@ async function renderPlanTab(){
     summaryWrap.innerHTML = `<div class="panel"><h2>${MP_LABEL[mp]} — ${month}</h2>
       <div class="kpis">
         <div class="kpi"><div class="label">План, ₽</div><div class="value">${fmt(planRub)} ₽</div></div>
-        <div class="kpi"><div class="label">Факт, ₽</div><div class="value">${fmt(factRub)} ₽</div>${planRub? `<div class="bar"><div style="width:${Math.min(100,factRub/planRub*100)}%"></div></div>`:''}</div>
+        <div class="kpi"><div class="label">Факт, ₽</div><div class="value">${fmt(factRub)} ₽</div>${planRub? `<div class="bar"><div style="width:${Math.min(100,factRub/planRub*100)}%;background:${progressBarColor(factRub/planRub*100)};"></div></div>`:''}</div>
         <div class="kpi"><div class="label">Осталось до плана</div><div class="value">${remainingPct!==null? fmt1(remainingPct)+'%':'—'}</div></div>
         <div class="kpi"><div class="label">Факт, шт / план, шт</div><div class="value">${fmt(factUnits)} / ${fmt(planUnits)}</div></div>
         ${runRateKpiMp}
       </div>
-      <div class="table-scroll"><table><thead><tr><th>Товар</th><th>План ₽</th><th>Факт ₽</th><th>План шт</th><th>Факт шт</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="table-scroll"><table><thead><tr><th>Товар</th><th>План ₽</th><th>Факт ₽</th><th>План, %</th><th>План шт</th><th>Факт шт</th></tr></thead><tbody>${rows}</tbody></table></div>
     </div>`;
     return;
   }
@@ -1009,15 +1099,18 @@ async function renderPlanTab(){
   if(!productId){ editorWrap.innerHTML='<div class="panel"><div class="empty">Выберите товар</div></div>'; summaryWrap.innerHTML=''; return; }
   const planMap=await getPlanMap(product);
   const plan=planMap[month] || {planRub:'', planUnits:'', stockQty:'', arrivalDate:'', arrivalQty:''};
+  const plannedPrice = (plan.plannedPrice!==undefined && plan.plannedPrice!==null && plan.plannedPrice!=='') ? plan.plannedPrice : '';
   const groupBanner = product.planGroup
     ? `<div class="note" style="margin-bottom:12px;">Общий план на группу «${product.planGroup}»: ${productsInGroup(product.planGroup).map(p=>p.name).join(', ')}. Остаток на складе и поступление тоже общие на группу.</div>`
     : '';
   editorWrap.innerHTML = `<div class="panel">${groupBanner}<h2>План на ${month}</h2><p class="hint">Вносится раз в месяц, можно отредактировать в любой момент</p>
     <div class="row">
-      <div class="field"><label>План, ₽</label><input id="plan_rub" type="number" min="0" value="${plan.planRub}"></div>
+      <div class="field"><label>Плановая цена, ₽</label><input id="plan_planned_price" type="number" min="0" value="${plannedPrice}"></div>
       <div class="field"><label>План, шт</label><input id="plan_units" type="number" min="0" value="${plan.planUnits}"></div>
+      <div class="field"><label>План, ₽</label><input id="plan_rub" type="number" min="0" value="${plan.planRub}"></div>
       <button class="btn" id="savePlanBtn">Сохранить план</button>
     </div>
+    <p class="hint">Плановая цена по умолчанию подтягивается из текущей цены товара — можно поправить вручную. При изменении «Плановая цена» или «План, шт» — «План, ₽» пересчитывается автоматически (плановая цена × план, шт), с возможностью поправить и его отдельно</p>
     <div class="row" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
       <div class="field"><label>Остаток на складе, шт.</label><input id="plan_stock" type="number" min="0" value="${plan.stockQty||''}"></div>
       <div class="field"><label>Дата поступления</label><input id="plan_arrival_date" type="date" value="${plan.arrivalDate||''}"></div>
@@ -1030,15 +1123,25 @@ async function renderPlanTab(){
     </div>
     <div class="note" id="autoPlanNote"></div>
     </div>`;
+  function recalcPlanRubFromPrice(){
+    const ppRaw=document.getElementById('plan_planned_price').value;
+    const pp=ppRaw!==''? +ppRaw : (product?.currentPriceLK||0);
+    const units=+document.getElementById('plan_units').value||0;
+    document.getElementById('plan_rub').value=Math.round(pp*units);
+  }
+  document.getElementById('plan_planned_price').addEventListener('input', recalcPlanRubFromPrice);
+  document.getElementById('plan_units').addEventListener('input', recalcPlanRubFromPrice);
   document.getElementById('autoPlanBtn').addEventListener('click', ()=>computeAutoPlan(productId, month));
   document.getElementById('savePlanBtn').addEventListener('click', async ()=>{
     const planRub=+document.getElementById('plan_rub').value||0;
     const planUnits=+document.getElementById('plan_units').value||0;
+    const plannedPriceRaw=document.getElementById('plan_planned_price').value;
+    const plannedPriceVal = plannedPriceRaw!==''? +plannedPriceRaw : null;
     const stockQty=document.getElementById('plan_stock').value?+document.getElementById('plan_stock').value:'';
     const arrivalDate=document.getElementById('plan_arrival_date').value||'';
     const arrivalQty=document.getElementById('plan_arrival_qty').value?+document.getElementById('plan_arrival_qty').value:'';
     const pm=await getPlanMap(product);
-    pm[month]={planRub, planUnits, stockQty, arrivalDate, arrivalQty};
+    pm[month]={planRub, planUnits, plannedPrice:plannedPriceVal, stockQty, arrivalDate, arrivalQty};
     await storeSet(planKeyFor(product), pm);
     renderPlanTab();
   });
@@ -1088,8 +1191,8 @@ async function renderPlanTab(){
   if(myToken!==planRenderToken || currentPlanMode()!=='product') return;
   summaryWrap.innerHTML = `<div class="panel"><h2>Факт по плану</h2>
     <div class="kpis">
-      <div class="kpi"><div class="label">Факт, ₽</div><div class="value">${fmt(factRub)} ₽</div>${planRub? `<div class="bar"><div style="width:${Math.min(100,factRub/planRub*100)}%"></div></div>`:''}</div>
-      <div class="kpi"><div class="label">Факт, шт</div><div class="value">${fmt(factUnits)}</div>${planUnits? `<div class="bar"><div style="width:${Math.min(100,factUnits/planUnits*100)}%"></div></div>`:''}</div>
+      <div class="kpi"><div class="label">Факт, ₽</div><div class="value">${fmt(factRub)} ₽</div>${planRub? `<div class="bar"><div style="width:${Math.min(100,factRub/planRub*100)}%;background:${progressBarColor(factRub/planRub*100)};"></div></div>`:''}</div>
+      <div class="kpi"><div class="label">Факт, шт</div><div class="value">${fmt(factUnits)}</div>${planUnits? `<div class="bar"><div style="width:${Math.min(100,factUnits/planUnits*100)}%;background:${progressBarColor(factUnits/planUnits*100)};"></div></div>`:''}</div>
       <div class="kpi"><div class="label">Выполнение плана</div><div class="value">${donePct!==null? fmt1(donePct)+'%' : '—'}</div></div>
       <div class="kpi"><div class="label">Осталось до плана</div><div class="value">${remainingPct!==null? fmt1(remainingPct)+'%' : '—'}</div></div>
       <div class="kpi"><div class="label">Нужно шт/день</div><div class="value">${neededUnitsPerDay!==null? fmt1(neededUnitsPerDay):'—'}</div></div>
@@ -1286,7 +1389,7 @@ async function renderDailyTab(){
     {label:'Цена в ЛК, ₽', get:e=>e?.priceLK, fmt:v=>v!=null?fmt(v):'', editField:'priceLK', agg:'avg'},
     {label:'Цена для покупателя, ₽', get:e=>e?.priceCustomer, fmt:v=>v!=null?fmt(v):'', editField:'priceCustomer', agg:'avg'},
     isOzon?{label:'Цена с Ozon картой, ₽', get:e=>e?.priceOzonCard, fmt:v=>v?fmt(v):'', editField:'priceOzonCard', agg:'avg'}:null,
-    {label:'СПП, %', get:e=>e?.spp, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, agg:'avg'},
+    {label:'СПП, %', get:e=>e?.spp, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, aggType:'spp'},
     {section:'Трафик'},
     {label:'Показы', get:e=>e?.impressions, fmt:v=>v!=null?fmt(v):'', editField:'impressions', agg:'sum'},
     isOzon?{label:'Уникальные посетители', get:e=>e?.uniqueVisitors, fmt:v=>v!=null?fmt(v):'', editField:'uniqueVisitors', agg:'sum'}:null,
@@ -1345,6 +1448,17 @@ async function renderDailyTab(){
       if(r.aggType==='cr2') return s.carts>0? s.orders/s.carts*100 : null;
       if(r.aggType==='crf') return s.clicks>0? s.orders/s.clicks*100 : null;
       if(r.aggType==='drr') return s.ordersRub>0? s.adspend/s.ordersRub*100 : null;
+      if(r.aggType==='spp'){
+        const sppVals=[];
+        dates.forEach(d=>{
+          const e=enrichedByDate[d];
+          if(!e) return;
+          const before=+e.priceLK||0, after=+e.priceCustomer||0;
+          if(before>0 && after>0) sppVals.push((1-after/before)*100);
+        });
+        if(sppVals.length===0) return null;
+        return sppVals.reduce((a,b)=>a+b,0)/sppVals.length;
+      }
       return null;
     }
     if(!r.agg) return null;
@@ -1352,7 +1466,7 @@ async function renderDailyTab(){
       const e=enrichedByDate[d];
       if(!e) return null;
       const v=r.get(e);
-      return (v===null||v===undefined||isNaN(v))? null : v;
+      return (v===null||v===undefined||isNaN(v)||v<=0)? null : v; // нулевые значения (товара нет/не заполнено) не участвуют в среднем
     }).filter(v=>v!==null);
     if(vals.length===0) return null;
     const sum=vals.reduce((a,b)=>a+b,0);
@@ -1477,6 +1591,7 @@ async function renderDailyTab(){
   const AD_BREAKDOWN_YM=['adspend_bpr','adspend_bpk','adspend_polki'];
   wrap.querySelectorAll('.num-edit-input').forEach(inp=>{
     inp.addEventListener('wheel', (e)=>{ e.preventDefault(); }, {passive:false});
+    inp.addEventListener('focus', ()=>{ if(inp.value==='0') inp.value=''; });
     inp.addEventListener('change', async ()=>{
       const d=inp.dataset.notedate;
       const field=inp.dataset.editfield;
