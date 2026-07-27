@@ -378,7 +378,7 @@
   <div id="tab-stock" class="tabpane" style="display:none;">
     <div class="panel">
       <h2>Остатки и динамика</h2>
-      <p class="hint">Товар и площадка берутся из общего списка на вкладке «Товары» — отдельный список здесь не ведётся. Товары с одной и той же «Группой плана» показаны одной строкой — остаток указывается суммарно на группу, название строки можно поправить прямо здесь. «Продажи, шт/день» считаются автоматически по прошлой календарной неделе (пн–вс перед выбранной неделей ввода) — и только если все 7 её дней полностью заполнены в «Ежедневных данных»; если нет — показывается «неделя не закрыта», без частичного расчёта. Не зависит от того, когда сохранён сам остаток. У каждой площадки — своя кнопка «Сохранить», разные сотрудники могут заполнять свои площадки одновременно без риска перезаписать чужие данные.</p>
+      <p class="hint">Товар и площадка (WB/Ozon/ЯМ) берутся из общего списка на вкладке «Товары» — отдельный список здесь не ведётся, товары с одной «Группой плана» показаны одной строкой. Фулфилмент полностью свободный список — заводишь строки сама кнопкой «+ Добавить строку», название и остаток вводятся вручную. «Продажи, шт/день» (только для WB/Ozon/ЯМ) считаются автоматически по прошлой календарной неделе (пн–вс перед выбранной неделей ввода) — и только если все 7 её дней полностью заполнены в «Ежедневных данных»; если нет — показывается «неделя не закрыта», без частичного расчёта. Не зависит от того, когда сохранён сам остаток. У каждой площадки — своя кнопка «Сохранить», разные сотрудники могут заполнять свои площадки одновременно без риска перезаписать чужие данные.</p>
     </div>
     <div id="stockTabWrap"><div class="empty">Загрузка…</div></div>
   </div>
@@ -446,7 +446,8 @@
       <h2>Остатки и динамика</h2>
       <p>Отдельного списка товаров здесь нет — товар и площадка берутся из общего списка на вкладке «Товары». Все четыре площадки (WB, Ozon, ЯМ, Фулфилмент) показаны карточками сразу, каждая — своя таблица и своя кнопка «Сохранить»: разные сотрудники могут заполнять свои площадки одновременно, не перезаписывая данные друг друга.</p>
       <p><b>Неделя для ввода</b> — по умолчанию открывается самая ранняя из «следующих нужных» недель среди всех площадок (у каждой площадки счёт ведётся отдельно, одна не «подталкивает» вперёд то, что видят по умолчанию другие). Через выпадающий список можно открыть и поправить любую другую неделю, включая текущую и предыдущую — они доступны сразу, даже если по ним ещё ничего не сохранено.</p>
-      <p><b>Товары с одинаковой «Группой плана»</b> (см. вкладку «Товары») показаны здесь одной строкой — остаток на них вносится суммарно, одним числом, а не по каждой карточке отдельно. Название строки можно поправить прямо здесь же, в первой ячейке — по умолчанию это название группы (или название товара, если группы нет), но можно вписать своё, для этой таблицы это не повлияет на настоящее название товара на других вкладках.</p>
+      <p><b>Товары с одинаковой «Группой плана»</b> (см. вкладку «Товары») показаны здесь одной строкой на карточках WB/Ozon/ЯМ — остаток на них вносится суммарно, одним числом, а не по каждой карточке отдельно. Название строки можно поправить прямо здесь же, в первой ячейке — по умолчанию это название группы (или название товара, если группы нет), но можно вписать своё, для этой таблицы это не повлияет на настоящее название товара на других вкладках.</p>
+      <p><b>Фулфилмент</b> — полностью свободный список, не связанный с товарами на других вкладках. Строки заводятся кнопкой «+ Добавить строку», название и остаток вводятся вручную, лишние строки удаляются кнопкой «× Удалить».</p>
       <p><b>«Продажи, шт/день»</b> считаются автоматически, не вводятся вручную — строго по <b>прошлой календарной неделе</b> (понедельник–воскресенье перед выбранной неделей ввода), и только если все 7 дней той недели полностью заполнены (не черновые) в «Ежедневных данных». Если неделя закрыта не полностью — показывается «неделя не закрыта» вместо цифры, частично посчитанное значение не показывается. Это не связано с тем, когда сохранён сам остаток — можно сохранить остаток раньше, чем закроется ежедневный мониторинг за нужную неделю, динамика просто появится позже, когда данные будут готовы. Для группы — суммируется по всем товарам, что в неё входят.</p>
     </div>
     <div class="panel">
@@ -671,8 +672,33 @@ const STOCK_CHANNELS=[
 ];
 
 function groupMembersFor(p){ return p.planGroup ? state.products.filter(x=>x.planGroup===p.planGroup) : [p]; }
-function buildStockRows(channel){
-  const list = channel==='ff' ? state.products : state.products.filter(p=>p.mp===channel);
+async function getFFRows(){ return (await storeGet('stockffrows')) || []; }
+async function addFFRow(){
+  const rows=await getFFRows();
+  const newId='ff'+Date.now();
+  rows.push({id:newId, name:''});
+  const ok=await storeSet('stockffrows', rows);
+  return ok? newId : null;
+}
+async function deleteFFRow(id){
+  const rows=await getFFRows();
+  const filtered=rows.filter(x=>x.id!==id);
+  return await storeSet('stockffrows', filtered);
+}
+async function renameFFRow(id, name){
+  const rows=await getFFRows();
+  const r=rows.find(x=>x.id===id);
+  if(!r) return false;
+  r.name=name;
+  return await storeSet('stockffrows', rows);
+}
+
+async function buildStockRows(channel){
+  if(channel==='ff'){
+    const rows=await getFFRows();
+    return rows.map(r=>({ rowKey:'ff_'+r.id, ffId:r.id, defaultLabel:r.name||'', members:[] }));
+  }
+  const list = state.products.filter(p=>p.mp===channel);
   const seen=new Set();
   const rowsDef=[];
   for(const p of list){
@@ -738,15 +764,18 @@ async function stockWeekOptions(){
 }
 
 let stockTabWeekDate=null;
-let stockTabDrafts={};
+let stockDraftsByWeek={};
 
 async function initStockDrafts(weekDate){
-  stockTabDrafts={};
+  if(stockDraftsByWeek[weekDate]) return; // уже открывали эту неделю в этой сессии — не перезатираем несохранённый ввод
+  const drafts={};
   for(const c of STOCK_CHANNELS){
     const saved=(await storeGet(stockChannelKey(c.ch, weekDate))) || null;
-    stockTabDrafts[c.ch]={ data: saved? {...saved} : {}, filled: !!saved };
+    drafts[c.ch]={ data: saved? {...saved} : {}, filled: !!saved };
   }
+  stockDraftsByWeek[weekDate]=drafts;
 }
+function currentStockDrafts(){ return stockDraftsByWeek[stockTabWeekDate]; }
 
 async function renderStockTab(){
   const el=document.getElementById('stockTabWrap');
@@ -785,27 +814,31 @@ async function renderStockTab(){
 }
 
 async function renderStockChannelCard(c){
-  const rowsDef=buildStockRows(c.ch);
-  const draft=stockTabDrafts[c.ch];
+  const rowsDef=await buildStockRows(c.ch);
+  const draft=currentStockDrafts()[c.ch];
   const showVelocity = c.ch!=='ff';
+  const isFF = c.ch==='ff';
   let inner='';
   if(rowsDef.length===0){
-    inner=`<div class="empty">Нет товаров для этой площадки</div>`;
+    inner = isFF
+      ? `<div class="empty">Пока нет ни одной строки — добавь кнопкой ниже</div>`
+      : `<div class="empty">Нет товаров для этой площадки</div>`;
   } else {
     const rowsHtml=[];
     for(const rd of rowsDef){
-      const label=await getStockLabel(rd.rowKey, rd.defaultLabel);
+      const label = isFF ? rd.defaultLabel : await getStockLabel(rd.rowKey, rd.defaultLabel);
       const velocity=showVelocity ? await computeRowVelocityForWeek(rd.members, stockTabWeekDate) : null;
       const stockVal=draft.data[rd.rowKey]??'';
       const safeLabel=(label||'').replace(/"/g,'&quot;');
       rowsHtml.push(`<tr>
-        <td class="sticky txt"><input type="text" class="stocklabel-input" data-rowkey="${rd.rowKey}" value="${safeLabel}" style="border:none;background:transparent;font-family:inherit;font-weight:600;font-size:inherit;color:inherit;padding:2px;width:150px;"></td>
+        <td class="sticky txt"><input type="text" class="${isFF?'ffrow-name-input':'stocklabel-input'}" data-rowkey="${rd.rowKey}" ${isFF?`data-ffid="${rd.ffId}"`:''} value="${safeLabel}" placeholder="${isFF?'Название':''}" style="border:none;background:transparent;font-family:inherit;font-weight:600;font-size:inherit;color:inherit;padding:2px;width:150px;"></td>
         <td><input type="number" min="0" class="num-edit-input stock-cell-input" data-ch="${c.ch}" data-rowkey="${rd.rowKey}" value="${stockVal}" style="width:70px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;padding:2px;"></td>
         ${showVelocity? `<td>${velocity!=null? fmt1(velocity)+' шт/день' : '<span title="Считается только когда все 7 дней прошлой календарной недели полностью заполнены">— (неделя не закрыта)</span>'}</td>` : ''}
+        ${isFF? `<td><button class="btn danger" data-delete-ffrow="${rd.ffId}" style="padding:3px 8px;font-size:11px;">× Удалить</button></td>` : ''}
       </tr>`);
     }
     inner=`<div class="table-scroll"><table class="daytable">
-      <thead><tr><th class="sticky">Товар</th><th>Остаток, шт</th>${showVelocity? '<th>Продажи, шт/день</th>' : ''}</tr></thead>
+      <thead><tr><th class="sticky">Товар</th><th>Остаток, шт</th>${showVelocity? '<th>Продажи, шт/день</th>' : ''}${isFF? '<th></th>' : ''}</tr></thead>
       <tbody>${rowsHtml.join('')}</tbody>
     </table></div>`;
   }
@@ -814,8 +847,10 @@ async function renderStockChannelCard(c){
       <h2 style="margin:0;">${c.label}</h2>
       <span class="badge" style="background:${draft.filled?'var(--pos-bg)':'var(--bg)'};color:${draft.filled?'var(--pos)':'var(--ink-3)'};">${draft.filled?'внесено':'не внесено'}</span>
     </div>
+    ${isFF? `<p class="hint">Свободный список — не привязан к товарам с других вкладок и ни в чём не участвует, кроме этой карточки. Название и остаток — просто справочная запись для тебя.</p>` : ''}
     ${inner}
-    <div style="margin-top:12px;text-align:right;">
+    <div style="margin-top:12px;display:flex;justify-content:${isFF?'space-between':'flex-end'};align-items:center;">
+      ${isFF? `<button class="btn secondary" data-add-ffrow="1">+ Добавить строку</button>` : ''}
       <button class="btn" data-save-channel="${c.ch}">Сохранить ${c.label}</button>
     </div>
   </div>`;
@@ -835,11 +870,34 @@ function wireStockTabEvents(){
     inp.addEventListener('focus', ()=>{ if(inp.value==='0') inp.value=''; });
     inp.addEventListener('input', ()=>{
       const ch=inp.dataset.ch, rowKey=inp.dataset.rowkey;
-      stockTabDrafts[ch].data[rowKey] = inp.value===''? null : +inp.value;
+      currentStockDrafts()[ch].data[rowKey] = inp.value===''? null : +inp.value;
     });
   });
   el.querySelectorAll('[data-save-channel]').forEach(btn=>{
     btn.addEventListener('click', ()=>onSaveStockChannel(btn));
+  });
+  el.querySelectorAll('.ffrow-name-input').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const ok=await renameFFRow(inp.dataset.ffid, inp.value.trim());
+      if(!ok) alert('Не удалось сохранить название — попробуйте ещё раз');
+    });
+  });
+  el.querySelectorAll('[data-add-ffrow]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      btn.disabled=true;
+      const newId=await addFFRow();
+      btn.disabled=false;
+      if(!newId){ alert('Не удалось добавить строку — попробуйте ещё раз'); return; }
+      renderStockTab();
+    });
+  });
+  el.querySelectorAll('[data-delete-ffrow]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Удалить эту строку? Остатки, внесённые по ней за все недели, тоже перестанут отображаться.')) return;
+      const ok=await deleteFFRow(btn.dataset.deleteFfrow);
+      if(!ok){ alert('Не удалось удалить — попробуйте ещё раз'); return; }
+      renderStockTab();
+    });
   });
   const picker=document.getElementById('stockWeekPicker');
   if(picker) picker.addEventListener('change', (e)=>{ stockTabWeekDate=e.target.value; renderStockTab(); });
@@ -848,7 +906,7 @@ function wireStockTabEvents(){
 async function onSaveStockChannel(btn){
   const ch=btn.dataset.saveChannel;
   const weekDate=stockTabWeekDate;
-  const draft=stockTabDrafts[ch];
+  const draft=currentStockDrafts()[ch];
   const clean={};
   Object.entries(draft.data).forEach(([k,v])=>{ if(v!==null && v!==undefined && !isNaN(v) && v>=0) clean[k]=v; });
   const origText=btn.textContent;
@@ -856,8 +914,14 @@ async function onSaveStockChannel(btn){
   const ok=await storeSet(stockChannelKey(ch, weekDate), clean);
   if(!ok){ btn.disabled=false; btn.textContent=origText; alert('Не удалось сохранить — попробуйте ещё раз'); return; }
   await addToStockWeekIndex(ch, weekDate);
+  currentStockDrafts()[ch].filled=true;
+  const card=document.querySelector(`[data-channel-card="${ch}"]`);
+  if(card){
+    const badge=card.querySelector('.badge');
+    if(badge){ badge.style.background='var(--pos-bg)'; badge.style.color='var(--pos)'; badge.textContent='внесено'; }
+  }
   btn.textContent='Сохранено ✓';
-  setTimeout(()=>{ renderStockTab(); }, 500);
+  setTimeout(()=>{ btn.disabled=false; btn.textContent=origText; }, 1200);
 }
 
 function fmtRuDate(iso){
