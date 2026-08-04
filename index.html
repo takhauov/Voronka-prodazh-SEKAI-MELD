@@ -207,6 +207,7 @@
     <button data-tab="funnel">Воронка и точки роста</button>
     <button data-tab="compare">Сравнение периодов</button>
     <button data-tab="stock">Остатки и динамика</button>
+    <button data-tab="distrib">Распределение товара</button>
     <button data-tab="import">Импорт данных</button>
     <button data-tab="products">Товары</button>
     <button data-tab="help">Справка</button>
@@ -383,6 +384,26 @@
     <div id="stockTabWrap"><div class="empty">Загрузка…</div></div>
   </div>
 
+  <!-- РАСПРЕДЕЛЕНИЕ ПАРТИИ -->
+  <div id="tab-distrib" class="tabpane" style="display:none;">
+    <div class="panel">
+      <h2>Распределение товара</h2>
+      <p class="hint">Разовый калькулятор по одному товару за раз — ничего не сохраняется. Остаток и динамика подтягиваются из последних сохранённых данных на вкладке «Остатки и динамика» (WB/Ozon/ЯМ) и из строки на Фулфилменте. Логика: сначала считается, на сколько дней хватит остатков по всем площадкам вместе с учетом новой партии, а затем распределяет между площадками с учетом текущего остатка и динамики продаж.</p>
+      <div class="row">
+        <div class="field"><label>Товар на WB</label><select id="distrib_wb_product"><option value="">— не выбрано —</option></select></div>
+        <div class="field"><label>Товар на Ozon</label><select id="distrib_ozon_product"><option value="">— не выбрано —</option></select></div>
+        <div class="field"><label>Товар на ЯМ</label><select id="distrib_ym_product"><option value="">— не выбрано —</option></select></div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div class="field"><label>Строка на Фулфилменте (партия)</label><select id="distrib_ff_row"><option value="">— не выбрано —</option></select></div>
+        <div class="field"><label>Партия, шт</label><input id="distrib_batch" type="number" min="0"></div>
+        <div class="field"><label>Резерв, %</label><input id="distrib_reserve_pct" type="number" min="0" max="100" value="10"></div>
+      </div>
+      <button class="btn" id="distribCalcBtn" style="margin-top:12px;">Рассчитать</button>
+    </div>
+    <div id="distribResultWrap"></div>
+  </div>
+
   <!-- ТОВАРЫ -->
   <div id="tab-products" class="tabpane" style="display:none;">
     <div class="panel">
@@ -449,6 +470,11 @@
       <p><b>Товары с одинаковой «Группой плана»</b> (см. вкладку «Товары») показаны здесь одной строкой на карточках WB/Ozon/ЯМ — остаток на них вносится суммарно, одним числом, а не по каждой карточке отдельно. Название строки можно поправить прямо здесь же, в первой ячейке — по умолчанию это название группы (или название товара, если группы нет), но можно вписать своё, для этой таблицы это не повлияет на настоящее название товара на других вкладках.</p>
       <p><b>Фулфилмент</b> — полностью свободный список, не связанный с товарами на других вкладках. Строки заводятся кнопкой «+ Добавить строку», название и остаток вводятся вручную, лишние строки удаляются кнопкой «× Удалить».</p>
       <p><b>«Продажи, шт/день»</b> считаются автоматически, не вводятся вручную — строго по <b>прошлой календарной неделе</b> (понедельник–воскресенье перед выбранной неделей ввода), и только если все 7 дней той недели полностью заполнены (не черновые) в «Ежедневных данных». Если неделя закрыта не полностью — показывается «неделя не закрыта» вместо цифры, частично посчитанное значение не показывается. Это не связано с тем, когда сохранён сам остаток — можно сохранить остаток раньше, чем закроется ежедневный мониторинг за нужную неделю, динамика просто появится позже, когда данные будут готовы. Для группы — суммируется по всем товарам, что в неё входят.</p>
+    </div>
+    <div class="panel">
+      <h2>Распределение товара</h2>
+      <p>Разовый калькулятор, ничего не сохраняет — считает, как поделить новую партию товара между WB/Ozon/ЯМ. Выбираешь товар по каждой площадке отдельно (можно не все три), строку на Фулфилменте — партия подтянется из её остатка автоматически, но её можно поправить вручную. Резерв (раньше «Авито/сайт/резерв», по умолчанию 10%) вычитается из партии первым, оставшееся делится между площадками.</p>
+      <p>Остаток и динамика берутся из последних сохранённых данных на вкладке «Остатки и динамика» — если для какой-то площадки остаток ещё не сохранён или прошлая неделя не закрыта (динамика не посчиталась), это будет явно показано в результате, а не подставлено как ноль.</p>
     </div>
     <div class="panel">
       <h2>Товары</h2>
@@ -712,16 +738,15 @@ async function buildStockRows(channel){
 async function computeRowVelocityForWeek(members, viewWeekDate){
   const prevWeekMonday=dateMinusDays(viewWeekDate,7);
   const days=Array.from({length:7},(_,i)=>datePlusDays(prevWeekMonday,i));
-  for(const m of members){
-    const dm=await getDailyMap(m.id);
+  const dailyMaps=await Promise.all(members.map(m=>getDailyMap(m.id)));
+  for(const dm of dailyMaps){
     for(const d of days){
       const e=dm[d];
       if(!e || e.draft) return null; // прошлая неделя ещё не закрыта полностью — динамику не считаем
     }
   }
   let totalUnits=0;
-  for(const m of members){
-    const dm=await getDailyMap(m.id);
+  for(const dm of dailyMaps){
     for(const d of days){ totalUnits+=+dm[d].orders||0; }
   }
   return totalUnits/7;
@@ -756,10 +781,8 @@ async function stockWeekOptions(){
   const thisMonday=mondayOf(todayISO());
   const prevMonday=dateMinusDays(thisMonday,7);
   const all=new Set([pending, thisMonday, prevMonday]);
-  for(const c of STOCK_CHANNELS){
-    const idx=await getStockWeekIndex(c.ch);
-    idx.forEach(w=>all.add(w));
-  }
+  const indexes=await Promise.all(STOCK_CHANNELS.map(c=>getStockWeekIndex(c.ch)));
+  indexes.forEach(idx=>idx.forEach(w=>all.add(w)));
   return [...all].sort().reverse();
 }
 
@@ -768,12 +791,11 @@ let stockDraftsByWeek={};
 
 async function initStockDrafts(weekDate){
   if(stockDraftsByWeek[weekDate]) return; // уже открывали эту неделю в этой сессии — не перезатираем несохранённый ввод
-  const drafts={};
-  for(const c of STOCK_CHANNELS){
+  const results=await Promise.all(STOCK_CHANNELS.map(async c=>{
     const saved=(await storeGet(stockChannelKey(c.ch, weekDate))) || null;
-    drafts[c.ch]={ data: saved? {...saved} : {}, filled: !!saved };
-  }
-  stockDraftsByWeek[weekDate]=drafts;
+    return [c.ch, { data: saved? {...saved} : {}, filled: !!saved }];
+  }));
+  stockDraftsByWeek[weekDate]=Object.fromEntries(results);
 }
 function currentStockDrafts(){ return stockDraftsByWeek[stockTabWeekDate]; }
 
@@ -804,13 +826,138 @@ async function renderStockTab(){
     html+=`<div class="panel"><div class="empty">Нет товаров — добавьте на вкладке «Товары»</div></div>`;
   } else {
     html+=`<div class="row" style="align-items:stretch;flex-wrap:wrap;">`;
-    for(const c of STOCK_CHANNELS){
-      html+=await renderStockChannelCard(c);
-    }
+    const cardHtmls=await Promise.all(STOCK_CHANNELS.map(c=>renderStockChannelCard(c)));
+    html+=cardHtmls.join('');
     html+=`</div>`;
   }
   el.innerHTML=html;
   wireStockTabEvents();
+}
+
+/* ---------------- РАСПРЕДЕЛЕНИЕ ПАРТИИ ---------------- */
+function rowKeyForProduct(p){ return p.planGroup ? 'group_'+sanitizeGroupKey(p.planGroup) : 'product_'+p.id; }
+async function getLatestStockValue(channel, rowKey){
+  const idx=(await getStockWeekIndex(channel)).sort().reverse();
+  for(const w of idx){
+    const data=await storeGet(stockChannelKey(channel, w));
+    if(data && data[rowKey]!==undefined && data[rowKey]!==null) return {value:data[rowKey], week:w};
+  }
+  return {value:null, week:null};
+}
+async function populateDistribTab(){
+  fillFilteredProductSelect2(document.getElementById('distrib_wb_product'), 'wb');
+  fillFilteredProductSelect2(document.getElementById('distrib_ozon_product'), 'ozon');
+  fillFilteredProductSelect2(document.getElementById('distrib_ym_product'), 'ym');
+  const ffRows=await getFFRows();
+  const ffSel=document.getElementById('distrib_ff_row');
+  const curFF=ffSel.value;
+  ffSel.innerHTML='<option value="">— не выбрано —</option>'+ffRows.map(r=>`<option value="${r.id}">${r.name||'(без названия)'}</option>`).join('');
+  if(curFF) ffSel.value=curFF;
+}
+function fillFilteredProductSelect2(sel, mp){
+  const cur=sel.value;
+  const filtered=state.products.filter(p=>p.mp===mp);
+  sel.innerHTML='<option value="">— не выбрано —</option>'+filtered.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  if(cur && filtered.find(p=>p.id===cur)) sel.value=cur;
+}
+document.getElementById('distrib_ff_row').addEventListener('change', async (e)=>{
+  const ffId=e.target.value;
+  const batchInput=document.getElementById('distrib_batch');
+  if(!ffId){ return; }
+  const { value } = await getLatestStockValue('ff', 'ff_'+ffId);
+  if(value!=null) batchInput.value=value;
+});
+document.getElementById('distribCalcBtn').addEventListener('click', runDistribCalc);
+
+async function runDistribCalc(){
+  const resWrap=document.getElementById('distribResultWrap');
+  const wbId=document.getElementById('distrib_wb_product').value;
+  const ozonId=document.getElementById('distrib_ozon_product').value;
+  const ymId=document.getElementById('distrib_ym_product').value;
+  const batch=+document.getElementById('distrib_batch').value||0;
+  const reservePct=+document.getElementById('distrib_reserve_pct').value||0;
+
+  if(!wbId && !ozonId && !ymId){ resWrap.innerHTML='<div class="panel"><div class="empty">Выберите хотя бы один товар</div></div>'; return; }
+  if(batch<=0){ resWrap.innerHTML='<div class="panel"><div class="empty">Укажите партию больше нуля</div></div>'; return; }
+
+  const pendingWeek=await computeStockPendingWeek();
+  const channelDefs=[
+    {ch:'wb', label:'WB', productId:wbId},
+    {ch:'ozon', label:'Ozon', productId:ozonId},
+    {ch:'ym', label:'ЯМ', productId:ymId},
+  ];
+
+  const perChannel=await Promise.all(channelDefs.map(async cd=>{
+    if(!cd.productId) return {...cd, stock:null, velocity:null, note:'товар не выбран'};
+    const product=state.products.find(p=>p.id===cd.productId);
+    const rowKey=rowKeyForProduct(product);
+    const members=groupMembersFor(product);
+    const [{value:stock, week:stockWeek}, velocity] = await Promise.all([
+      getLatestStockValue(cd.ch, rowKey),
+      computeRowVelocityForWeek(members, pendingWeek)
+    ]);
+    let note='';
+    if(stock===null) note='нет сохранённого остатка';
+    else if(velocity===null) note='прошлая неделя не закрыта — динамика не посчитана';
+    return {...cd, stock, stockWeek, velocity, note};
+  }));
+
+  const reserve=Math.ceil(batch*reservePct/100);
+  const availableForMp=Math.max(0, batch-reserve);
+
+  const usable=perChannel.filter(c=>c.productId && c.stock!==null && c.velocity!==null);
+  const totalVelocity=usable.reduce((s,c)=>s+c.velocity,0);
+  const totalStock=usable.reduce((s,c)=>s+c.stock,0);
+  const targetStockTotal=totalStock+availableForMp;
+  const targetDays = totalVelocity>0 ? targetStockTotal/totalVelocity : 0;
+
+  const needs=perChannel.map(c=>{
+    if(!c.productId || c.stock===null || c.velocity===null) return {...c, need:0};
+    const need=Math.max(0, Math.round((targetDays*c.velocity - c.stock)/10)*10);
+    return {...c, need};
+  });
+
+  const sumNeeds=needs.reduce((s,c)=>s+c.need,0);
+  let allocated;
+  if(sumNeeds<=availableForMp){
+    allocated=needs.map(c=>({...c, alloc:c.need}));
+  } else {
+    const maxNeed=Math.max(...needs.map(c=>c.need));
+    let trimmedOnce=false;
+    allocated=needs.map(c=>{
+      if(!trimmedOnce && c.need===maxNeed && c.need>0){
+        trimmedOnce=true;
+        return {...c, alloc:Math.max(0, c.need-(sumNeeds-availableForMp))};
+      }
+      return {...c, alloc:c.need};
+    });
+  }
+
+  const daysNoteMissing = perChannel.filter(c=>c.productId && (c.stock===null || c.velocity===null));
+
+  resWrap.innerHTML=`<div class="panel">
+    <h2>Результат</h2>
+    ${totalVelocity===0? `<div class="rec warn"><div class="dot"></div><div>Нет ни одной площадки с посчитанной динамикой — распределение показать нельзя. ${daysNoteMissing.map(c=>`${c.label}: ${c.note}`).join('; ')}</div></div>` : ''}
+    <div class="kpis">
+      <div class="kpi"><div class="label">Резерв</div><div class="value">${fmt(reserve)} шт</div></div>
+      <div class="kpi"><div class="label">Доступно на МП</div><div class="value">${fmt(availableForMp)} шт</div></div>
+      <div class="kpi"><div class="label">Целевая обеспеченность</div><div class="value">${targetDays? fmt1(targetDays)+' дн.' : '—'}</div></div>
+    </div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Площадка</th><th>Товар</th><th>Остаток</th><th>Динамика, шт/день</th><th>Довезти, шт</th></tr></thead>
+      <tbody>${allocated.map(c=>{
+        const productName = c.productId ? state.products.find(p=>p.id===c.productId)?.name : '—';
+        return `<tr>
+          <td class="txt">${c.label}</td>
+          <td class="txt">${productName||'—'}</td>
+          <td>${c.stock!=null? fmt(c.stock)+' шт'+(c.stockWeek? ` (на ${fmtRuDate(c.stockWeek)})`:'') : (c.note||'—')}</td>
+          <td>${c.velocity!=null? fmt1(c.velocity) : (c.productId?'—':'')}</td>
+          <td style="font-weight:600;">${c.productId? fmt(c.alloc)+' шт' : '—'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+    <div class="note">Проверка: сумма «довезти» + резерв = ${fmt(allocated.reduce((s,c)=>s+c.alloc,0)+reserve)} шт (партия — ${fmt(batch)} шт)</div>
+  </div>`;
 }
 
 async function renderStockChannelCard(c){
@@ -824,19 +971,20 @@ async function renderStockChannelCard(c){
       ? `<div class="empty">Пока нет ни одной строки — добавь кнопкой ниже</div>`
       : `<div class="empty">Нет товаров для этой площадки</div>`;
   } else {
-    const rowsHtml=[];
-    for(const rd of rowsDef){
-      const label = isFF ? rd.defaultLabel : await getStockLabel(rd.rowKey, rd.defaultLabel);
-      const velocity=showVelocity ? await computeRowVelocityForWeek(rd.members, stockTabWeekDate) : null;
+    const rowsHtml=await Promise.all(rowsDef.map(async rd=>{
+      const [label, velocity] = await Promise.all([
+        isFF ? Promise.resolve(rd.defaultLabel) : getStockLabel(rd.rowKey, rd.defaultLabel),
+        showVelocity ? computeRowVelocityForWeek(rd.members, stockTabWeekDate) : Promise.resolve(null)
+      ]);
       const stockVal=draft.data[rd.rowKey]??'';
       const safeLabel=(label||'').replace(/"/g,'&quot;');
-      rowsHtml.push(`<tr>
+      return `<tr>
         <td class="sticky txt"><input type="text" class="${isFF?'ffrow-name-input':'stocklabel-input'}" data-rowkey="${rd.rowKey}" ${isFF?`data-ffid="${rd.ffId}"`:''} value="${safeLabel}" placeholder="${isFF?'Название':''}" style="border:none;background:transparent;font-family:inherit;font-weight:600;font-size:inherit;color:inherit;padding:2px;width:150px;"></td>
         <td><input type="number" min="0" class="num-edit-input stock-cell-input" data-ch="${c.ch}" data-rowkey="${rd.rowKey}" value="${stockVal}" style="width:70px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;padding:2px;"></td>
         ${showVelocity? `<td>${velocity!=null? fmt1(velocity)+' шт/день' : '<span title="Считается только когда все 7 дней прошлой календарной недели полностью заполнены">— (неделя не закрыта)</span>'}</td>` : ''}
         ${isFF? `<td><button class="btn danger" data-delete-ffrow="${rd.ffId}" style="padding:3px 8px;font-size:11px;">× Удалить</button></td>` : ''}
-      </tr>`);
-    }
+      </tr>`;
+    }));
     inner=`<div class="table-scroll"><table class="daytable">
       <thead><tr><th class="sticky">Товар</th><th>Остаток, шт</th>${showVelocity? '<th>Продажи, шт/день</th>' : ''}${isFF? '<th></th>' : ''}</tr></thead>
       <tbody>${rowsHtml.join('')}</tbody>
@@ -847,7 +995,7 @@ async function renderStockChannelCard(c){
       <h2 style="margin:0;">${c.label}</h2>
       <span class="badge" style="background:${draft.filled?'var(--pos-bg)':'var(--bg)'};color:${draft.filled?'var(--pos)':'var(--ink-3)'};">${draft.filled?'внесено':'не внесено'}</span>
     </div>
-    ${isFF? `<p class="hint">Свободный список — не привязан к товарам с других вкладок и ни в чём не участвует, кроме этой карточки. Название и остаток — просто справочная запись для тебя.</p>` : ''}
+    ${isFF? `<p class="hint">Текущий остаток товаров на ФФ.</p>` : ''}
     ${inner}
     <div style="margin-top:12px;display:flex;justify-content:${isFF?'space-between':'flex-end'};align-items:center;">
       ${isFF? `<button class="btn secondary" data-add-ffrow="1">+ Добавить строку</button>` : ''}
@@ -2717,6 +2865,7 @@ document.getElementById('tabs').addEventListener('click', async (e)=>{
   if(e.target.dataset.tab==='import'){ syncProductSelector('imp_product_mp','imp_product'); resetImportPreview(); }
   if(e.target.dataset.tab==='products'){ renderProductsTable(); }
   if(e.target.dataset.tab==='stock'){ renderStockTab(); }
+  if(e.target.dataset.tab==='distrib'){ populateDistribTab(); }
 });
 
 /* ---------------- ИМПОРТ ДАННЫХ ИЗ ФАЙЛА ---------------- */
