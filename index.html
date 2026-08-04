@@ -888,10 +888,10 @@ async function runDistribCalc(){
   ];
 
   const perChannel=await Promise.all(channelDefs.map(async cd=>{
-    if(!cd.rowKey) return {...cd, stock:null, velocity:null, note:'товар не выбран', label:''};
+    if(!cd.rowKey) return {...cd, stock:null, velocity:null, note:'товар не выбран', productLabel:''};
     const rowsDef=await buildStockRows(cd.ch);
     const rd=rowsDef.find(r=>r.rowKey===cd.rowKey);
-    if(!rd) return {...cd, stock:null, velocity:null, note:'товар не найден (возможно, изменилась группировка — переоткройте вкладку)', label:''};
+    if(!rd) return {...cd, stock:null, velocity:null, note:'товар не найден (возможно, изменилась группировка — переоткройте вкладку)', productLabel:''};
     const label=await getStockLabel(rd.rowKey, rd.defaultLabel);
     const [{value:stock, week:stockWeek}, velocity] = await Promise.all([
       getLatestStockValue(cd.ch, rd.rowKey),
@@ -900,7 +900,7 @@ async function runDistribCalc(){
     let note='';
     if(stock===null) note='нет сохранённого остатка';
     else if(velocity===null) note='прошлая неделя не закрыта — динамика не посчитана';
-    return {...cd, stock, stockWeek, velocity, note, label};
+    return {...cd, stock, stockWeek, velocity, note, productLabel:label};
   }));
 
   const reserve=Math.ceil(batch*reservePct/100);
@@ -947,7 +947,7 @@ async function runDistribCalc(){
     <div class="table-scroll"><table>
       <thead><tr><th>Площадка</th><th>Товар</th><th>Остаток</th><th>Динамика, шт/день</th><th>Довезти, шт</th></tr></thead>
       <tbody>${allocated.map(c=>{
-        const productName = c.rowKey ? (c.label||'—') : '—';
+        const productName = c.rowKey ? (c.productLabel||'—') : '—';
         return `<tr>
           <td class="txt">${c.label}</td>
           <td class="txt">${productName||'—'}</td>
