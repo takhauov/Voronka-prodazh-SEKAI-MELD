@@ -835,7 +835,6 @@ async function renderStockTab(){
 }
 
 /* ---------------- РАСПРЕДЕЛЕНИЕ ПАРТИИ ---------------- */
-function rowKeyForProduct(p){ return p.planGroup ? 'group_'+sanitizeGroupKey(p.planGroup) : 'product_'+p.id; }
 async function getLatestStockValue(channel, rowKey){
   const idx=(await getStockWeekIndex(channel)).sort().reverse();
   for(const w of idx){
@@ -845,20 +844,21 @@ async function getLatestStockValue(channel, rowKey){
   return {value:null, week:null};
 }
 async function populateDistribTab(){
-  fillFilteredProductSelect2(document.getElementById('distrib_wb_product'), 'wb');
-  fillFilteredProductSelect2(document.getElementById('distrib_ozon_product'), 'ozon');
-  fillFilteredProductSelect2(document.getElementById('distrib_ym_product'), 'ym');
+  await fillDistribProductSelect(document.getElementById('distrib_wb_product'), 'wb');
+  await fillDistribProductSelect(document.getElementById('distrib_ozon_product'), 'ozon');
+  await fillDistribProductSelect(document.getElementById('distrib_ym_product'), 'ym');
   const ffRows=await getFFRows();
   const ffSel=document.getElementById('distrib_ff_row');
   const curFF=ffSel.value;
   ffSel.innerHTML='<option value="">— не выбрано —</option>'+ffRows.map(r=>`<option value="${r.id}">${r.name||'(без названия)'}</option>`).join('');
   if(curFF) ffSel.value=curFF;
 }
-function fillFilteredProductSelect2(sel, mp){
+async function fillDistribProductSelect(sel, channel){
   const cur=sel.value;
-  const filtered=state.products.filter(p=>p.mp===mp);
-  sel.innerHTML='<option value="">— не выбрано —</option>'+filtered.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-  if(cur && filtered.find(p=>p.id===cur)) sel.value=cur;
+  const rowsDef=await buildStockRows(channel);
+  const withLabels=await Promise.all(rowsDef.map(async rd=>({ rowKey:rd.rowKey, label: await getStockLabel(rd.rowKey, rd.defaultLabel) })));
+  sel.innerHTML='<option value="">— не выбрано —</option>'+withLabels.map(r=>`<option value="${r.rowKey}">${r.label}</option>`).join('');
+  if(cur && withLabels.find(r=>r.rowKey===cur)) sel.value=cur;
 }
 document.getElementById('distrib_ff_row').addEventListener('change', async (e)=>{
   const ffId=e.target.value;
@@ -871,48 +871,49 @@ document.getElementById('distribCalcBtn').addEventListener('click', runDistribCa
 
 async function runDistribCalc(){
   const resWrap=document.getElementById('distribResultWrap');
-  const wbId=document.getElementById('distrib_wb_product').value;
-  const ozonId=document.getElementById('distrib_ozon_product').value;
-  const ymId=document.getElementById('distrib_ym_product').value;
+  const wbKey=document.getElementById('distrib_wb_product').value;
+  const ozonKey=document.getElementById('distrib_ozon_product').value;
+  const ymKey=document.getElementById('distrib_ym_product').value;
   const batch=+document.getElementById('distrib_batch').value||0;
   const reservePct=+document.getElementById('distrib_reserve_pct').value||0;
 
-  if(!wbId && !ozonId && !ymId){ resWrap.innerHTML='<div class="panel"><div class="empty">Выберите хотя бы один товар</div></div>'; return; }
+  if(!wbKey && !ozonKey && !ymKey){ resWrap.innerHTML='<div class="panel"><div class="empty">Выберите хотя бы один товар</div></div>'; return; }
   if(batch<=0){ resWrap.innerHTML='<div class="panel"><div class="empty">Укажите партию больше нуля</div></div>'; return; }
 
   const pendingWeek=mondayOf(todayISO());
   const channelDefs=[
-    {ch:'wb', label:'WB', productId:wbId},
-    {ch:'ozon', label:'Ozon', productId:ozonId},
-    {ch:'ym', label:'ЯМ', productId:ymId},
+    {ch:'wb', label:'WB', rowKey:wbKey},
+    {ch:'ozon', label:'Ozon', rowKey:ozonKey},
+    {ch:'ym', label:'ЯМ', rowKey:ymKey},
   ];
 
   const perChannel=await Promise.all(channelDefs.map(async cd=>{
-    if(!cd.productId) return {...cd, stock:null, velocity:null, note:'товар не выбран'};
-    const product=state.products.find(p=>p.id===cd.productId);
-    const rowKey=rowKeyForProduct(product);
-    const members=groupMembersFor(product);
+    if(!cd.rowKey) return {...cd, stock:null, velocity:null, note:'товар не выбран', label:''};
+    const rowsDef=await buildStockRows(cd.ch);
+    const rd=rowsDef.find(r=>r.rowKey===cd.rowKey);
+    if(!rd) return {...cd, stock:null, velocity:null, note:'товар не найден (возможно, изменилась группировка — переоткройте вкладку)', label:''};
+    const label=await getStockLabel(rd.rowKey, rd.defaultLabel);
     const [{value:stock, week:stockWeek}, velocity] = await Promise.all([
-      getLatestStockValue(cd.ch, rowKey),
-      computeRowVelocityForWeek(members, pendingWeek)
+      getLatestStockValue(cd.ch, rd.rowKey),
+      computeRowVelocityForWeek(rd.members, pendingWeek)
     ]);
     let note='';
     if(stock===null) note='нет сохранённого остатка';
     else if(velocity===null) note='прошлая неделя не закрыта — динамика не посчитана';
-    return {...cd, stock, stockWeek, velocity, note};
+    return {...cd, stock, stockWeek, velocity, note, label};
   }));
 
   const reserve=Math.ceil(batch*reservePct/100);
   const availableForMp=Math.max(0, batch-reserve);
 
-  const usable=perChannel.filter(c=>c.productId && c.stock!==null && c.velocity!==null);
+  const usable=perChannel.filter(c=>c.rowKey && c.stock!==null && c.velocity!==null);
   const totalVelocity=usable.reduce((s,c)=>s+c.velocity,0);
   const totalStock=usable.reduce((s,c)=>s+c.stock,0);
   const targetStockTotal=totalStock+availableForMp;
   const targetDays = totalVelocity>0 ? targetStockTotal/totalVelocity : 0;
 
   const needs=perChannel.map(c=>{
-    if(!c.productId || c.stock===null || c.velocity===null) return {...c, need:0};
+    if(!c.rowKey || c.stock===null || c.velocity===null) return {...c, need:0};
     const need=Math.max(0, Math.round((targetDays*c.velocity - c.stock)/10)*10);
     return {...c, need};
   });
@@ -933,7 +934,7 @@ async function runDistribCalc(){
     });
   }
 
-  const daysNoteMissing = perChannel.filter(c=>c.productId && (c.stock===null || c.velocity===null));
+  const daysNoteMissing = perChannel.filter(c=>c.rowKey && (c.stock===null || c.velocity===null));
 
   resWrap.innerHTML=`<div class="panel">
     <h2>Результат</h2>
@@ -946,13 +947,13 @@ async function runDistribCalc(){
     <div class="table-scroll"><table>
       <thead><tr><th>Площадка</th><th>Товар</th><th>Остаток</th><th>Динамика, шт/день</th><th>Довезти, шт</th></tr></thead>
       <tbody>${allocated.map(c=>{
-        const productName = c.productId ? state.products.find(p=>p.id===c.productId)?.name : '—';
+        const productName = c.rowKey ? (c.label||'—') : '—';
         return `<tr>
           <td class="txt">${c.label}</td>
           <td class="txt">${productName||'—'}</td>
           <td>${c.stock!=null? fmt(c.stock)+' шт'+(c.stockWeek? ` (на ${fmtRuDate(c.stockWeek)})`:'') : (c.note||'—')}</td>
-          <td>${c.velocity!=null? fmt1(c.velocity) : (c.productId?'—':'')}</td>
-          <td style="font-weight:600;">${c.productId? fmt(c.alloc)+' шт' : '—'}</td>
+          <td>${c.velocity!=null? fmt1(c.velocity) : (c.rowKey?'—':'')}</td>
+          <td style="font-weight:600;">${c.rowKey? fmt(c.alloc)+' шт' : '—'}</td>
         </tr>`;
       }).join('')}</tbody>
     </table></div>
