@@ -880,7 +880,7 @@ async function runDistribCalc(){
   if(!wbId && !ozonId && !ymId){ resWrap.innerHTML='<div class="panel"><div class="empty">Выберите хотя бы один товар</div></div>'; return; }
   if(batch<=0){ resWrap.innerHTML='<div class="panel"><div class="empty">Укажите партию больше нуля</div></div>'; return; }
 
-  const pendingWeek=await computeStockPendingWeek();
+  const pendingWeek=mondayOf(todayISO());
   const channelDefs=[
     {ch:'wb', label:'WB', productId:wbId},
     {ch:'ozon', label:'Ozon', productId:ozonId},
