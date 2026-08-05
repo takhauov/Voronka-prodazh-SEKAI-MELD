@@ -640,8 +640,8 @@ async function storeListKeys(prefix){
 
 async function loadProducts(){
   const keys=await storeListKeys('product:');
-  const list=[];
-  for(const k of keys){ const p=await storeGet(k); if(p) list.push(p); }
+  const results=await Promise.all(keys.map(k=>storeGet(k)));
+  const list=results.filter(Boolean);
   list.sort((a,b)=> (a.mp+a.name).localeCompare(b.mp+b.name));
   state.products=list;
 }
@@ -1315,9 +1315,9 @@ async function productMonthFact(productId, month){
 async function planFactFor(product, month){
   if(!product.planGroup) return productMonthFact(product.id, month);
   const members=productsInGroup(product.planGroup);
+  const results=await Promise.all(members.map(p=>productMonthFact(p.id, month)));
   let factUnits=0, factRub=0, adSpend=0;
-  for(const p of members){
-    const f=await productMonthFact(p.id, month);
+  for(const f of results){
     factUnits+=f.factUnits; factRub+=f.factRub; adSpend+=f.adSpend;
   }
   return {factUnits, factRub, adSpend};
@@ -1348,10 +1348,10 @@ async function computeAutoPlan(productId, month){
   const groupMembers = product.planGroup ? productsInGroup(product.planGroup) : [product];
 
   const monthsSet=new Set();
-  for(const p of groupMembers){
-    const dm=await getDailyMap(p.id);
+  const memberDailyMaps=await Promise.all(groupMembers.map(p=>getDailyMap(p.id)));
+  memberDailyMaps.forEach(dm=>{
     Object.keys(dm).forEach(d=>{ if(d.slice(0,7)<month) monthsSet.add(d.slice(0,7)); });
-  }
+  });
   const baseMonths=[...monthsSet].sort().reverse().slice(0,3);
 
   if(baseMonths.length===0){
@@ -1360,15 +1360,14 @@ async function computeAutoPlan(productId, month){
   }
 
   let totalUnits=0, totalDays=0;
-  for(const m of baseMonths){
-    let monthUnits=0;
-    for(const p of groupMembers){
-      const f=await productMonthFact(p.id, m);
-      monthUnits+=f.factUnits;
-    }
+  const monthResults=await Promise.all(baseMonths.map(async m=>{
+    const facts=await Promise.all(groupMembers.map(p=>productMonthFact(p.id, m)));
+    return facts.reduce((s,f)=>s+f.factUnits, 0);
+  }));
+  monthResults.forEach((monthUnits, i)=>{
     totalUnits+=monthUnits;
-    totalDays+=daysInMonth(m);
-  }
+    totalDays+=daysInMonth(baseMonths[i]);
+  });
   const avgDailyRate=totalUnits/totalDays;
 
   // сезонная поправка: если у товара задана группа сезонности — берём соотношение
@@ -1507,10 +1506,13 @@ async function renderPlanTab(){
     let planRub=0, planUnits=0, factRub=0, factUnits=0, runRateUnitsTotal=0, runRateRubTotal=0;
     const rowsMap=new Map();
     const seenGroups=new Set();
-    for(const p of products){
+    const productData=await Promise.all(products.map(async p=>{
       const pm=await getPlanMap(p);
       const pl=pm[month]||{planRub:0,planUnits:0,plannedPrice:null};
       const f=await productMonthFact(p.id, month);
+      return {p, pl, f};
+    }));
+    for(const {p, pl, f} of productData){
       const isDupGroup = p.planGroup && seenGroups.has(p.planGroup);
       if(p.planGroup) seenGroups.add(p.planGroup);
       if(!isDupGroup){ planRub+=+pl.planRub||0; planUnits+=+pl.planUnits||0; }
@@ -1523,7 +1525,7 @@ async function renderPlanTab(){
         rowsMap.set(rowKey, {
           name: p.name+(p.planGroup?` (группа «${p.planGroup}»)`:''),
           planRub: pl.planRub||0, planUnits: pl.planUnits||0,
-          plannedPrice: pl.plannedPrice!=null? pl.plannedPrice : (p.currentPriceLK||null),
+          plannedPrice: pl.plannedPrice!=null? pl.plannedPrice : (month>=monthNow()? (p.currentPriceLK||null) : null),
           factRub: f.factRub, factUnits: f.factUnits
         });
       }
