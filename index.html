@@ -1505,25 +1505,37 @@ async function renderPlanTab(){
     const dayOfMonth=new Date().getDate();
     const daysElapsed = isCurrentMonth? dayOfMonth : dim;
     let planRub=0, planUnits=0, factRub=0, factUnits=0, runRateUnitsTotal=0, runRateRubTotal=0;
-    const rowsData=[];
+    const rowsMap=new Map();
     const seenGroups=new Set();
     for(const p of products){
       const pm=await getPlanMap(p);
-      const pl=pm[month]||{planRub:0,planUnits:0};
+      const pl=pm[month]||{planRub:0,planUnits:0,plannedPrice:null};
       const f=await productMonthFact(p.id, month);
       const isDupGroup = p.planGroup && seenGroups.has(p.planGroup);
       if(p.planGroup) seenGroups.add(p.planGroup);
       if(!isDupGroup){ planRub+=+pl.planRub||0; planUnits+=+pl.planUnits||0; }
       factRub+=f.factRub; factUnits+=f.factUnits;
-      rowsData.push({name:p.name+(p.planGroup?` (группа «${p.planGroup}»)`:''), planRub:pl.planRub||0, planUnits:pl.planUnits||0, factRub:f.factRub, factUnits:f.factUnits});
+      const rowKey = p.planGroup || p.id;
+      if(rowsMap.has(rowKey)){
+        const existing=rowsMap.get(rowKey);
+        existing.factRub+=f.factRub; existing.factUnits+=f.factUnits;
+      } else {
+        rowsMap.set(rowKey, {
+          name: p.name+(p.planGroup?` (группа «${p.planGroup}»)`:''),
+          planRub: pl.planRub||0, planUnits: pl.planUnits||0,
+          plannedPrice: pl.plannedPrice!=null? pl.plannedPrice : (p.currentPriceLK||null),
+          factRub: f.factRub, factUnits: f.factUnits
+        });
+      }
       if(isCurrentMonth && daysElapsed>0){
         const productRunRateUnits=(f.factUnits/daysElapsed)*dim;
         runRateUnitsTotal+=productRunRateUnits;
         runRateRubTotal+=productRunRateUnits*(p.currentPriceLK||0);
       }
     }
+    const rowsData=[...rowsMap.values()].filter(r=>r.planRub>0 || r.planUnits>0);
     const remainingPct = planRub>0? Math.max(0,(planRub-factRub)/planRub*100) : null;
-    const rows=rowsData.map(r=>`<tr><td class="txt">${r.name}</td><td>${fmt(r.planRub)} ₽</td><td>${fmt(r.factRub)} ₽</td><td>${r.planRub>0? fmt1(r.factRub/r.planRub*100)+'%' : '—'}</td><td>${fmt(r.planUnits)}</td><td>${fmt(r.factUnits)}</td></tr>`).join('');
+    const rows=rowsData.map(r=>`<tr><td class="txt">${r.name}</td><td>${r.plannedPrice!=null? fmt(r.plannedPrice)+' ₽' : '—'}</td><td>${fmt(r.planRub)} ₽</td><td>${fmt(r.factRub)} ₽</td><td>${r.planRub>0? fmt1(r.factRub/r.planRub*100)+'%' : '—'}</td><td>${fmt(r.planUnits)}</td><td>${fmt(r.factUnits)}</td></tr>`).join('');
     let runRateKpiMp='';
     if(isCurrentMonth){
       const runRateUnitsRounded=Math.round(runRateUnitsTotal);
@@ -1540,7 +1552,7 @@ async function renderPlanTab(){
         <div class="kpi"><div class="label">Факт, шт / план, шт</div><div class="value">${fmt(factUnits)} / ${fmt(planUnits)}</div></div>
         ${runRateKpiMp}
       </div>
-      <div class="table-scroll"><table><thead><tr><th>Товар</th><th>План ₽</th><th>Факт ₽</th><th>План, %</th><th>План шт</th><th>Факт шт</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="table-scroll"><table><thead><tr><th>Товар</th><th>Плановая цена</th><th>План ₽</th><th>Факт ₽</th><th>План, %</th><th>План шт</th><th>Факт шт</th></tr></thead><tbody>${rows}</tbody></table></div>
     </div>`;
     return;
   }
