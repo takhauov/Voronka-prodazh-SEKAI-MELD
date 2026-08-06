@@ -208,7 +208,7 @@
     <button data-tab="compare">Сравнение периодов</button>
     <button data-tab="stock">Остатки и динамика</button>
     <button data-tab="distrib">Распределение товара</button>
-    <button data-tab="zakup">Закуп</button>
+    <button data-tab="zakup">Планирование закупа</button>
     <button data-tab="import">Импорт данных</button>
     <button data-tab="products">Товары</button>
     <button data-tab="help">Справка</button>
@@ -405,22 +405,20 @@
     <div id="distribResultWrap"></div>
   </div>
 
-  <!-- ЗАКУП -->
+  <!-- ПЛАНИРОВАНИЕ ЗАКУПА -->
   <div id="tab-zakup" class="tabpane" style="display:none;">
     <div class="panel">
-      <h2>Закуп</h2>
-      <p class="hint">Список товаров собирается автоматически (та же логика, что на Фулфилменте — по «Группе плана» или по совпадению названия), заново вносить ничего не нужно. Остаток и скорость продаж подтягиваются из «Остатков и динамики». Настройки (страховой запас, сроки, видимость, привязка к Фулфилменту) — во вкладке «Товары» ниже.</p>
+      <h2>Планирование закупа</h2>
+      <p class="hint">Список товаров собирается автоматически (та же логика, что на Фулфилменте — по «Группе плана» или по совпадению названия), заново вносить ничего не нужно. Остаток и скорость продаж подтягиваются из «Остатков и динамики». Настройки (страховой запас, сроки, видимость, привязка к площадкам и Фулфилменту) — во вкладке «Товары» ниже.</p>
       <div class="segmented" id="zakupModeToggle">
         <button data-zmode="overview" class="active">Обзор</button>
         <button data-zmode="products">Товары</button>
         <button data-zmode="shipments">Поставки в пути</button>
-        <button data-zmode="order">Заявка на закуп</button>
       </div>
     </div>
     <div id="zakupOverviewWrap" style="display:block;"></div>
     <div id="zakupProductsWrap" style="display:none;"></div>
     <div id="zakupShipmentsWrap" style="display:none;"></div>
-    <div id="zakupOrderWrap" style="display:none;"></div>
   </div>
 
   <!-- ТОВАРЫ -->
@@ -496,14 +494,13 @@
       <p>Остаток и динамика берутся из последних сохранённых данных на вкладке «Остатки и динамика» — если для какой-то площадки остаток ещё не сохранён или прошлая неделя не закрыта (динамика не посчиталась), это будет явно показано в результате, а не подставлено как ноль.</p>
     </div>
     <div class="panel">
-      <h2>Закуп</h2>
-      <p>Список товаров собирается автоматически — та же логика, что на Фулфилменте: по «Группе плана», если задана, иначе по совпадению названия. Заново вносить товары не нужно. Четыре подраздела:</p>
+      <h2>Планирование закупа</h2>
+      <p>Список товаров собирается автоматически — та же логика, что на Фулфилменте: по «Группе плана», если задана, иначе по совпадению названия. Заново вносить товары не нужно. Три подраздела:</p>
       <p><b>Обзор</b> — основная таблица, отсортирована по срочности. Остаток и скорость продаж подтягиваются из «Остатков и динамики» заново при каждом открытии — ничего не хранится отдельно.</p>
-      <p><b>Точка заказа</b> = скорость продаж × (срок изготовления + срок доставки) + страховой запас. Используется для «Дней до закупа» и как основа для «Закуп, шт», отдельным столбцом в таблице не показывается. <b>Дней до закупа</b> = (остаток по всем точкам + товар в пути − точка заказа) ÷ скорость продаж. Если скорости продаж нет (прошлая неделя не закрыта) — показывается «—», без ошибки. <b>Закуп, шт</b> — точка заказа, округлённая вверх до ближайших 10 (это целевой уровень запаса, к которому нужно стремиться, а не «сколько докупить сверх того, что есть»; округление вверх — чтобы не заказать меньше нужного). «Дней до закупа» при этом считается от точной, неокруглённой точки заказа — округление не искажает срочность.</p>
+      <p><b>Точка заказа</b> = скорость продаж × (срок изготовления + срок доставки) + страховой запас. Используется для «Дней до закупа» и как основа для «Закуп, шт», отдельным столбцом в таблице не показывается. <b>Дней до закупа</b> = (остаток по всем точкам + товар в пути − точка заказа) ÷ скорость продаж, округляется в меньшую сторону (в том числе для отрицательных — в сторону большей просрочки, с запасом на осторожность). Если скорости продаж нет (прошлая неделя не закрыта) — показывается «—», без ошибки. <b>Закуп, шт</b> — точка заказа, округлённая вверх до ближайших 10 (это целевой уровень запаса, к которому нужно стремиться, а не «сколько докупить сверх того, что есть»; округление вверх — чтобы не заказать меньше нужного). «Дней до закупа» при этом считается от точной, неокруглённой точки заказа — округление не искажает срочность.</p>
       <p>Светофор: «Норма» — больше 5 дней в запасе, «Скоро закупать» — от 0 до 5 дней, «Просрочено» — меньше 0.</p>
-      <p><b>Товары</b> — здесь настраиваются страховой запас, срок изготовления, срок доставки на каждый товар (кнопка «Настройки»), привязка к конкретной строке на Фулфилменте (нужна, чтобы поставки при отметке «Пришло» автоматически прибавлялись к нужному остатку), и видимость — кнопка «Скрыть» убирает товар из «Обзора» и «Заявки на закуп» (например, если товар выведен из матрицы), не удаляя ни его историю, ни настройки — можно вернуть в любой момент кнопкой «Вернуть».</p>
+      <p><b>Товары</b> — здесь настраиваются страховой запас, срок изготовления, срок доставки на каждый товар (кнопка «Настройки»), видимость — кнопка «Скрыть» убирает товар из «Обзора» (например, если товар выведен из матрицы), не удаляя ни его историю, ни настройки — можно вернуть в любой момент кнопкой «Вернуть». Там же — ручная привязка к конкретным карточкам на WB/Ozon/ЯМ и к строке на Фулфилменте: нужна, когда автоматика не может сама понять, что несколько карточек — это один товар (например, из-за разных названий на разных площадках). Можно выбрать сразу несколько карточек через Ctrl+клик — например, если на одной площадке два дубля без общей «Группы плана». Как только товар вручную привязан в одной строке — прежние «осиротевшие» авто-строки для тех же карточек сами пропадают из списка, чтобы товар не дублировался.</p>
       <p><b>Поставки в пути</b> — отдельный список с ожидаемой датой прихода. Пока поставка не отмечена «Пришло» — учитывается в «Дней до закупа» как дополнительный резерв. Как только отмечаешь «Пришло» — количество автоматически прибавляется к остатку на привязанной строке Фулфилмента за текущую неделю, вручную вносить не нужно (если строка на ФФ не привязана — дашборд предупредит и оставит остаток без изменений, отметив только саму поставку).</p>
-      <p><b>Заявка на закуп</b> — собирает товары со статусом «Скоро закупать» и «Просрочено», количество — до точки заказа. Текст можно скопировать в буфер или сохранить файлом .txt.</p>
       <p><b>Сглаживание скорости продаж</b> (переключатель на «Обзоре») — «по последней неделе» или «среднее за 2 недели» (защищает точку заказа от резкого скачка из-за одной нетипичной недели). Общая настройка на весь дашборд, не на отдельный товар.</p>
     </div>
     <div class="panel">
@@ -1121,12 +1118,42 @@ function buildZakupRows(){
   }
   return [...seen.values()];
 }
-function channelRowKeyFor(members, channel){
+function hasZakupOverride(settings){
+  return (settings.wbProductIds&&settings.wbProductIds.length) || (settings.ozonProductIds&&settings.ozonProductIds.length) || (settings.ymProductIds&&settings.ymProductIds.length);
+}
+// Убирает «осиротевшие» авто-строки, все товары которых вручную забраны в другую строку через привязку в Настройках —
+// иначе один и тот же товар после ручного объединения продолжал бы показываться ещё и отдельными фрагментами.
+function dedupZakupRows(withSettings){
+  const claims=new Map(); // productId -> rowKey, который его забрал вручную
+  for(const {row,settings} of withSettings){
+    if(!hasZakupOverride(settings)) continue;
+    ['wbProductIds','ozonProductIds','ymProductIds'].forEach(f=>{
+      (settings[f]||[]).forEach(id=>claims.set(id, row.rowKey));
+    });
+  }
+  return withSettings.filter(({row,settings})=>{
+    if(hasZakupOverride(settings)) return true; // у строки своя ручная привязка — показываем всегда
+    if(row.members.length===0) return true;
+    const allClaimedElsewhere = row.members.every(m=>claims.has(m.id) && claims.get(m.id)!==row.rowKey);
+    return !allClaimedElsewhere;
+  });
+}
+function channelRowKeysFor(members, channel){
   const chMembers=members.filter(m=>m.mp===channel);
-  if(chMembers.length===0) return null;
-  const withGroup=chMembers.find(m=>m.planGroup);
-  if(withGroup) return 'group_'+sanitizeGroupKey(withGroup.planGroup);
-  return 'product_'+chMembers[0].id;
+  if(chMembers.length===0) return [];
+  const keys=new Set();
+  for(const m of chMembers){
+    keys.add(m.planGroup ? 'group_'+sanitizeGroupKey(m.planGroup) : 'product_'+m.id);
+  }
+  return [...keys];
+}
+async function sumLatestStock(channel, keys){
+  if(keys.length===0) return {value:null};
+  const results=await Promise.all(keys.map(k=>getLatestStockValue(channel,k)));
+  const anyValue=results.some(r=>r.value!=null);
+  if(!anyValue) return {value:null};
+  const latestWeek=results.filter(r=>r.week).map(r=>r.week).sort().reverse()[0]||null;
+  return {value: results.reduce((s,r)=>s+(r.value||0),0), week: latestWeek};
 }
 async function getZakupSettings(rowKey){
   const v=await storeGet('zakupsettings:'+rowKey);
@@ -1181,9 +1208,9 @@ async function computeZakupRow(row, smoothingMode){
   const ozonM=resolveChannelMembers(row, settings, 'ozon');
   const ymM=resolveChannelMembers(row, settings, 'ym');
   const [stockWb, stockOzon, stockYm, stockFf, velocity, shipments] = await Promise.all([
-    (()=>{ const k=channelRowKeyFor(wbM,'wb'); return k? getLatestStockValue('wb',k) : Promise.resolve({value:null}); })(),
-    (()=>{ const k=channelRowKeyFor(ozonM,'ozon'); return k? getLatestStockValue('ozon',k) : Promise.resolve({value:null}); })(),
-    (()=>{ const k=channelRowKeyFor(ymM,'ym'); return k? getLatestStockValue('ym',k) : Promise.resolve({value:null}); })(),
+    sumLatestStock('wb', channelRowKeysFor(wbM,'wb')),
+    sumLatestStock('ozon', channelRowKeysFor(ozonM,'ozon')),
+    sumLatestStock('ym', channelRowKeysFor(ymM,'ym')),
     settings.ffRowId? getLatestStockValue('ff','ff_'+settings.ffRowId) : Promise.resolve({value:null}),
     computeZakupVelocity(wbM, ozonM, ymM, smoothingMode),
     getZakupShipments(),
@@ -1208,7 +1235,7 @@ async function renderZakupOverview(){
   wrap.innerHTML='<div class="panel"><div class="empty">Считаю…</div></div>';
   const smoothing=await getZakupMode();
   const allRows=buildZakupRows();
-  const withSettings=await Promise.all(allRows.map(async r=>({row:r, settings:await getZakupSettings(r.rowKey)})));
+  const withSettings=dedupZakupRows(await Promise.all(allRows.map(async r=>({row:r, settings:await getZakupSettings(r.rowKey)}))));
   const activeRows=withSettings.filter(x=>x.settings.active!==false).map(x=>x.row);
   if(activeRows.length===0){
     wrap.innerHTML='<div class="panel"><div class="empty">Нет видимых товаров — включите нужные во вкладке «Товары»</div></div>';
@@ -1224,7 +1251,7 @@ async function renderZakupOverview(){
     <td>${fmt(r.totalStock)} шт</td>
     <td>${r.inTransitQty>0? fmt(r.inTransitQty)+' шт' : '—'}</td>
     <td>${r.velocity!=null? fmt1(r.velocity)+' шт/день' : '—'}</td>
-    <td>${r.daysToOrder!=null? fmt1(r.daysToOrder)+' дн.' : '—'}</td>
+    <td>${r.daysToOrder!=null? fmt(Math.floor(r.daysToOrder))+' дн.' : '—'}</td>
     <td><span class="badge" style="background:var(--${ZAKUP_STATUS_CLASS[r.status]}-bg,var(--bg));color:var(--${ZAKUP_STATUS_CLASS[r.status]},var(--ink-3));">${ZAKUP_STATUS_LABEL[r.status]}</span></td>
     <td>${r.orderQty!=null? fmt(r.orderQty)+' шт' : '—'}</td>
   </tr>`).join('');
@@ -1255,7 +1282,7 @@ async function renderZakupProducts(){
   wrap.innerHTML='<div class="panel"><div class="empty">Загрузка…</div></div>';
   const allRows=buildZakupRows();
   const ffRows=await getFFRows();
-  const withSettings=await Promise.all(allRows.map(async r=>({row:r, settings:await getZakupSettings(r.rowKey)})));
+  const withSettings=dedupZakupRows(await Promise.all(allRows.map(async r=>({row:r, settings:await getZakupSettings(r.rowKey)}))));
   withSettings.sort((a,b)=>a.row.name.localeCompare(b.row.name));
 
   const rowsHtml=withSettings.map(({row,settings})=>{
@@ -1440,45 +1467,6 @@ async function renderZakupShipments(){
   });
 }
 
-async function renderZakupOrder(){
-  const wrap=document.getElementById('zakupOrderWrap');
-  wrap.innerHTML='<div class="panel"><div class="empty">Считаю…</div></div>';
-  const smoothing=await getZakupMode();
-  const allRows=buildZakupRows();
-  const withSettings=await Promise.all(allRows.map(async r=>({row:r, settings:await getZakupSettings(r.rowKey)})));
-  const activeRows=withSettings.filter(x=>x.settings.active!==false).map(x=>x.row);
-  const computed=await Promise.all(activeRows.map(r=>computeZakupRow(r, smoothing)));
-  const toOrder=computed.filter(r=>r.status==='warn' || r.status==='danger').sort((a,b)=>(a.daysToOrder??999)-(b.daysToOrder??999));
-
-  if(toOrder.length===0){
-    wrap.innerHTML='<div class="panel"><div class="empty">Пока никого не нужно заказывать — все товары в норме</div></div>';
-    return;
-  }
-  const text=toOrder.map(r=>`${r.name} — ${fmt(r.orderQty)} шт`).join('\n');
-  wrap.innerHTML=`<div class="panel">
-    <h2>Заявка на закуп</h2>
-    <p class="hint">Товары со статусом «Скоро закупать» и «Просрочено», количество — до точки заказа.</p>
-    <div class="order-text-box" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:var(--font-mono);font-size:13px;white-space:pre-wrap;">${text}</div>
-    <div style="margin-top:12px;display:flex;gap:8px;">
-      <button class="btn secondary" id="zorderCopyBtn">Скопировать</button>
-      <button class="btn secondary" id="zorderDownloadBtn">Сохранить как .txt</button>
-    </div>
-  </div>`;
-  document.getElementById('zorderCopyBtn').addEventListener('click', ()=>{
-    navigator.clipboard.writeText(text).then(()=>{
-      const btn=document.getElementById('zorderCopyBtn');
-      const orig=btn.textContent; btn.textContent='✓ Скопировано';
-      setTimeout(()=>{ btn.textContent=orig; }, 1500);
-    }).catch(()=>{});
-  });
-  document.getElementById('zorderDownloadBtn').addEventListener('click', ()=>{
-    const blob=new Blob([text], {type:'text/plain;charset=utf-8'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download='заявка-на-закуп-'+todayISO()+'.txt';
-    a.click();
-  });
-}
 
 document.getElementById('zakupModeToggle').addEventListener('click', (e)=>{
   if(e.target.tagName!=='BUTTON') return;
@@ -1488,11 +1476,9 @@ document.getElementById('zakupModeToggle').addEventListener('click', (e)=>{
   document.getElementById('zakupOverviewWrap').style.display = mode==='overview'?'block':'none';
   document.getElementById('zakupProductsWrap').style.display = mode==='products'?'block':'none';
   document.getElementById('zakupShipmentsWrap').style.display = mode==='shipments'?'block':'none';
-  document.getElementById('zakupOrderWrap').style.display = mode==='order'?'block':'none';
   if(mode==='overview') renderZakupOverview();
   if(mode==='products') renderZakupProducts();
   if(mode==='shipments') renderZakupShipments();
-  if(mode==='order') renderZakupOrder();
 });
 
 /* ---------------- ТОВАРЫ ---------------- */
