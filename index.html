@@ -500,6 +500,7 @@
       <p><b>Точка заказа</b> = скорость продаж × (срок изготовления + срок доставки) + страховой запас. Используется для «Дней до закупа» и как основа для «Закуп, шт», отдельным столбцом в таблице не показывается. <b>Дней до закупа</b> = (остаток по всем точкам + товар в пути − точка заказа) ÷ скорость продаж, округляется в меньшую сторону (в том числе для отрицательных — в сторону большей просрочки, с запасом на осторожность). Если скорости продаж нет (прошлая неделя не закрыта) — показывается «—», без ошибки. <b>Закуп, шт</b> — точка заказа, округлённая вверх до ближайших 10 (это целевой уровень запаса, к которому нужно стремиться, а не «сколько докупить сверх того, что есть»; округление вверх — чтобы не заказать меньше нужного). «Дней до закупа» при этом считается от точной, неокруглённой точки заказа — округление не искажает срочность.</p>
       <p>Светофор: «Норма» — больше 5 дней в запасе, «Скоро закупать» — от 0 до 5 дней, «Просрочено» — меньше 0.</p>
       <p><b>Товары</b> — здесь настраиваются страховой запас, срок изготовления, срок доставки на каждый товар (кнопка «Настройки»), видимость — кнопка «Скрыть» убирает товар из «Обзора» (например, если товар выведен из матрицы), не удаляя ни его историю, ни настройки — можно вернуть в любой момент кнопкой «Вернуть». Там же — ручная привязка к конкретным карточкам на WB/Ozon/ЯМ и к строке на Фулфилменте: нужна, когда автоматика не может сама понять, что несколько карточек — это один товар (например, из-за разных названий на разных площадках). Можно выбрать сразу несколько карточек через Ctrl+клик — например, если на одной площадке два дубля без общей «Группы плана». Как только товар вручную привязан в одной строке — прежние «осиротевшие» авто-строки для тех же карточек сами пропадают из списка, чтобы товар не дублировался.</p>
+      <p><b>Страховой запас — два режима.</b> «Фиксированное число» — как раньше, вводишь конкретное количество штук вручную, не меняется само. «Динамически» — вместо числа задаёшь «на сколько дней должно хватать» (например, 15), и страховой запас каждый раз пересчитывается заново от текущей скорости продаж (скорость × дни) — так буфер сам растёт при ускорении продаж и уменьшается при замедлении, не нужно вручную поправлять. Если скорости продаж ещё нет (прошлая неделя не закрыта) — в динамическом режиме точка заказа целиком станет «—», пока данные не появятся.</p>
       <p><b>Поставки в пути</b> — отдельный список с ожидаемой датой прихода. Пока поставка не отмечена «Пришло» — учитывается в «Дней до закупа» как дополнительный резерв. Как только отмечаешь «Пришло» — количество автоматически прибавляется к остатку на привязанной строке Фулфилмента за текущую неделю, вручную вносить не нужно (если строка на ФФ не привязана — дашборд предупредит и оставит остаток без изменений, отметив только саму поставку).</p>
       <p><b>Сглаживание скорости продаж</b> (переключатель на «Обзоре») — «по последней неделе» или «среднее за 2 недели» (защищает точку заказа от резкого скачка из-за одной нетипичной недели). Общая настройка на весь дашборд, не на отдельный товар.</p>
     </div>
@@ -1157,7 +1158,7 @@ async function sumLatestStock(channel, keys){
 }
 async function getZakupSettings(rowKey){
   const v=await storeGet('zakupsettings:'+rowKey);
-  return v || {safetyStock:0, prodDays:0, deliveryDays:0, active:true, ffRowId:null};
+  return v || {safetyStock:0, safetyStockMode:'fixed', safetyStockDays:15, prodDays:0, deliveryDays:0, active:true, ffRowId:null};
 }
 async function saveZakupSettings(rowKey, settings){
   return await storeSet('zakupsettings:'+rowKey, settings);
@@ -1217,8 +1218,10 @@ async function computeZakupRow(row, smoothingMode){
   ]);
   const totalStock=(stockWb.value||0)+(stockOzon.value||0)+(stockYm.value||0)+(stockFf.value||0);
   const cycle=(+settings.prodDays||0)+(+settings.deliveryDays||0);
-  const safetyStock=+settings.safetyStock||0;
-  const reorderPoint = velocity!=null ? Math.round(velocity*cycle + safetyStock) : null;
+  const safetyStock = settings.safetyStockMode==='dynamic'
+    ? (velocity!=null ? velocity*(+settings.safetyStockDays||15) : null)
+    : (+settings.safetyStock||0);
+  const reorderPoint = (velocity!=null && safetyStock!=null) ? Math.round(velocity*cycle + safetyStock) : null;
   const inTransitQty=inTransitQtyFor(row.rowKey, shipments);
   const daysToOrder = (velocity && velocity>0 && reorderPoint!=null) ? (totalStock+inTransitQty-reorderPoint)/velocity : null;
   let status='unknown';
@@ -1287,9 +1290,17 @@ async function renderZakupProducts(){
 
   const rowsHtml=withSettings.map(({row,settings})=>{
     const isActive=settings.active!==false;
+    const resolvedWb=resolveChannelMembers(row, settings, 'wb');
+    const resolvedOzon=resolveChannelMembers(row, settings, 'ozon');
+    const resolvedYm=resolveChannelMembers(row, settings, 'ym');
+    const platforms=[];
+    if(resolvedWb.length) platforms.push('WB');
+    if(resolvedOzon.length) platforms.push('Ozon');
+    if(resolvedYm.length) platforms.push('Я.Маркет');
+    if(settings.ffRowId) platforms.push('ФФ');
     return `<tr style="${isActive?'':'opacity:0.6;'}">
       <td class="txt">${row.name}${!isActive?' <span class="badge" style="background:var(--bg);color:var(--ink-3);">скрыт</span>':''}</td>
-      <td class="txt">${row.members.map(m=>MP_LABEL[m.mp]).join(', ')}</td>
+      <td class="txt">${platforms.join(', ')||'—'}</td>
       <td>
         <button class="btn secondary" data-zsettings-toggle="${row.rowKey}" style="padding:5px 10px;font-size:12px;">Настройки</button>
         <button class="btn ${isActive?'danger':'secondary'}" data-ztoggle-active="${row.rowKey}" style="padding:5px 10px;font-size:12px;">${isActive?'Скрыть':'Вернуть'}</button>
@@ -1297,11 +1308,24 @@ async function renderZakupProducts(){
     </tr>
     <tr class="zsettings-row" data-zsettings-row="${row.rowKey}" style="display:none;">
       <td colspan="3">
-        <div class="row" style="padding:8px 0;flex-wrap:wrap;">
-          <div class="field"><label>Страховой запас, шт</label><input type="number" min="0" data-zfield="safetyStock" data-zrow="${row.rowKey}" value="${settings.safetyStock||0}" style="width:100px;"></div>
+        <div class="row" style="padding:8px 0;flex-wrap:wrap;align-items:flex-end;">
+          <div class="field">
+            <label>Страховой запас — режим</label>
+            <select data-zfield="safetyStockMode" data-zrow="${row.rowKey}" data-zsafety-mode="${row.rowKey}" style="width:220px;">
+              <option value="fixed" ${settings.safetyStockMode!=='dynamic'?'selected':''}>Фиксированное число, шт</option>
+              <option value="dynamic" ${settings.safetyStockMode==='dynamic'?'selected':''}>Динамически — дней запаса</option>
+            </select>
+          </div>
+          <div class="field" data-zsafety-fixed="${row.rowKey}" style="display:${settings.safetyStockMode==='dynamic'?'none':'flex'};">
+            <label>Страховой запас, шт</label><input type="number" min="0" data-zfield="safetyStock" data-zrow="${row.rowKey}" value="${settings.safetyStock||0}" style="width:100px;">
+          </div>
+          <div class="field" data-zsafety-dynamic="${row.rowKey}" style="display:${settings.safetyStockMode==='dynamic'?'flex':'none'};">
+            <label>Хватало на, дн.</label><input type="number" min="0" data-zfield="safetyStockDays" data-zrow="${row.rowKey}" value="${settings.safetyStockDays||15}" style="width:100px;">
+          </div>
           <div class="field"><label>Срок изготовления, дн.</label><input type="number" min="0" data-zfield="prodDays" data-zrow="${row.rowKey}" value="${settings.prodDays||0}" style="width:100px;"></div>
           <div class="field"><label>Срок доставки, дн.</label><input type="number" min="0" data-zfield="deliveryDays" data-zrow="${row.rowKey}" value="${settings.deliveryDays||0}" style="width:100px;"></div>
         </div>
+        <p class="hint" style="margin:2px 0 8px;">При «Динамически» страховой запас = скорость продаж × указанное число дней — пересчитывается сам при каждом открытии «Обзора», не хранится отдельным числом. Если скорости продаж ещё нет (прошлая неделя не закрыта) — точка заказа тоже станет «—», пока данные не появятся.</p>
         <div class="row" style="padding:8px 0;flex-wrap:wrap;">
           <div class="field" style="min-width:220px;"><label>Товар(ы) на WB <span class="hint" style="display:block;font-weight:400;">пусто = автоматически; несколько — через Ctrl+клик</span></label>
             <select multiple size="3" data-zfield="wbProductIds" data-zrow="${row.rowKey}">
@@ -1344,6 +1368,15 @@ async function renderZakupProducts(){
       if(row) row.style.display = row.style.display==='none' ? 'table-row' : 'none';
     });
   });
+  wrap.querySelectorAll('[data-zsafety-mode]').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      const rowKey=sel.dataset.zsafetyMode;
+      const fixedField=wrap.querySelector(`[data-zsafety-fixed="${rowKey}"]`);
+      const dynamicField=wrap.querySelector(`[data-zsafety-dynamic="${rowKey}"]`);
+      if(fixedField) fixedField.style.display = sel.value==='dynamic'? 'none' : 'flex';
+      if(dynamicField) dynamicField.style.display = sel.value==='dynamic'? 'flex' : 'none';
+    });
+  });
   wrap.querySelectorAll('[data-ztoggle-active]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const rowKey=btn.dataset.ztoggleActive;
@@ -1365,6 +1398,8 @@ async function renderZakupProducts(){
           settings[field]=[...inp.selectedOptions].map(o=>o.value);
         } else if(field==='ffRowId'){
           settings[field]=inp.value||null;
+        } else if(field==='safetyStockMode'){
+          settings[field]=inp.value;
         } else {
           settings[field]=+inp.value||0;
         }
