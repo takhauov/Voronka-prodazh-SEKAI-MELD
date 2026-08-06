@@ -425,12 +425,18 @@
   <div id="tab-products" class="tabpane" style="display:none;">
     <div class="panel">
       <h2>Добавить товар</h2>
-      <p class="hint">Один и тот же товар на разных площадках добавляйте отдельными карточками. Цены вносятся позже, на вкладке «Ежедневные данные»</p>
       <div class="row">
-        <div class="field"><label>Площадка</label>
-          <select id="p_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select>
+        <div class="field"><label>Площадки</label>
+          <div class="checkgroup">
+            <label><input type="checkbox" id="p_mp_wb" checked> Wildberries</label>
+            <label><input type="checkbox" id="p_mp_ozon"> Ozon</label>
+            <label><input type="checkbox" id="p_mp_ym"> Яндекс Маркет</label>
+          </div>
         </div>
         <div class="field" style="min-width:260px;"><label>Название товара</label><input id="p_name" placeholder="Например, Термокружка 500мл черная"></div>
+        <div class="field" style="min-width:220px;"><label>Сезонность</label>
+          <select id="p_season"><option value="">— не выбрано, заполню позже —</option></select>
+        </div>
         <button class="btn" id="addProductBtn">Добавить</button>
       </div>
     </div>
@@ -1521,6 +1527,9 @@ const DEFAULT_THRESHOLDS={ctr:3, cr1:10, cr2:20, buyout:80, cancel:10};
 function getThresholds(product){ return {...DEFAULT_THRESHOLDS, ...(product?.thresholds||{})}; }
 
 async function renderProductsTable(){
+  const seasonSel=document.getElementById('p_season');
+  const seasonGroups=[...new Set(state.products.map(p=>p.seasonalityGroup).filter(Boolean))].sort();
+  seasonSel.innerHTML='<option value="">— не выбрано, заполню позже —</option>'+seasonGroups.map(g=>`<option value="${g}">${g}</option>`).join('');
   const wrap=document.getElementById('productsTableWrap');
   if(state.products.length===0){ wrap.innerHTML='<div class="empty">Пока нет товаров — добавьте первый выше</div>'; return; }
   const rows = state.products.map(p=>{
@@ -1713,15 +1722,29 @@ async function renderProductsTable(){
   }));
 }
 document.getElementById('addProductBtn').addEventListener('click', async ()=>{
-  const mp=document.getElementById('p_mp').value;
+  const mps=[];
+  if(document.getElementById('p_mp_wb').checked) mps.push('wb');
+  if(document.getElementById('p_mp_ozon').checked) mps.push('ozon');
+  if(document.getElementById('p_mp_ym').checked) mps.push('ym');
   const name=document.getElementById('p_name').value.trim();
+  const seasonalityGroup=document.getElementById('p_season').value||null;
   if(!name){ alert('Введите название товара'); return; }
-  const id=uid();
-  const bidCount=bidCountForMp(mp);
-  const ok=await storeSet('product:'+id, {id, mp, name, currentPriceLK:null, currentPriceCustomer:null, currentPriceOzonCard:null, currentPromo:null,
-    adBids:Array.from({length:bidCount},(_,i)=>({label:`Ставка ${i+1}`,value:null}))});
-  if(!ok){ alert('Не удалось добавить товар — сбой хранилища. Попробуйте ещё раз.'); return; }
+  if(mps.length===0){ alert('Отметьте хотя бы одну площадку'); return; }
+  const btn=document.getElementById('addProductBtn');
+  const origText=btn.textContent;
+  btn.disabled=true; btn.textContent='Добавляю…';
+  let failedMp=null;
+  for(const mp of mps){
+    const id=uid();
+    const bidCount=bidCountForMp(mp);
+    const ok=await storeSet('product:'+id, {id, mp, name, seasonalityGroup, currentPriceLK:null, currentPriceCustomer:null, currentPriceOzonCard:null, currentPromo:null,
+      adBids:Array.from({length:bidCount},(_,i)=>({label:`Ставка ${i+1}`,value:null}))});
+    if(!ok){ failedMp=mp; break; }
+  }
+  btn.disabled=false; btn.textContent=origText;
+  if(failedMp){ alert(`Не удалось добавить товар на площадке ${MP_LABEL[failedMp]} — сбой хранилища. Товар мог добавиться частично, проверьте список ниже и попробуйте ещё раз для недостающих площадок.`); }
   document.getElementById('p_name').value='';
+  document.getElementById('p_season').value='';
   await loadProducts(); refreshAllProductSelects(); renderProductsTable();
 });
 
