@@ -12,7 +12,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
 <style>
   :root{
-    --bg:#F4F5F1; --surface:#FFFFFF; --border:#E2E4DE;
+    --bg:#F7F8FB; --surface:#FFFFFF; --border:#E2E6ED;
     --ink:#1B1E23; --ink-2:#63676E; --ink-3:#929699;
     --wb:#7B2E9E; --wb-bg:#F4EAF9; --wb-ink:#5C1F79;
     --ozon:#0057FF; --ozon-bg:#E9F0FF; --ozon-ink:#0041C4;
@@ -29,7 +29,7 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);padding:26px;}
-  .wrap{max-width:1280px;margin:0 auto;}
+  .wrap{max-width:100%;margin:0 auto;}
   .header-bar{background:#16213E;color:#fff;border-radius:var(--radius);padding:18px 22px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
   .header-bar h1{color:#fff;margin:0 0 4px;}
   .header-bar .sub{color:#B7C0D6;margin-bottom:0;}
@@ -208,6 +208,7 @@
     <button data-tab="compare">Сравнение периодов</button>
     <button data-tab="stock">Остатки и динамика</button>
     <button data-tab="distrib">Распределение товара</button>
+    <button data-tab="zakup">Закуп</button>
     <button data-tab="import">Импорт данных</button>
     <button data-tab="products">Товары</button>
     <button data-tab="help">Справка</button>
@@ -404,6 +405,24 @@
     <div id="distribResultWrap"></div>
   </div>
 
+  <!-- ЗАКУП -->
+  <div id="tab-zakup" class="tabpane" style="display:none;">
+    <div class="panel">
+      <h2>Закуп</h2>
+      <p class="hint">Список товаров собирается автоматически (та же логика, что на Фулфилменте — по «Группе плана» или по совпадению названия), заново вносить ничего не нужно. Остаток и скорость продаж подтягиваются из «Остатков и динамики». Настройки (страховой запас, сроки, видимость, привязка к Фулфилменту) — во вкладке «Товары» ниже.</p>
+      <div class="segmented" id="zakupModeToggle">
+        <button data-zmode="overview" class="active">Обзор</button>
+        <button data-zmode="products">Товары</button>
+        <button data-zmode="shipments">Поставки в пути</button>
+        <button data-zmode="order">Заявка на закуп</button>
+      </div>
+    </div>
+    <div id="zakupOverviewWrap" style="display:block;"></div>
+    <div id="zakupProductsWrap" style="display:none;"></div>
+    <div id="zakupShipmentsWrap" style="display:none;"></div>
+    <div id="zakupOrderWrap" style="display:none;"></div>
+  </div>
+
   <!-- ТОВАРЫ -->
   <div id="tab-products" class="tabpane" style="display:none;">
     <div class="panel">
@@ -477,6 +496,17 @@
       <p>Остаток и динамика берутся из последних сохранённых данных на вкладке «Остатки и динамика» — если для какой-то площадки остаток ещё не сохранён или прошлая неделя не закрыта (динамика не посчиталась), это будет явно показано в результате, а не подставлено как ноль.</p>
     </div>
     <div class="panel">
+      <h2>Закуп</h2>
+      <p>Список товаров собирается автоматически — та же логика, что на Фулфилменте: по «Группе плана», если задана, иначе по совпадению названия. Заново вносить товары не нужно. Четыре подраздела:</p>
+      <p><b>Обзор</b> — основная таблица, отсортирована по срочности. Остаток и скорость продаж подтягиваются из «Остатков и динамики» заново при каждом открытии — ничего не хранится отдельно.</p>
+      <p><b>Точка заказа</b> = скорость продаж × (срок изготовления + срок доставки) + страховой запас. Используется для «Дней до закупа» и как основа для «Закуп, шт», отдельным столбцом в таблице не показывается. <b>Дней до закупа</b> = (остаток по всем точкам + товар в пути − точка заказа) ÷ скорость продаж. Если скорости продаж нет (прошлая неделя не закрыта) — показывается «—», без ошибки. <b>Закуп, шт</b> — точка заказа, округлённая вверх до ближайших 10 (это целевой уровень запаса, к которому нужно стремиться, а не «сколько докупить сверх того, что есть»; округление вверх — чтобы не заказать меньше нужного). «Дней до закупа» при этом считается от точной, неокруглённой точки заказа — округление не искажает срочность.</p>
+      <p>Светофор: «Норма» — больше 5 дней в запасе, «Скоро закупать» — от 0 до 5 дней, «Просрочено» — меньше 0.</p>
+      <p><b>Товары</b> — здесь настраиваются страховой запас, срок изготовления, срок доставки на каждый товар (кнопка «Настройки»), привязка к конкретной строке на Фулфилменте (нужна, чтобы поставки при отметке «Пришло» автоматически прибавлялись к нужному остатку), и видимость — кнопка «Скрыть» убирает товар из «Обзора» и «Заявки на закуп» (например, если товар выведен из матрицы), не удаляя ни его историю, ни настройки — можно вернуть в любой момент кнопкой «Вернуть».</p>
+      <p><b>Поставки в пути</b> — отдельный список с ожидаемой датой прихода. Пока поставка не отмечена «Пришло» — учитывается в «Дней до закупа» как дополнительный резерв. Как только отмечаешь «Пришло» — количество автоматически прибавляется к остатку на привязанной строке Фулфилмента за текущую неделю, вручную вносить не нужно (если строка на ФФ не привязана — дашборд предупредит и оставит остаток без изменений, отметив только саму поставку).</p>
+      <p><b>Заявка на закуп</b> — собирает товары со статусом «Скоро закупать» и «Просрочено», количество — до точки заказа. Текст можно скопировать в буфер или сохранить файлом .txt.</p>
+      <p><b>Сглаживание скорости продаж</b> (переключатель на «Обзоре») — «по последней неделе» или «среднее за 2 недели» (защищает точку заказа от резкого скачка из-за одной нетипичной недели). Общая настройка на весь дашборд, не на отдельный товар.</p>
+    </div>
+    <div class="panel">
       <h2>Товары</h2>
       <p>Список всех товаров по всем площадкам. Здесь же — кнопка «Пороги» у каждого товара, чтобы настроить свои границы нормы для «Точек роста» (по умолчанию: CTR 3%, конверсия в корзину 10%, в заказ 20%, выкуп 80%, отмены 10%), и кнопка «Группа плана» — для товаров, которые продаются с нескольких карточек одновременно (подробнее — в разделе «План и факт» этой справки).</p>
     </div>
@@ -539,7 +569,7 @@ function pct(a,b){ return (b && b>0)? a/b*100 : null; }
    true  — Firebase (для рабочей версии на GitHub Pages)
    false — window.storage (для быстрых тестов прямо в Claude.ai)
    Перед заливкой на GitHub Pages поставь true. */
-const USE_FIREBASE = true;
+const USE_FIREBASE = false;
 /* ================================================================ */
 
 /* ================== FIREBASE ==================
@@ -1077,6 +1107,393 @@ function fmtRuDate(iso){
   const [y,m,d]=iso.split('-');
   return `${d}.${m}.${y}`;
 }
+
+/* ---------------- ЗАКУП ---------------- */
+function canonicalZakupKey(name){ return 'zk_'+sanitizeGroupKey((name||'').trim().toLowerCase()); }
+function buildZakupRows(){
+  const seen=new Map(); // key -> {rowKey, name, members:[]}
+  for(const p of state.products){
+    const groupKey = p.planGroup ? 'zk_group_'+sanitizeGroupKey(p.planGroup) : canonicalZakupKey(p.name);
+    if(!seen.has(groupKey)){
+      seen.set(groupKey, { rowKey:groupKey, name:p.planGroup||p.name, members:[] });
+    }
+    seen.get(groupKey).members.push(p);
+  }
+  return [...seen.values()];
+}
+function channelRowKeyFor(members, channel){
+  const chMembers=members.filter(m=>m.mp===channel);
+  if(chMembers.length===0) return null;
+  const withGroup=chMembers.find(m=>m.planGroup);
+  if(withGroup) return 'group_'+sanitizeGroupKey(withGroup.planGroup);
+  return 'product_'+chMembers[0].id;
+}
+async function getZakupSettings(rowKey){
+  const v=await storeGet('zakupsettings:'+rowKey);
+  return v || {safetyStock:0, prodDays:0, deliveryDays:0, active:true, ffRowId:null};
+}
+async function saveZakupSettings(rowKey, settings){
+  return await storeSet('zakupsettings:'+rowKey, settings);
+}
+async function getZakupMode(){
+  const v=await storeGet('zakupmode');
+  return (v && v.smoothing) ? v.smoothing : 'lastWeek';
+}
+async function getZakupShipments(){ return (await storeGet('zakupshipments')) || []; }
+async function saveZakupShipments(list){ return await storeSet('zakupshipments', list); }
+function inTransitQtyFor(rowKey, shipments){
+  return shipments.filter(s=>s.rowKey===rowKey && s.status==='in_transit').reduce((s,x)=>s+(+x.qty||0),0);
+}
+
+function resolveChannelMembers(row, settings, channel){
+  const overrideIds = settings[channel+'ProductIds'];
+  if(overrideIds && overrideIds.length>0){
+    return overrideIds.map(id=>state.products.find(x=>x.id===id)).filter(Boolean);
+  }
+  return row.members.filter(m=>m.mp===channel);
+}
+async function computeZakupVelocity(wbM, ozonM, ymM, smoothingMode){
+  const thisWeek=mondayOf(todayISO());
+  const [vWb, vOzon, vYm] = await Promise.all([
+    wbM.length? computeRowVelocityForWeek(wbM, thisWeek) : Promise.resolve(0),
+    ozonM.length? computeRowVelocityForWeek(ozonM, thisWeek) : Promise.resolve(0),
+    ymM.length? computeRowVelocityForWeek(ymM, thisWeek) : Promise.resolve(0),
+  ]);
+  const parts=[wbM.length?vWb:0, ozonM.length?vOzon:0, ymM.length?vYm:0];
+  const anyNull = (wbM.length&&vWb===null) || (ozonM.length&&vOzon===null) || (ymM.length&&vYm===null);
+  const thisVel = anyNull? null : parts.reduce((a,b)=>a+(b||0),0);
+  if(smoothingMode!=='avg2' || thisVel===null) return thisVel;
+  const prevWeek=dateMinusDays(thisWeek,7);
+  const [vWb2, vOzon2, vYm2] = await Promise.all([
+    wbM.length? computeRowVelocityForWeek(wbM, prevWeek) : Promise.resolve(0),
+    ozonM.length? computeRowVelocityForWeek(ozonM, prevWeek) : Promise.resolve(0),
+    ymM.length? computeRowVelocityForWeek(ymM, prevWeek) : Promise.resolve(0),
+  ]);
+  const anyNull2 = (wbM.length&&vWb2===null) || (ozonM.length&&vOzon2===null) || (ymM.length&&vYm2===null);
+  if(anyNull2) return thisVel; // прошлая-прошлая неделя не закрыта — используем только последнюю
+  const prevVel=[wbM.length?vWb2:0, ozonM.length?vOzon2:0, ymM.length?vYm2:0].reduce((a,b)=>a+(b||0),0);
+  return (thisVel+prevVel)/2;
+}
+
+async function computeZakupRow(row, smoothingMode){
+  const settings=await getZakupSettings(row.rowKey);
+  const wbM=resolveChannelMembers(row, settings, 'wb');
+  const ozonM=resolveChannelMembers(row, settings, 'ozon');
+  const ymM=resolveChannelMembers(row, settings, 'ym');
+  const [stockWb, stockOzon, stockYm, stockFf, velocity, shipments] = await Promise.all([
+    (()=>{ const k=channelRowKeyFor(wbM,'wb'); return k? getLatestStockValue('wb',k) : Promise.resolve({value:null}); })(),
+    (()=>{ const k=channelRowKeyFor(ozonM,'ozon'); return k? getLatestStockValue('ozon',k) : Promise.resolve({value:null}); })(),
+    (()=>{ const k=channelRowKeyFor(ymM,'ym'); return k? getLatestStockValue('ym',k) : Promise.resolve({value:null}); })(),
+    settings.ffRowId? getLatestStockValue('ff','ff_'+settings.ffRowId) : Promise.resolve({value:null}),
+    computeZakupVelocity(wbM, ozonM, ymM, smoothingMode),
+    getZakupShipments(),
+  ]);
+  const totalStock=(stockWb.value||0)+(stockOzon.value||0)+(stockYm.value||0)+(stockFf.value||0);
+  const cycle=(+settings.prodDays||0)+(+settings.deliveryDays||0);
+  const safetyStock=+settings.safetyStock||0;
+  const reorderPoint = velocity!=null ? Math.round(velocity*cycle + safetyStock) : null;
+  const inTransitQty=inTransitQtyFor(row.rowKey, shipments);
+  const daysToOrder = (velocity && velocity>0 && reorderPoint!=null) ? (totalStock+inTransitQty-reorderPoint)/velocity : null;
+  let status='unknown';
+  if(daysToOrder!=null){ status = daysToOrder>5? 'ok' : (daysToOrder>=0? 'warn' : 'danger'); }
+  const orderQty = reorderPoint!=null ? Math.ceil(reorderPoint/10)*10 : null;
+  return { ...row, settings, totalStock, velocity, cycle, safetyStock, reorderPoint, inTransitQty, daysToOrder, status, orderQty };
+}
+
+const ZAKUP_STATUS_LABEL={ok:'Норма', warn:'Скоро закупать', danger:'Просрочено', unknown:'Нет данных'};
+const ZAKUP_STATUS_CLASS={ok:'pos', warn:'warn', danger:'neg', unknown:'ink-3'};
+
+async function renderZakupOverview(){
+  const wrap=document.getElementById('zakupOverviewWrap');
+  wrap.innerHTML='<div class="panel"><div class="empty">Считаю…</div></div>';
+  const smoothing=await getZakupMode();
+  const allRows=buildZakupRows();
+  const withSettings=await Promise.all(allRows.map(async r=>({row:r, settings:await getZakupSettings(r.rowKey)})));
+  const activeRows=withSettings.filter(x=>x.settings.active!==false).map(x=>x.row);
+  if(activeRows.length===0){
+    wrap.innerHTML='<div class="panel"><div class="empty">Нет видимых товаров — включите нужные во вкладке «Товары»</div></div>';
+    return;
+  }
+  const computed=await Promise.all(activeRows.map(r=>computeZakupRow(r, smoothing)));
+  computed.sort((a,b)=>{
+    const da=a.daysToOrder==null?999:a.daysToOrder, db=b.daysToOrder==null?999:b.daysToOrder;
+    return da-db;
+  });
+  const rowsHtml=computed.map(r=>`<tr>
+    <td class="txt">${r.name}</td>
+    <td>${fmt(r.totalStock)} шт</td>
+    <td>${r.inTransitQty>0? fmt(r.inTransitQty)+' шт' : '—'}</td>
+    <td>${r.velocity!=null? fmt1(r.velocity)+' шт/день' : '—'}</td>
+    <td>${r.daysToOrder!=null? fmt1(r.daysToOrder)+' дн.' : '—'}</td>
+    <td><span class="badge" style="background:var(--${ZAKUP_STATUS_CLASS[r.status]}-bg,var(--bg));color:var(--${ZAKUP_STATUS_CLASS[r.status]},var(--ink-3));">${ZAKUP_STATUS_LABEL[r.status]}</span></td>
+    <td>${r.orderQty!=null? fmt(r.orderQty)+' шт' : '—'}</td>
+  </tr>`).join('');
+  wrap.innerHTML=`<div class="panel">
+    <div class="row" style="justify-content:space-between;align-items:center;">
+      <p class="hint" style="margin:0;">Отсортировано по срочности — у кого меньше дней до закупа, тот выше. Пересчитывается заново при каждом открытии, по самым свежим данным «Остатков и динамики».</p>
+      <div class="field" style="min-width:220px;">
+        <label>Сглаживание скорости продаж</label>
+        <select id="zakupSmoothing">
+          <option value="lastWeek"${smoothing==='lastWeek'?' selected':''}>По последней неделе</option>
+          <option value="avg2"${smoothing==='avg2'?' selected':''}>Среднее за 2 недели</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Товар</th><th>Остаток</th><th>В пути</th><th>Скорость</th><th>Дней до закупа</th><th>Статус</th><th>Закуп, шт</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table></div>
+  </div>`;
+  document.getElementById('zakupSmoothing').addEventListener('change', async (e)=>{
+    await storeSet('zakupmode', {smoothing:e.target.value});
+    renderZakupOverview();
+  });
+}
+
+async function renderZakupProducts(){
+  const wrap=document.getElementById('zakupProductsWrap');
+  wrap.innerHTML='<div class="panel"><div class="empty">Загрузка…</div></div>';
+  const allRows=buildZakupRows();
+  const ffRows=await getFFRows();
+  const withSettings=await Promise.all(allRows.map(async r=>({row:r, settings:await getZakupSettings(r.rowKey)})));
+  withSettings.sort((a,b)=>a.row.name.localeCompare(b.row.name));
+
+  const rowsHtml=withSettings.map(({row,settings})=>{
+    const isActive=settings.active!==false;
+    return `<tr style="${isActive?'':'opacity:0.6;'}">
+      <td class="txt">${row.name}${!isActive?' <span class="badge" style="background:var(--bg);color:var(--ink-3);">скрыт</span>':''}</td>
+      <td class="txt">${row.members.map(m=>MP_LABEL[m.mp]).join(', ')}</td>
+      <td>
+        <button class="btn secondary" data-zsettings-toggle="${row.rowKey}" style="padding:5px 10px;font-size:12px;">Настройки</button>
+        <button class="btn ${isActive?'danger':'secondary'}" data-ztoggle-active="${row.rowKey}" style="padding:5px 10px;font-size:12px;">${isActive?'Скрыть':'Вернуть'}</button>
+      </td>
+    </tr>
+    <tr class="zsettings-row" data-zsettings-row="${row.rowKey}" style="display:none;">
+      <td colspan="3">
+        <div class="row" style="padding:8px 0;flex-wrap:wrap;">
+          <div class="field"><label>Страховой запас, шт</label><input type="number" min="0" data-zfield="safetyStock" data-zrow="${row.rowKey}" value="${settings.safetyStock||0}" style="width:100px;"></div>
+          <div class="field"><label>Срок изготовления, дн.</label><input type="number" min="0" data-zfield="prodDays" data-zrow="${row.rowKey}" value="${settings.prodDays||0}" style="width:100px;"></div>
+          <div class="field"><label>Срок доставки, дн.</label><input type="number" min="0" data-zfield="deliveryDays" data-zrow="${row.rowKey}" value="${settings.deliveryDays||0}" style="width:100px;"></div>
+        </div>
+        <div class="row" style="padding:8px 0;flex-wrap:wrap;">
+          <div class="field" style="min-width:220px;"><label>Товар(ы) на WB <span class="hint" style="display:block;font-weight:400;">пусто = автоматически; несколько — через Ctrl+клик</span></label>
+            <select multiple size="3" data-zfield="wbProductIds" data-zrow="${row.rowKey}">
+              ${state.products.filter(p=>p.mp==='wb').map(p=>`<option value="${p.id}" ${(settings.wbProductIds||[]).includes(p.id)?'selected':''}>${p.name}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field" style="min-width:220px;"><label>Товар(ы) на Ozon <span class="hint" style="display:block;font-weight:400;">пусто = автоматически; несколько — через Ctrl+клик</span></label>
+            <select multiple size="3" data-zfield="ozonProductIds" data-zrow="${row.rowKey}">
+              ${state.products.filter(p=>p.mp==='ozon').map(p=>`<option value="${p.id}" ${(settings.ozonProductIds||[]).includes(p.id)?'selected':''}>${p.name}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field" style="min-width:220px;"><label>Товар(ы) на ЯМ <span class="hint" style="display:block;font-weight:400;">пусто = автоматически; несколько — через Ctrl+клик</span></label>
+            <select multiple size="3" data-zfield="ymProductIds" data-zrow="${row.rowKey}">
+              ${state.products.filter(p=>p.mp==='ym').map(p=>`<option value="${p.id}" ${(settings.ymProductIds||[]).includes(p.id)?'selected':''}>${p.name}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field" style="min-width:220px;"><label>Строка на Фулфилменте</label>
+            <select data-zfield="ffRowId" data-zrow="${row.rowKey}">
+              <option value="">— не привязано —</option>
+              ${ffRows.map(fr=>`<option value="${fr.id}" ${settings.ffRowId===fr.id?'selected':''}>${fr.name||'(без названия)'}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <button class="btn secondary" data-zsettings-save="${row.rowKey}">Сохранить настройки</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML=`<div class="panel">
+    <p class="hint">Список товаров собирается сам, добавлять здесь ничего не нужно. «Скрыть» убирает товар из «Обзора» и «Заявки на закуп» (например, если товар выведен из матрицы) — историю и настройки при этом не теряет, можно вернуть в любой момент. Если на одной площадке две карточки одного товара с одинаковой «Группой плана» — они и так учитываются вместе автоматически. Ручная привязка в «Настройках» нужна только когда автоматика не может сама понять, что это один товар — там тоже можно выбрать сразу несколько карточек через Ctrl+клик.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Товар</th><th>Площадки</th><th>Действия</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table></div>
+  </div>`;
+
+  wrap.querySelectorAll('[data-zsettings-toggle]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const row=wrap.querySelector(`[data-zsettings-row="${btn.dataset.zsettingsToggle}"]`);
+      if(row) row.style.display = row.style.display==='none' ? 'table-row' : 'none';
+    });
+  });
+  wrap.querySelectorAll('[data-ztoggle-active]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const rowKey=btn.dataset.ztoggleActive;
+      const settings=await getZakupSettings(rowKey);
+      settings.active = settings.active===false ? true : false;
+      const ok=await saveZakupSettings(rowKey, settings);
+      if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+      renderZakupProducts();
+    });
+  });
+  wrap.querySelectorAll('[data-zsettings-save]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const rowKey=btn.dataset.zsettingsSave;
+      const settings=await getZakupSettings(rowKey);
+      wrap.querySelectorAll(`[data-zrow="${rowKey}"]`).forEach(inp=>{
+        const field=inp.dataset.zfield;
+        const multiFields=['wbProductIds','ozonProductIds','ymProductIds'];
+        if(multiFields.includes(field)){
+          settings[field]=[...inp.selectedOptions].map(o=>o.value);
+        } else if(field==='ffRowId'){
+          settings[field]=inp.value||null;
+        } else {
+          settings[field]=+inp.value||0;
+        }
+      });
+      const origText=btn.textContent;
+      btn.disabled=true; btn.textContent='Сохраняю…';
+      const ok=await saveZakupSettings(rowKey, settings);
+      btn.disabled=false;
+      if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+      btn.textContent='✓ Сохранено';
+      setTimeout(()=>{ btn.textContent=origText; }, 1500);
+    });
+  });
+}
+
+async function renderZakupShipments(){
+  const wrap=document.getElementById('zakupShipmentsWrap');
+  wrap.innerHTML='<div class="panel"><div class="empty">Загрузка…</div></div>';
+  const allRows=buildZakupRows();
+  const shipments=await getZakupShipments();
+  const inTransit=shipments.filter(s=>s.status==='in_transit').sort((a,b)=>(a.expectedDate||'').localeCompare(b.expectedDate||''));
+  const arrived=shipments.filter(s=>s.status==='arrived').sort((a,b)=>(b.arrivedAt||'').localeCompare(a.arrivedAt||'')).slice(0,20);
+
+  const rowLabel=rowKey=>allRows.find(r=>r.rowKey===rowKey)?.name || rowKey;
+
+  wrap.innerHTML=`<div class="panel">
+    <h2>Новая поставка</h2>
+    <div class="row">
+      <div class="field" style="min-width:220px;"><label>Товар</label>
+        <select id="zship_product">${allRows.map(r=>`<option value="${r.rowKey}">${r.name}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Количество, шт</label><input id="zship_qty" type="number" min="1"></div>
+      <div class="field"><label>Ожидаемая дата прихода</label><input id="zship_date" type="date"></div>
+      <button class="btn" id="zshipAddBtn" style="align-self:flex-end;">Добавить поставку</button>
+    </div>
+    <p class="hint">Пока поставка не отмечена «Пришло» — она учитывается в «Дней до закупа» на «Обзоре». Когда отмечаешь «Пришло» — количество автоматически прибавляется к остатку на Фулфилменте на этой неделе (для той строки ФФ, что привязана к товару во вкладке «Товары») — вручную вносить не нужно.</p>
+  </div>
+  <div class="panel">
+    <h2>В пути (${inTransit.length})</h2>
+    ${inTransit.length===0? '<div class="empty">Нет поставок в пути</div>' : `<div class="table-scroll"><table>
+      <thead><tr><th>Товар</th><th>Количество</th><th>Ожидается</th><th></th></tr></thead>
+      <tbody>${inTransit.map(s=>`<tr>
+        <td class="txt">${rowLabel(s.rowKey)}</td>
+        <td>${fmt(s.qty)} шт</td>
+        <td>${fmtRuDate(s.expectedDate)}</td>
+        <td><button class="btn secondary" data-zship-arrive="${s.id}" style="padding:5px 10px;font-size:12px;">Отметить «Пришло»</button> <button class="btn danger" data-zship-del="${s.id}" style="padding:5px 10px;font-size:12px;">× Удалить</button></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`}
+  </div>
+  <div class="panel">
+    <h2>Недавно пришедшие</h2>
+    ${arrived.length===0? '<div class="empty">Пока нет отмеченных поставок</div>' : `<div class="table-scroll"><table>
+      <thead><tr><th>Товар</th><th>Количество</th><th>Пришло</th></tr></thead>
+      <tbody>${arrived.map(s=>`<tr><td class="txt">${rowLabel(s.rowKey)}</td><td>${fmt(s.qty)} шт</td><td>${fmtRuDate(s.arrivedAt)}</td></tr>`).join('')}</tbody>
+    </table></div>`}
+  </div>`;
+
+  document.getElementById('zshipAddBtn').addEventListener('click', async ()=>{
+    const rowKey=document.getElementById('zship_product').value;
+    const qty=+document.getElementById('zship_qty').value||0;
+    const date=document.getElementById('zship_date').value;
+    if(!rowKey || qty<=0 || !date){ alert('Заполните товар, количество больше нуля и дату'); return; }
+    const list=await getZakupShipments();
+    list.push({id:'ship'+Date.now(), rowKey, qty, expectedDate:date, status:'in_transit', createdAt:todayISO(), arrivedAt:null});
+    const ok=await saveZakupShipments(list);
+    if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+    renderZakupShipments();
+  });
+  wrap.querySelectorAll('[data-zship-del]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Удалить эту поставку?')) return;
+      const list=(await getZakupShipments()).filter(s=>s.id!==btn.dataset.zshipDel);
+      const ok=await saveZakupShipments(list);
+      if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+      renderZakupShipments();
+    });
+  });
+  wrap.querySelectorAll('[data-zship-arrive]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const shipId=btn.dataset.zshipArrive;
+      const list=await getZakupShipments();
+      const ship=list.find(s=>s.id===shipId);
+      if(!ship) return;
+      const settings=await getZakupSettings(ship.rowKey);
+      if(settings.ffRowId){
+        const thisWeek=mondayOf(todayISO());
+        const ffKey='ff_'+settings.ffRowId;
+        const data=await storeGet(stockChannelKey('ff', thisWeek)) || {};
+        data[ffKey] = (+data[ffKey]||0) + (+ship.qty||0);
+        const okStock=await storeSet(stockChannelKey('ff', thisWeek), data);
+        if(okStock) await addToStockWeekIndex('ff', thisWeek);
+      } else {
+        if(!confirm('У этого товара не привязана строка на Фулфилменте — остаток автоматически не увеличится, только сама поставка будет отмечена «Пришло». Продолжить?')) return;
+      }
+      ship.status='arrived'; ship.arrivedAt=todayISO();
+      const ok=await saveZakupShipments(list);
+      if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+      renderZakupShipments();
+    });
+  });
+}
+
+async function renderZakupOrder(){
+  const wrap=document.getElementById('zakupOrderWrap');
+  wrap.innerHTML='<div class="panel"><div class="empty">Считаю…</div></div>';
+  const smoothing=await getZakupMode();
+  const allRows=buildZakupRows();
+  const withSettings=await Promise.all(allRows.map(async r=>({row:r, settings:await getZakupSettings(r.rowKey)})));
+  const activeRows=withSettings.filter(x=>x.settings.active!==false).map(x=>x.row);
+  const computed=await Promise.all(activeRows.map(r=>computeZakupRow(r, smoothing)));
+  const toOrder=computed.filter(r=>r.status==='warn' || r.status==='danger').sort((a,b)=>(a.daysToOrder??999)-(b.daysToOrder??999));
+
+  if(toOrder.length===0){
+    wrap.innerHTML='<div class="panel"><div class="empty">Пока никого не нужно заказывать — все товары в норме</div></div>';
+    return;
+  }
+  const text=toOrder.map(r=>`${r.name} — ${fmt(r.orderQty)} шт`).join('\n');
+  wrap.innerHTML=`<div class="panel">
+    <h2>Заявка на закуп</h2>
+    <p class="hint">Товары со статусом «Скоро закупать» и «Просрочено», количество — до точки заказа.</p>
+    <div class="order-text-box" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:var(--font-mono);font-size:13px;white-space:pre-wrap;">${text}</div>
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      <button class="btn secondary" id="zorderCopyBtn">Скопировать</button>
+      <button class="btn secondary" id="zorderDownloadBtn">Сохранить как .txt</button>
+    </div>
+  </div>`;
+  document.getElementById('zorderCopyBtn').addEventListener('click', ()=>{
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn=document.getElementById('zorderCopyBtn');
+      const orig=btn.textContent; btn.textContent='✓ Скопировано';
+      setTimeout(()=>{ btn.textContent=orig; }, 1500);
+    }).catch(()=>{});
+  });
+  document.getElementById('zorderDownloadBtn').addEventListener('click', ()=>{
+    const blob=new Blob([text], {type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='заявка-на-закуп-'+todayISO()+'.txt';
+    a.click();
+  });
+}
+
+document.getElementById('zakupModeToggle').addEventListener('click', (e)=>{
+  if(e.target.tagName!=='BUTTON') return;
+  document.querySelectorAll('#zakupModeToggle button').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  const mode=e.target.dataset.zmode;
+  document.getElementById('zakupOverviewWrap').style.display = mode==='overview'?'block':'none';
+  document.getElementById('zakupProductsWrap').style.display = mode==='products'?'block':'none';
+  document.getElementById('zakupShipmentsWrap').style.display = mode==='shipments'?'block':'none';
+  document.getElementById('zakupOrderWrap').style.display = mode==='order'?'block':'none';
+  if(mode==='overview') renderZakupOverview();
+  if(mode==='products') renderZakupProducts();
+  if(mode==='shipments') renderZakupShipments();
+  if(mode==='order') renderZakupOrder();
+});
 
 /* ---------------- ТОВАРЫ ---------------- */
 const DEFAULT_THRESHOLDS={ctr:3, cr1:10, cr2:20, buyout:80, cancel:10};
@@ -2881,6 +3298,7 @@ document.getElementById('tabs').addEventListener('click', async (e)=>{
   if(e.target.dataset.tab==='products'){ renderProductsTable(); }
   if(e.target.dataset.tab==='stock'){ renderStockTab(); }
   if(e.target.dataset.tab==='distrib'){ populateDistribTab(); }
+  if(e.target.dataset.tab==='zakup'){ renderZakupOverview(); }
 });
 
 /* ---------------- ИМПОРТ ДАННЫХ ИЗ ФАЙЛА ---------------- */
