@@ -193,7 +193,7 @@
   <div class="header-bar">
     <div>
       <h1>Воронка продаж</h1>
-      <div class="sub">Ручной учёт по товарам на WB, Ozon и Яндекс Маркете</div>
+      <div class="sub">Учёт по товарам на WB, Ozon и Яндекс Маркете</div>
     </div>
     <div id="userBar" style="display:none;justify-content:flex-end;align-items:center;gap:10px;">
       <span id="userEmailLabel"></span>
@@ -733,6 +733,14 @@ const STOCK_CHANNELS=[
 
 function groupMembersFor(p){ return p.planGroup ? state.products.filter(x=>x.planGroup===p.planGroup) : [p]; }
 async function getFFRows(){ return (await storeGet('stockffrows')) || []; }
+async function ensureFFRowForName(name){
+  const rows=await getFFRows();
+  const exists=rows.some(r=>(r.name||'').trim().toLowerCase()===name.trim().toLowerCase());
+  if(exists) return true;
+  const newId='ff'+Date.now()+Math.floor(Math.random()*1000);
+  rows.push({id:newId, name});
+  return await storeSet('stockffrows', rows);
+}
 async function addFFRow(){
   const rows=await getFFRows();
   const newId='ff'+Date.now();
@@ -1025,14 +1033,14 @@ async function renderStockChannelCard(c){
       <tbody>${rowsHtml.join('')}</tbody>
     </table></div>`;
   }
-  return `<div class="panel" style="flex:1 1 420px;min-width:340px;" data-channel-card="${c.ch}">
+  return `<div class="panel" style="flex:1 1 420px;min-width:340px;display:flex;flex-direction:column;" data-channel-card="${c.ch}">
     <div class="row" style="justify-content:space-between;align-items:center;">
       <h2 style="margin:0;">${c.label}</h2>
       <span class="badge" style="background:${draft.filled?'var(--pos-bg)':'var(--bg)'};color:${draft.filled?'var(--pos)':'var(--ink-3)'};">${draft.filled?'внесено':'не внесено'}</span>
     </div>
     ${isFF? `<p class="hint">Текущий остаток товаров на ФФ.</p>` : ''}
     ${inner}
-    <div style="margin-top:12px;display:flex;justify-content:${isFF?'space-between':'flex-end'};align-items:center;">
+    <div style="margin-top:auto;padding-top:12px;display:flex;justify-content:${isFF?'space-between':'flex-end'};align-items:center;">
       ${isFF? `<button class="btn secondary" data-add-ffrow="1">+ Добавить строку</button>` : ''}
       <button class="btn" data-save-channel="${c.ch}">Сохранить ${c.label}</button>
     </div>
@@ -1743,6 +1751,7 @@ document.getElementById('addProductBtn').addEventListener('click', async ()=>{
   }
   btn.disabled=false; btn.textContent=origText;
   if(failedMp){ alert(`Не удалось добавить товар на площадке ${MP_LABEL[failedMp]} — сбой хранилища. Товар мог добавиться частично, проверьте список ниже и попробуйте ещё раз для недостающих площадок.`); }
+  if(!failedMp){ await ensureFFRowForName(name); }
   document.getElementById('p_name').value='';
   document.getElementById('p_season').value='';
   await loadProducts(); refreshAllProductSelects(); renderProductsTable();
@@ -2456,7 +2465,10 @@ async function renderDailyTab(){
     const aggText = aggRaw!==null ? r.fmt(aggRaw) : '';
     const aggIsHighDrr = r.label==='ДРР, %' && aggRaw!==null && aggRaw>15;
     const aggCell = `<td class="sticky2 txt"${aggIsHighDrr?' style="color:var(--neg);"':''}>${aggText}</td>`;
-    return `<tr class="${rowClass}"><td class="sticky txt">${r.label}</td>${aggCell}${cells}</tr>`;
+    const labelCell = r.isEditableBid
+      ? `<td class="sticky txt"><input type="text" class="bidlabel-edit-input" data-bidindex="${r.bidIndex}" value="${(r.label||'').replace(/"/g,'&quot;')}" style="border:none;background:transparent;font-family:inherit;font-weight:600;font-size:inherit;color:inherit;padding:2px;width:100%;"></td>`
+      : `<td class="sticky txt">${r.label}</td>`;
+    return `<tr class="${rowClass}">${labelCell}${aggCell}${cells}</tr>`;
   }).join('');
 
   if(!hasAnyDataThisMonth){
@@ -2564,6 +2576,19 @@ async function renderDailyTab(){
         const ok=await storeSet('daily:'+productId, dm2);
         if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); dm2[d].adBids[idx].value=oldVal; inp.value=oldVal??''; }
       }
+    });
+  });
+  wrap.querySelectorAll('.bidlabel-edit-input').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const idx=+inp.dataset.bidindex;
+      const newLabel=inp.value.trim() || `Ставка ${idx+1}`;
+      if(!product.adBids) product.adBids=[];
+      if(!product.adBids[idx]) product.adBids[idx]={label:newLabel, value:null};
+      const oldLabel=product.adBids[idx].label;
+      product.adBids[idx].label=newLabel;
+      const ok=await storeSet('product:'+productId, product);
+      if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); product.adBids[idx].label=oldLabel; inp.value=oldLabel; return; }
+      inp.value=newLabel;
     });
   });
 }
