@@ -598,6 +598,13 @@ function showFbError(msg){
 function hideFbError(){
   document.getElementById('fbStatusBanner').style.display='none';
 }
+window.addEventListener('unhandledrejection', (event)=>{
+  if(event.reason && event.reason.isReadFailure){
+    console.error('Необработанный сбой чтения из хранилища:', event.reason);
+    showFbError('Не удалось загрузить часть данных из базы (сбой соединения). Обновите страницу (Ctrl+F5) перед тем как что-либо сохранять — иначе есть риск случайно затереть уже сохранённые данные пустым состоянием.');
+    event.preventDefault();
+  }
+});
 function initFirebase(){
   if(fbReadyPromise) return fbReadyPromise;
   fbReadyPromise=new Promise((resolve,reject)=>{
@@ -626,13 +633,27 @@ const FIRESTORE_COLLECTION = 'app_data';
 
 async function storeGet(key){
   if(!USE_FIREBASE){ try{ const r=await window.storage.get(key,false); return r?JSON.parse(r.value):null; }catch(e){ return null; } }
-  try{
-    const db=await initFirebase();
-    const doc=await db.collection(FIRESTORE_COLLECTION).doc(key).get();
-    if(!doc.exists) return null;
-    const data=doc.data();
-    return (data && data.v!==undefined) ? JSON.parse(data.v) : null;
-  }catch(e){ console.error('storage get failed',key,e); return null; }
+  let lastErr=null;
+  for(let attempt=0; attempt<3; attempt++){
+    try{
+      const db=await initFirebase();
+      const doc=await db.collection(FIRESTORE_COLLECTION).doc(key).get();
+      if(!doc.exists) return null; // документа реально нет — это не ошибка чтения, а нормальный ответ
+      const data=doc.data();
+      return (data && data.v!==undefined) ? JSON.parse(data.v) : null;
+    }catch(e){
+      lastErr=e;
+      console.error('storage get failed (попытка '+(attempt+1)+' из 3)',key,e);
+      if(attempt<2) await new Promise(res=>setTimeout(res,500*(attempt+1)));
+    }
+  }
+  // Все попытки провалились — это НЕ то же самое, что «документа нет».
+  // Явно бросаем ошибку, чтобы вызывающий код не спутал сбой чтения с пустым разделом
+  // и не сохранил поверх настоящих данных пустое состояние.
+  const err=new Error('Не удалось прочитать данные из хранилища ('+key+') после нескольких попыток');
+  err.isReadFailure=true;
+  err.key=key;
+  throw err;
 }
 async function storeSet(key,val){
   if(!USE_FIREBASE){
@@ -3606,8 +3627,19 @@ async function startApp(){
   document.getElementById('funnel_month').value=monthNow();
   document.getElementById('daily_history_month').value=monthNow();
   document.getElementById('cmp_monthB').value=monthNow();
-  productsReadyPromise=loadProducts();
-  await productsReadyPromise;
+  try{
+    productsReadyPromise=loadProducts();
+    await productsReadyPromise;
+  }catch(e){
+    console.error('Не удалось загрузить список товаров при старте', e);
+    showFbError('Не удалось загрузить список товаров — проверьте соединение и нажмите «Повторить». Пока список не загрузится полностью, ничего не редактируйте и не сохраняйте, чтобы случайно не затереть данные.');
+    const banner=document.getElementById('fbStatusBanner');
+    const retryBtn=document.createElement('button');
+    retryBtn.className='btn secondary'; retryBtn.style.marginLeft='10px'; retryBtn.textContent='Повторить';
+    retryBtn.addEventListener('click', ()=>{ hideFbError(); startApp(); });
+    banner.appendChild(retryBtn);
+    return;
+  }
   refreshAllProductSelects();
   renderPlanTab();
 }
