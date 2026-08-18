@@ -2300,7 +2300,39 @@ function cellBadge(diff, {suffix='', decimals=1, goodUp=true, neutral=false}={})
 let dailyTableRerenderTimer=null;
 function scheduleDailyTableRerender(){
   if(dailyTableRerenderTimer) clearTimeout(dailyTableRerenderTimer);
-  dailyTableRerenderTimer=setTimeout(()=>{ dailyTableRerenderTimer=null; renderDailyTab(); }, 1800);
+  dailyTableRerenderTimer=setTimeout(async ()=>{
+    dailyTableRerenderTimer=null;
+    // Запоминаем, какая ячейка была выбрана/в фокусе до пересборки таблицы —
+    // полная пересборка (innerHTML) иначе сбрасывает выделение, даже если
+    // пользователь просто смотрит на ячейку, а не редактирует её.
+    const wrapBefore=document.getElementById('dailyTableWrap');
+    const active=(wrapBefore && wrapBefore.contains(document.activeElement)) ? document.activeElement : null;
+    const focusInfo = active ? {
+      notedate: active.dataset ? active.dataset.notedate : null,
+      editfield: active.dataset ? active.dataset.editfield : null,
+      bidindex: active.dataset ? active.dataset.bidindex : null,
+      selStart: (typeof active.selectionStart==='number') ? active.selectionStart : null,
+    } : null;
+
+    await renderDailyTab();
+
+    // Возвращаем фокус (и позицию курсора) на ту же ячейку после пересборки.
+    if(focusInfo && focusInfo.notedate){
+      const wrapAfter=document.getElementById('dailyTableWrap');
+      if(wrapAfter){
+        let selector = `[data-notedate="${CSS.escape(focusInfo.notedate)}"]`;
+        if(focusInfo.editfield) selector += `[data-editfield="${CSS.escape(focusInfo.editfield)}"]`;
+        if(focusInfo.bidindex!=null && focusInfo.bidindex!=='') selector += `[data-bidindex="${CSS.escape(focusInfo.bidindex)}"]`;
+        const el = wrapAfter.querySelector(selector);
+        if(el && typeof el.focus==='function'){
+          el.focus();
+          if(focusInfo.selStart!=null && typeof el.setSelectionRange==='function'){
+            try{ el.setSelectionRange(focusInfo.selStart, focusInfo.selStart); }catch(e){}
+          }
+        }
+      }
+    }
+  }, 1800);
 }
 
 async function renderDailyTab(){
@@ -2578,6 +2610,23 @@ async function renderDailyTab(){
         if(FUNNEL_FIELDS.includes(field) && dm2[d].draft) delete dm2[d].draft;
         const ok=await storeSet('daily:'+productId, dm2);
         if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); dm2[d][field]=oldVal; inp.value=oldVal??''; return; }
+        // Если правится цена — синхронизируем её в карточку товара (вкладка «Товары»),
+        // но только если правится самый свежий день в истории, а не задним числом.
+        // Раньше это делал только массовый импорт из Excel, из-за чего у товаров,
+        // куда данные вносили вручную день за днём, «Текущая цена» оставалась пустой.
+        const PRICE_FIELDS=['priceLK','priceCustomer','priceOzonCard'];
+        if(PRICE_FIELDS.includes(field)){
+          const maxDate=Object.keys(dm2).sort().slice(-1)[0];
+          if(d===maxDate){
+            const p=state.products.find(x=>x.id===productId);
+            if(p){
+              if(field==='priceLK') p.currentPriceLK=dm2[d].priceLK;
+              if(field==='priceCustomer') p.currentPriceCustomer=dm2[d].priceCustomer;
+              if(field==='priceOzonCard') p.currentPriceOzonCard=dm2[d].priceOzonCard;
+              await storeSet('product:'+p.id, p);
+            }
+          }
+        }
         scheduleDailyTableRerender();
       }
     });
