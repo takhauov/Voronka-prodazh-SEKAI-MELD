@@ -693,6 +693,78 @@ async function storeListKeys(prefix){
   }catch(e){ console.error('storage list failed',prefix,e); return []; }
 }
 
+/* ======================= БЕЗОПАСНОЕ (не перезаписывающее чужое/своё же) СОХРАНЕНИЕ =======================
+   Раньше каждое изменение одной ячейки (показы/клики/заказы и т.д.) делало независимое
+   "прочитать документ дня → поправить одно поле → сохранить документ целиком" — без очереди
+   и без проверки версии. Если сотрудник быстро проходил по нескольким полям одной строки
+   (Tab с "Показы" на "Клики" и дальше) — два таких запроса могли улететь почти одновременно,
+   и если ответы от сервера приходили не в том порядке, в котором были отправлены, более
+   поздний по факту запрос (с устаревшим локальным снимком, ещё не знавшим о соседней правке)
+   переписывал документ и стирал её. Это тот же класс ошибки, что уже был найден и исправлен
+   в дашборде РНП — здесь она тоже реальна и не требует ни двух вкладок, ни двух сотрудников,
+   достаточно быстро ввести пару полей подряд в одной строке.
+
+   mutateStoreValue(key, makeDefault, mutatorFn) заменяет связку "storeGet → руками поправить →
+   storeSet" везде, где документ читается и переписывается целиком:
+   - Для одного и того же key все правки выстраиваются в очередь (mutateQueues) — второй
+     мутатор всегда стартует читать данные только после того, как первый полностью завершил
+     запись, а не одновременно с ним.
+   - В боевом режиме (Firestore) чтение и запись — единая атомарная транзакция (runTransaction):
+     если документ успел измениться между чтением и записью (например, из другой вкладки),
+     Firestore сам это обнаружит и повторит попытку — гонка невозможна даже между вкладками,
+     не только внутри одной.
+   - mutatorFn(freshValue) должен только МЕНЯТЬ переданный объект (описывать конкретную правку),
+     а не строить свой независимый результат — тогда его можно безопасно применить повторно
+     к самой свежей версии, если потребуется повтор попытки. */
+const mutateQueues = {};
+async function mutateStoreValue(key, makeDefault, mutatorFn){
+  const prev = mutateQueues[key] || Promise.resolve();
+  const next = prev.then(async ()=>{
+    if(!USE_FIREBASE){
+      // Тестовый режим: нет Firestore-транзакций, но всё равно читаем свежее значение
+      // непосредственно перед записью — так тестовый прогон ловит гонки в пределах
+      // одной вкладки/одного процесса, даже без реальной атомарности на сервере.
+      for(let attempt=0; attempt<3; attempt++){
+        try{
+          let fresh = await storeGet(key);
+          if(fresh===null || fresh===undefined) fresh = (typeof makeDefault==='function'? makeDefault() : makeDefault);
+          mutatorFn(fresh);
+          if(fresh===null || fresh===undefined) return null; // мутатор сам решил, что писать нечего (например, документ не должен существовать)
+          const ok = await storeSet(key, fresh);
+          if(ok) return fresh;
+        }catch(e){ console.error('mutateStoreValue (тестовый режим) не удалось', key, e); }
+      }
+      return null;
+    }
+    let lastErr=null;
+    for(let attempt=0; attempt<3; attempt++){
+      let result=null;
+      try{
+        const db=await initFirebase();
+        const ref=db.collection(FIRESTORE_COLLECTION).doc(key);
+        await db.runTransaction(async tx=>{
+          const doc=await tx.get(ref);
+          const data=doc.exists? doc.data(): null;
+          let fresh=(data && data.v!==undefined) ? JSON.parse(data.v) : (typeof makeDefault==='function'? makeDefault() : makeDefault);
+          mutatorFn(fresh);
+          if(fresh===null || fresh===undefined){ result='__skip__'; return; } // мутатор решил, что писать нечего
+          tx.set(ref, {v: JSON.stringify(fresh)});
+          result=fresh;
+        });
+        return result==='__skip__' ? null : result;
+      }catch(e){
+        lastErr=e;
+        console.error('mutateStoreValue не удалось (попытка '+(attempt+1)+')', key, e);
+        if(attempt<2) await new Promise(res=>setTimeout(res,500*(attempt+1)));
+      }
+    }
+    console.error('mutateStoreValue: все попытки провалились', key, lastErr);
+    return null;
+  }).catch(e=>{ console.error('ошибка в очереди сохранения', key, e); return null; });
+  mutateQueues[key] = next;
+  return next;
+}
+
 async function loadProducts(){
   const keys=await storeListKeys('product:');
   const results=await Promise.all(keys.map(k=>storeGet(k)));
@@ -755,31 +827,36 @@ const STOCK_CHANNELS=[
 function groupMembersFor(p){ return p.planGroup ? state.products.filter(x=>x.planGroup===p.planGroup) : [p]; }
 async function getFFRows(){ return (await storeGet('stockffrows')) || []; }
 async function ensureFFRowForName(name){
-  const rows=await getFFRows();
-  const exists=rows.some(r=>(r.name||'').trim().toLowerCase()===name.trim().toLowerCase());
-  if(exists) return true;
-  const newId='ff'+Date.now()+Math.floor(Math.random()*1000);
-  rows.push({id:newId, name});
-  return await storeSet('stockffrows', rows);
+  const result=await mutateStoreValue('stockffrows', ()=>[], (rows)=>{
+    const exists=rows.some(r=>(r.name||'').trim().toLowerCase()===name.trim().toLowerCase());
+    if(!exists){
+      const newId='ff'+Date.now()+Math.floor(Math.random()*1000);
+      rows.push({id:newId, name});
+    }
+  });
+  return !!result;
 }
 async function addFFRow(){
-  const rows=await getFFRows();
-  const newId='ff'+Date.now();
-  rows.push({id:newId, name:''});
-  const ok=await storeSet('stockffrows', rows);
-  return ok? newId : null;
+  let newId=null;
+  const result=await mutateStoreValue('stockffrows', ()=>[], (rows)=>{
+    newId='ff'+Date.now();
+    rows.push({id:newId, name:''});
+  });
+  return result? newId : null;
 }
 async function deleteFFRow(id){
-  const rows=await getFFRows();
-  const filtered=rows.filter(x=>x.id!==id);
-  return await storeSet('stockffrows', filtered);
+  const result=await mutateStoreValue('stockffrows', ()=>[], (rows)=>{
+    const idx=rows.findIndex(x=>x.id===id);
+    if(idx!==-1) rows.splice(idx,1);
+  });
+  return !!result;
 }
 async function renameFFRow(id, name){
-  const rows=await getFFRows();
-  const r=rows.find(x=>x.id===id);
-  if(!r) return false;
-  r.name=name;
-  return await storeSet('stockffrows', rows);
+  const result=await mutateStoreValue('stockffrows', ()=>[], (rows)=>{
+    const r=rows.find(x=>x.id===id);
+    if(r) r.name=name;
+  });
+  return !!result;
 }
 
 async function buildStockRows(channel){
@@ -823,8 +900,9 @@ function stockChannelKey(channel, weekDate){ return 'stockweek:'+channel+':'+wee
 function stockWeekIndexKey(channel){ return 'stockweekindex:'+channel; }
 async function getStockWeekIndex(channel){ return (await storeGet(stockWeekIndexKey(channel))) || []; }
 async function addToStockWeekIndex(channel, weekDate){
-  const idx=await getStockWeekIndex(channel);
-  if(!idx.includes(weekDate)){ idx.push(weekDate); await storeSet(stockWeekIndexKey(channel), idx); }
+  await mutateStoreValue(stockWeekIndexKey(channel), ()=>[], (idx)=>{
+    if(!idx.includes(weekDate)) idx.push(weekDate);
+  });
 }
 async function computeChannelNextWeek(channel){
   const idx=await getStockWeekIndex(channel);
@@ -856,7 +934,7 @@ async function initStockDrafts(weekDate){
   if(stockDraftsByWeek[weekDate]) return; // уже открывали эту неделю в этой сессии — не перезатираем несохранённый ввод
   const results=await Promise.all(STOCK_CHANNELS.map(async c=>{
     const saved=(await storeGet(stockChannelKey(c.ch, weekDate))) || null;
-    return [c.ch, { data: saved? {...saved} : {}, filled: !!saved }];
+    return [c.ch, { data: saved? {...saved} : {}, filled: !!saved, touched: new Set() }];
   }));
   stockDraftsByWeek[weekDate]=Object.fromEntries(results);
 }
@@ -1073,7 +1151,7 @@ function wireStockTabEvents(){
   el.querySelectorAll('.stocklabel-input').forEach(inp=>{
     inp.addEventListener('change', async ()=>{
       const rowKey=inp.dataset.rowkey;
-      const ok=await storeSet('stocklabel:'+rowKey, {label: inp.value.trim()});
+      const ok=await mutateStoreValue('stocklabel:'+rowKey, ()=>({}), (fresh)=>{ fresh.label=inp.value.trim(); });
       if(!ok) alert('Не удалось сохранить название — попробуйте ещё раз');
     });
   });
@@ -1082,7 +1160,10 @@ function wireStockTabEvents(){
     inp.addEventListener('focus', ()=>{ if(inp.value==='0') inp.value=''; });
     inp.addEventListener('input', ()=>{
       const ch=inp.dataset.ch, rowKey=inp.dataset.rowkey;
-      currentStockDrafts()[ch].data[rowKey] = inp.value===''? null : +inp.value;
+      const draft=currentStockDrafts()[ch];
+      draft.data[rowKey] = inp.value===''? null : +inp.value;
+      if(!draft.touched) draft.touched=new Set();
+      draft.touched.add(rowKey);
     });
   });
   el.querySelectorAll('[data-save-channel]').forEach(btn=>{
@@ -1119,12 +1200,21 @@ async function onSaveStockChannel(btn){
   const ch=btn.dataset.saveChannel;
   const weekDate=stockTabWeekDate;
   const draft=currentStockDrafts()[ch];
-  const clean={};
-  Object.entries(draft.data).forEach(([k,v])=>{ if(v!==null && v!==undefined && !isNaN(v) && v>=0) clean[k]=v; });
+  const touched=draft.touched || new Set();
   const origText=btn.textContent;
   btn.disabled=true; btn.textContent='Сохраняю…';
-  const ok=await storeSet(stockChannelKey(ch, weekDate), clean);
-  if(!ok){ btn.disabled=false; btn.textContent=origText; alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+  // Применяем только реально тронутые в этой сессии строки — поверх самой свежей версии
+  // недели/канала, а не поверх черновика, который мог устареть, если кто-то ещё сохранял
+  // сюда же (другой канал того же товара, или та же строка с другого устройства) с момента,
+  // когда мы открыли эту неделю.
+  const result=await mutateStoreValue(stockChannelKey(ch, weekDate), ()=>({}), (fresh)=>{
+    touched.forEach(rowKey=>{
+      const v=draft.data[rowKey];
+      if(v!==null && v!==undefined && !isNaN(v) && v>=0) fresh[rowKey]=v;
+      else delete fresh[rowKey]; // явно очищено пользователем
+    });
+  });
+  if(!result){ btn.disabled=false; btn.textContent=origText; alert('Не удалось сохранить — попробуйте ещё раз'); return; }
   await addToStockWeekIndex(ch, weekDate);
   currentStockDrafts()[ch].filled=true;
   const card=document.querySelector(`[data-channel-card="${ch}"]`);
@@ -1195,6 +1285,8 @@ async function getZakupSettings(rowKey){
   const v=await storeGet('zakupsettings:'+rowKey);
   return v || {safetyStock:0, safetyStockMode:'fixed', safetyStockDays:15, prodDays:0, deliveryDays:0, active:true, ffRowId:null};
 }
+// БОЛЬШЕ НЕ ИСПОЛЬЗУЕТСЯ напрямую — заменено на mutateStoreValue() в местах записи (см. выше),
+// которое не перезаписывает документ вслепую. Оставлено на случай прямого доступа.
 async function saveZakupSettings(rowKey, settings){
   return await storeSet('zakupsettings:'+rowKey, settings);
 }
@@ -1203,6 +1295,7 @@ async function getZakupMode(){
   return (v && v.smoothing) ? v.smoothing : 'lastWeek';
 }
 async function getZakupShipments(){ return (await storeGet('zakupshipments')) || []; }
+// БОЛЬШЕ НЕ ИСПОЛЬЗУЕТСЯ напрямую — заменено на mutateStoreValue() в местах записи (см. выше).
 async function saveZakupShipments(list){ return await storeSet('zakupshipments', list); }
 function inTransitQtyFor(rowKey, shipments){
   return shipments.filter(s=>s.rowKey===rowKey && s.status==='in_transit').reduce((s,x)=>s+(+x.qty||0),0);
@@ -1310,7 +1403,8 @@ async function renderZakupOverview(){
     </table></div>
   </div>`;
   document.getElementById('zakupSmoothing').addEventListener('change', async (e)=>{
-    await storeSet('zakupmode', {smoothing:e.target.value});
+    const val=e.target.value;
+    await mutateStoreValue('zakupmode', ()=>({}), (fresh)=>{ fresh.smoothing=val; });
     renderZakupOverview();
   });
 }
@@ -1415,35 +1509,37 @@ async function renderZakupProducts(){
   wrap.querySelectorAll('[data-ztoggle-active]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const rowKey=btn.dataset.ztoggleActive;
-      const settings=await getZakupSettings(rowKey);
-      settings.active = settings.active===false ? true : false;
-      const ok=await saveZakupSettings(rowKey, settings);
-      if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+      const result=await mutateStoreValue('zakupsettings:'+rowKey, ()=>({safetyStock:0, safetyStockMode:'fixed', safetyStockDays:15, prodDays:0, deliveryDays:0, active:true, ffRowId:null}), (settings)=>{
+        settings.active = settings.active===false ? true : false;
+      });
+      if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
       renderZakupProducts();
     });
   });
   wrap.querySelectorAll('[data-zsettings-save]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const rowKey=btn.dataset.zsettingsSave;
-      const settings=await getZakupSettings(rowKey);
+      const fieldUpdates={};
       wrap.querySelectorAll(`[data-zrow="${rowKey}"]`).forEach(inp=>{
         const field=inp.dataset.zfield;
         const multiFields=['wbProductIds','ozonProductIds','ymProductIds'];
         if(multiFields.includes(field)){
-          settings[field]=[...inp.selectedOptions].map(o=>o.value);
+          fieldUpdates[field]=[...inp.selectedOptions].map(o=>o.value);
         } else if(field==='ffRowId'){
-          settings[field]=inp.value||null;
+          fieldUpdates[field]=inp.value||null;
         } else if(field==='safetyStockMode'){
-          settings[field]=inp.value;
+          fieldUpdates[field]=inp.value;
         } else {
-          settings[field]=+inp.value||0;
+          fieldUpdates[field]=+inp.value||0;
         }
       });
       const origText=btn.textContent;
       btn.disabled=true; btn.textContent='Сохраняю…';
-      const ok=await saveZakupSettings(rowKey, settings);
+      const result=await mutateStoreValue('zakupsettings:'+rowKey, ()=>({safetyStock:0, safetyStockMode:'fixed', safetyStockDays:15, prodDays:0, deliveryDays:0, active:true, ffRowId:null}), (settings)=>{
+        Object.assign(settings, fieldUpdates);
+      });
       btn.disabled=false;
-      if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+      if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
       btn.textContent='✓ Сохранено';
       setTimeout(()=>{ btn.textContent=origText; }, 1500);
     });
@@ -1497,18 +1593,20 @@ async function renderZakupShipments(){
     const qty=+document.getElementById('zship_qty').value||0;
     const date=document.getElementById('zship_date').value;
     if(!rowKey || qty<=0 || !date){ alert('Заполните товар, количество больше нуля и дату'); return; }
-    const list=await getZakupShipments();
-    list.push({id:'ship'+Date.now(), rowKey, qty, expectedDate:date, status:'in_transit', createdAt:todayISO(), arrivedAt:null});
-    const ok=await saveZakupShipments(list);
-    if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+    const newShipment={id:'ship'+Date.now(), rowKey, qty, expectedDate:date, status:'in_transit', createdAt:todayISO(), arrivedAt:null};
+    const result=await mutateStoreValue('zakupshipments', ()=>[], (list)=>{ list.push(newShipment); });
+    if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
     renderZakupShipments();
   });
   wrap.querySelectorAll('[data-zship-del]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       if(!confirm('Удалить эту поставку?')) return;
-      const list=(await getZakupShipments()).filter(s=>s.id!==btn.dataset.zshipDel);
-      const ok=await saveZakupShipments(list);
-      if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+      const shipId=btn.dataset.zshipDel;
+      const result=await mutateStoreValue('zakupshipments', ()=>[], (list)=>{
+        const idx=list.findIndex(s=>s.id===shipId);
+        if(idx!==-1) list.splice(idx,1);
+      });
+      if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
       renderZakupShipments();
     });
   });
@@ -1522,16 +1620,20 @@ async function renderZakupShipments(){
       if(settings.ffRowId){
         const thisWeek=mondayOf(todayISO());
         const ffKey='ff_'+settings.ffRowId;
-        const data=await storeGet(stockChannelKey('ff', thisWeek)) || {};
-        data[ffKey] = (+data[ffKey]||0) + (+ship.qty||0);
-        const okStock=await storeSet(stockChannelKey('ff', thisWeek), data);
-        if(okStock) await addToStockWeekIndex('ff', thisWeek);
+        const qtyToAdd=+ship.qty||0;
+        const stockResult=await mutateStoreValue(stockChannelKey('ff', thisWeek), ()=>({}), (data)=>{
+          data[ffKey] = (+data[ffKey]||0) + qtyToAdd;
+        });
+        if(stockResult) await addToStockWeekIndex('ff', thisWeek);
       } else {
         if(!confirm('У этого товара не привязана строка на Фулфилменте — остаток автоматически не увеличится, только сама поставка будет отмечена «Пришло». Продолжить?')) return;
       }
-      ship.status='arrived'; ship.arrivedAt=todayISO();
-      const ok=await saveZakupShipments(list);
-      if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
+      const arrivedDate=todayISO();
+      const result=await mutateStoreValue('zakupshipments', ()=>[], (listFresh)=>{
+        const s=listFresh.find(x=>x.id===shipId);
+        if(s){ s.status='arrived'; s.arrivedAt=arrivedDate; }
+      });
+      if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); return; }
       renderZakupShipments();
     });
   });
@@ -1615,9 +1717,10 @@ async function renderProductsTable(){
     const nn=prompt('Новое название товара', p.name);
     if(nn===null || !nn.trim()) return;
     const oldName=p.name;
-    p.name=nn.trim();
-    const ok=await storeSet('product:'+id, p);
-    if(!ok){ p.name=oldName; alert('Не удалось сохранить — сбой хранилища. Название не изменено, попробуйте ещё раз.'); return; }
+    const newName=nn.trim();
+    p.name=newName; // мгновенно локально
+    const result=await mutateStoreValue('product:'+id, ()=>null, (pFresh)=>{ if(pFresh) pFresh.name=newName; });
+    if(!result){ p.name=oldName; alert('Не удалось сохранить — сбой хранилища. Название не изменено, попробуйте ещё раз.'); return; }
     await loadProducts(); refreshAllProductSelects(); renderProductsTable();
   }));
   wrap.querySelectorAll('[data-thresh-toggle]').forEach(b=>b.addEventListener('click', ()=>{
@@ -1647,24 +1750,23 @@ async function renderProductsTable(){
     if(newGroup && !prevGroup){
       const individualPlan=await storeGet('plan:'+id);
       if(individualPlan){
-        const groupPlan=(await storeGet('plangroup:'+newGroup)) || {};
-        Object.keys(individualPlan).forEach(month=>{
-          if(!groupPlan[month]){ groupPlan[month]=individualPlan[month]; migratedMonths++; }
+        const mResult=await mutateStoreValue('plangroup:'+newGroup, ()=>({}), (groupPlanFresh)=>{
+          migratedMonths=0; // пересчитываем с нуля на каждую попытку — их может быть несколько при конфликте версий
+          Object.keys(individualPlan).forEach(month=>{
+            if(!groupPlanFresh[month]){ groupPlanFresh[month]=individualPlan[month]; migratedMonths++; }
+          });
         });
-        if(migratedMonths>0){
-          const mOk=await storeSet('plangroup:'+newGroup, groupPlan);
-          if(!mOk){
-            b.disabled=false; b.textContent=originalText;
-            alert('Не удалось перенести старый план в группу — сбой хранилища. Попробуйте ещё раз.');
-            return;
-          }
+        if(!mResult){
+          b.disabled=false; b.textContent=originalText;
+          alert('Не удалось перенести старый план в группу — сбой хранилища. Попробуйте ещё раз.');
+          return;
         }
       }
     }
 
-    p.planGroup = newGroup || null;
-    const ok=await storeSet('product:'+id, p);
-    if(!ok){
+    p.planGroup = newGroup || null; // мгновенно локально
+    const result=await mutateStoreValue('product:'+id, ()=>null, (pFresh)=>{ if(pFresh) pFresh.planGroup = newGroup || null; });
+    if(!result){
       p.planGroup=prevGroup;
       b.disabled=false; b.textContent=originalText;
       alert('Не удалось сохранить группу — сбой хранилища. Попробуйте ещё раз.');
@@ -1689,9 +1791,9 @@ async function renderProductsTable(){
       el.querySelectorAll('[data-seasoncoef]').forEach(inp=>{ newCoefs[inp.dataset.monthidx]=+inp.value||0; });
       const originalText=btn.textContent;
       btn.disabled=true; btn.textContent='Сохраняю…';
-      const ok=await storeSet('seasonality:'+sanitizeGroupKey(gName), newCoefs);
+      const result=await mutateStoreValue('seasonality:'+sanitizeGroupKey(gName), ()=>({}), (fresh)=>{ Object.assign(fresh, newCoefs); });
       btn.disabled=false;
-      if(!ok){ alert('Не удалось сохранить — сбой хранилища. Попробуйте ещё раз.'); return; }
+      if(!result){ alert('Не удалось сохранить — сбой хранилища. Попробуйте ещё раз.'); return; }
       btn.textContent='✓ Сохранено';
       setTimeout(()=>{ btn.textContent=originalText; }, 2000);
     });
@@ -1710,9 +1812,9 @@ async function renderProductsTable(){
       const p=state.products.find(x=>x.id===pid);
       const prevGroup=p.seasonalityGroup;
       const newGroup=inp.value.trim();
-      p.seasonalityGroup=newGroup||null;
-      const ok=await storeSet('product:'+pid, p);
-      if(!ok){ p.seasonalityGroup=prevGroup; inp.value=prevGroup||''; alert('Не удалось сохранить — сбой хранилища. Попробуйте ещё раз.'); return; }
+      p.seasonalityGroup=newGroup||null; // мгновенно локально
+      const result=await mutateStoreValue('product:'+pid, ()=>null, (pFresh)=>{ if(pFresh) pFresh.seasonalityGroup=newGroup||null; });
+      if(!result){ p.seasonalityGroup=prevGroup; inp.value=prevGroup||''; alert('Не удалось сохранить — сбой хранилища. Попробуйте ещё раз.'); return; }
       await loadProducts();
     });
   });
@@ -1722,11 +1824,11 @@ async function renderProductsTable(){
     const prevThresholds=p.thresholds;
     const thresholds={};
     wrap.querySelectorAll(`[data-thpid="${id}"]`).forEach(inp=>{ thresholds[inp.dataset.th]=+inp.value||0; });
-    p.thresholds=thresholds;
+    p.thresholds=thresholds; // мгновенно локально
     const originalText=b.textContent;
     b.disabled=true; b.textContent='Сохраняю…';
-    const ok=await storeSet('product:'+id, p);
-    if(!ok){
+    const result=await mutateStoreValue('product:'+id, ()=>null, (pFresh)=>{ if(pFresh) pFresh.thresholds=thresholds; });
+    if(!result){
       p.thresholds=prevThresholds;
       b.disabled=false; b.textContent=originalText;
       b.style.background='var(--neg-bg)'; b.style.color='var(--neg)'; b.style.borderColor='var(--neg-bg)';
@@ -1744,9 +1846,9 @@ async function renderProductsTable(){
     const id=b.dataset.threshReset;
     const p=state.products.find(x=>x.id===id);
     const prevThresholds=p.thresholds;
-    delete p.thresholds;
-    const ok=await storeSet('product:'+id, p);
-    if(!ok){ p.thresholds=prevThresholds; alert('Не удалось сбросить пороги — сбой хранилища. Попробуйте ещё раз.'); return; }
+    delete p.thresholds; // мгновенно локально
+    const result=await mutateStoreValue('product:'+id, ()=>null, (pFresh)=>{ if(pFresh) delete pFresh.thresholds; });
+    if(!result){ p.thresholds=prevThresholds; alert('Не удалось сбросить пороги — сбой хранилища. Попробуйте ещё раз.'); return; }
     await loadProducts(); renderProductsTable();
   }));
 }
@@ -2099,9 +2201,8 @@ async function renderPlanTab(){
     const stockQty=document.getElementById('plan_stock').value?+document.getElementById('plan_stock').value:'';
     const arrivalDate=document.getElementById('plan_arrival_date').value||'';
     const arrivalQty=document.getElementById('plan_arrival_qty').value?+document.getElementById('plan_arrival_qty').value:'';
-    const pm=await getPlanMap(product);
-    pm[month]={planRub, planUnits, plannedPrice:plannedPriceVal, stockQty, arrivalDate, arrivalQty};
-    await storeSet(planKeyFor(product), pm);
+    const newEntry={planRub, planUnits, plannedPrice:plannedPriceVal, stockQty, arrivalDate, arrivalQty};
+    await mutateStoreValue(planKeyFor(product), ()=>({}), (pmFresh)=>{ pmFresh[month]=newEntry; });
     renderPlanTab();
   });
 
@@ -2168,37 +2269,49 @@ async function renderPlanTab(){
 // Создаёт цепочку черновиков от последнего известного дня до сегодняшнего, если их ещё нет.
 // Ничего не делает, если черновик на сегодня уже существует (повторные заходы в тот же день безопасны).
 async function ensureTodayDraft(productId){
-  const dm=await getDailyMap(productId);
-  const dates=Object.keys(dm).sort();
+  const initialDm=await getDailyMap(productId);
+  const dates=Object.keys(initialDm).sort();
   if(dates.length===0) return; // нет истории вообще — первый день вносится вручную через историю
   const today=todayISO();
-  let cursorDate=dates[0];
 
-  let changed=false;
-  let lastKnownEntry=dm[cursorDate];
-  while(cursorDate<today){
-    const nextDate=datePlusDays(cursorDate,1);
-    if(dm[nextDate]){
-      lastKnownEntry=dm[nextDate];
-    } else {
-      const src=lastKnownEntry;
-      dm[nextDate]={
-        priceLK:src.priceLK||0, priceCustomer:src.priceCustomer||0, priceOzonCard:src.priceOzonCard||0,
-        impressions:0, uniqueVisitors:0, searchPosition:null, clicks:0, carts:0, orders:0, ordersRub:0,
-        buyouts:0, cancellations:0, adspend:0, adspend_ark:0, adspend_search:0, adspend_bpr:0, adspend_bpk:0, adspend_polki:0,
-        changeNote:'', changeTypes:[], promo:src.promo??null,
-        adBids: src.adBids ? src.adBids.map(b=>({...b})) : [],
-        draft:true
-      };
-      lastKnownEntry=dm[nextDate];
-      changed=true;
+  // Мутатор описывает "досоздать недостающие черновые дни от последнего известного до
+  // сегодня" — переносим в переиспользуемую функцию, чтобы её можно было безопасно
+  // применить к самой свежей версии прямо перед записью (см. mutateStoreValue выше).
+  // Идемпотентна: заполняет только реально отсутствующие даты, повторный вызов на уже
+  // заполненных данных ничего не меняет.
+  const fillMissingDrafts=(dm)=>{
+    const ds=Object.keys(dm).sort();
+    if(ds.length===0) return;
+    let cursorDate=ds[0];
+    let lastKnownEntry=dm[cursorDate];
+    while(cursorDate<today){
+      const nextDate=datePlusDays(cursorDate,1);
+      if(dm[nextDate]){
+        lastKnownEntry=dm[nextDate];
+      } else {
+        const src=lastKnownEntry;
+        dm[nextDate]={
+          priceLK:src.priceLK||0, priceCustomer:src.priceCustomer||0, priceOzonCard:src.priceOzonCard||0,
+          impressions:0, uniqueVisitors:0, searchPosition:null, clicks:0, carts:0, orders:0, ordersRub:0,
+          buyouts:0, cancellations:0, adspend:0, adspend_ark:0, adspend_search:0, adspend_bpr:0, adspend_bpk:0, adspend_polki:0,
+          changeNote:'', changeTypes:[], promo:src.promo??null,
+          adBids: src.adBids ? src.adBids.map(b=>({...b})) : [],
+          draft:true
+        };
+        lastKnownEntry=dm[nextDate];
+      }
+      cursorDate=nextDate;
     }
-    cursorDate=nextDate;
-  }
-  if(changed){
-    const ok=await storeSet('daily:'+productId, dm);
-    if(!ok) console.error('Не удалось автоматически создать/восстановить день — сбой хранилища');
-  }
+  };
+
+  // Быстрая локальная проверка — стоит ли вообще что-то досоздавать (не трогает базу).
+  let needsFill=false;
+  { let cursorDate=dates[0];
+    while(cursorDate<today){ const nextDate=datePlusDays(cursorDate,1); if(!initialDm[nextDate]) needsFill=true; cursorDate=nextDate; } }
+  if(!needsFill) return;
+
+  const result=await mutateStoreValue('daily:'+productId, ()=>({}), fillMissingDrafts);
+  if(!result) console.error('Не удалось автоматически создать/восстановить день — сбой хранилища');
 }
 
 async function onDailyProductChange(){
@@ -2208,6 +2321,35 @@ async function onDailyProductChange(){
   await renderDailyTab();
 }
 document.getElementById('daily_product').addEventListener('change', onDailyProductChange);
+
+// Tab по умолчанию двигает фокус вбок (следующая дата в той же строке-показателе) —
+// это неудобно при построчном вводе. Перехватываем и двигаем вниз: та же дата,
+// следующий показатель. Shift+Tab — в обратную сторону (вверх). С последней строки
+// столбца — переход на первую строку того же столбца (без выхода за пределы даты).
+// Обработчик один, на постоянном контейнере #dailyTableWrap — переживает пересборку
+// таблицы (innerHTML меняется, сам wrap — нет), поэтому вешаем один раз, а не в renderDailyTab.
+(function initDailyTabNavigation(){
+  const EDITABLE_SELECTOR='.num-edit-input,.bid-edit-input,.comment-edit-input,.promo-edit-input,.changetype-display,select[data-notedate]';
+  const wrapEl=document.getElementById('dailyTableWrap');
+  if(!wrapEl) return;
+  wrapEl.addEventListener('keydown', (e)=>{
+    if(e.key!=='Tab') return;
+    const target=e.target;
+    if(!target || typeof target.matches!=='function' || !target.matches(EDITABLE_SELECTOR)) return;
+    const date=target.dataset.notedate;
+    if(!date) return;
+    const all=[...wrapEl.querySelectorAll(EDITABLE_SELECTOR)];
+    const sameColumn=all.filter(el=>el.dataset.notedate===date);
+    const posInColumn=sameColumn.indexOf(target);
+    if(posInColumn===-1 || sameColumn.length<2) return;
+    e.preventDefault();
+    const delta=e.shiftKey? -1 : 1;
+    const nextIdx=(posInColumn+delta+sameColumn.length)%sameColumn.length;
+    const nextEl=sameColumn[nextIdx];
+    nextEl.focus();
+    if((nextEl.tagName==='INPUT'||nextEl.tagName==='TEXTAREA') && typeof nextEl.select==='function') nextEl.select();
+  });
+})();
 
 function deltaHtml(curr, prev, {goodUp=true, decimals=1, suffix='', neutral=false}={}){
   if(prev===null||prev===undefined||curr===null||curr===undefined) return '<span class="delta-na">—</span>';
@@ -2348,7 +2490,7 @@ async function renderDailyTab(){
     document.getElementById('createFirstDayBtn').addEventListener('click', async ()=>{
       const today=todayISO();
       const bidCount=bidCountForMp(product?.mp);
-      dm[today]={
+      const newDay={
         priceLK:0, priceCustomer:0, priceOzonCard:0,
         impressions:0, uniqueVisitors:0, searchPosition:null, clicks:0, carts:0, orders:0, ordersRub:0,
         buyouts:0, cancellations:0, adspend:0, adspend_ark:0, adspend_search:0, adspend_bpr:0, adspend_bpk:0, adspend_polki:0,
@@ -2356,8 +2498,8 @@ async function renderDailyTab(){
         adBids: Array.from({length:bidCount},(_,i)=>({label:`Ставка ${i+1}`,value:null})),
         draft:true
       };
-      const ok=await storeSet('daily:'+productId, dm);
-      if(!ok){ alert('Не удалось создать день — сбой хранилища, попробуйте ещё раз'); return; }
+      const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{ if(!dmFresh[today]) dmFresh[today]=newDay; });
+      if(!result){ alert('Не удалось создать день — сбой хранилища, попробуйте ещё раз'); return; }
       renderDailyTab();
     });
     return;
@@ -2404,8 +2546,8 @@ async function renderDailyTab(){
     product.mp==='ym'?{label:'БПК, факт ₽', get:e=>e?.adspend_bpk, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_bpk', agg:'sum'}:null,
     product.mp==='ym'?{label:'Полки, факт ₽', get:e=>e?.adspend_polki, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_polki', agg:'sum'}:null,
     {label:'ДРР, %', get:e=>e?.drr, fmt:v=>v!=null?fmt1(v)+'%':'', aggType:'drr'},
-    {label:'CPC, ₽', get:e=>e?.cpc, fmt:v=>v!=null?fmt1(v)+' ₽':''},
-    {label:'CPO, ₽', get:e=>e?.cpo, fmt:v=>v!=null?fmt(v)+' ₽':''},
+    {label:'CPC, ₽', get:e=>e?.cpc, fmt:v=>v!=null?fmt1(v)+' ₽':'', aggType:'cpc'},
+    {label:'CPO, ₽', get:e=>e?.cpo, fmt:v=>v!=null?fmt(v)+' ₽':'', aggType:'cpo'},
     ...bidLabels.map((label,i)=>({label, get:e=>e?.adBids?.[i]?.value, fmt:v=>v!=null?v:'', isEditableBid:true, bidIndex:i})),
     {section:'Акции'},
     {label:'Участие в акции', get:e=>e?.promo??'', fmt:v=>v==='yes'?'Участвую':v==='no'?'Не участвую':'', isEditablePromo:true},
@@ -2439,6 +2581,8 @@ async function renderDailyTab(){
       if(r.aggType==='cr2') return s.carts>0? s.orders/s.carts*100 : null;
       if(r.aggType==='crf') return s.clicks>0? s.orders/s.clicks*100 : null;
       if(r.aggType==='drr') return s.ordersRub>0? s.adspend/s.ordersRub*100 : null;
+      if(r.aggType==='cpc') return s.clicks>0? s.adspend/s.clicks : null;
+      if(r.aggType==='cpo') return s.orders>0? s.adspend/s.orders : null;
       if(r.aggType==='spp'){
         const sppVals=[];
         dates.forEach(d=>{
@@ -2547,12 +2691,10 @@ async function renderDailyTab(){
       sel.focus();
       sel.addEventListener('blur', async ()=>{
         const newTypes=[...sel.selectedOptions].map(o=>o.value);
-        const dm2=await getDailyMap(productId);
-        if(dm2[d]){
-          dm2[d].changeTypes=newTypes;
-          const ok=await storeSet('daily:'+productId, dm2);
-          if(!ok) alert('Не удалось сохранить — попробуйте ещё раз');
-        }
+        const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
+          if(dmFresh[d]) dmFresh[d].changeTypes=newTypes;
+        });
+        if(!result) alert('Не удалось сохранить — попробуйте ещё раз');
         renderDailyTab();
       }, {once:true});
     });
@@ -2562,25 +2704,23 @@ async function renderDailyTab(){
     inp.addEventListener('input', ()=>{ inp.style.height='auto'; inp.style.height=inp.scrollHeight+'px'; });
     inp.addEventListener('change', async ()=>{
       const d=inp.dataset.notedate;
-      const dm2=await getDailyMap(productId);
-      if(dm2[d]){
-        dm2[d].changeNote = inp.value.trim();
-        const ok=await storeSet('daily:'+productId, dm2);
-        if(!ok) alert('Не удалось сохранить комментарий — попробуйте ещё раз');
-      }
+      const newNote=inp.value.trim();
+      const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
+        if(dmFresh[d]) dmFresh[d].changeNote=newNote;
+      });
+      if(!result) alert('Не удалось сохранить комментарий — попробуйте ещё раз');
     });
   });
   wrap.querySelectorAll('.promo-edit-input').forEach(sel=>{
     sel.addEventListener('change', async ()=>{
       const d=sel.dataset.notedate;
-      const dm2=await getDailyMap(productId);
-      if(dm2[d]){
-        const oldVal=dm2[d].promo;
-        dm2[d].promo = sel.value===''? null : sel.value;
-        const ok=await storeSet('daily:'+productId, dm2);
-        if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); dm2[d].promo=oldVal; sel.value=oldVal??''; return; }
-        scheduleDailyTableRerender();
-      }
+      const newVal=sel.value===''? null : sel.value;
+      const oldVal=dm[d]?.promo;
+      const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
+        if(dmFresh[d]) dmFresh[d].promo=newVal;
+      });
+      if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); sel.value=oldVal??''; return; }
+      scheduleDailyTableRerender();
     });
   });
   const AD_BREAKDOWN_WB=['adspend_ark','adspend_search'];
@@ -2591,44 +2731,50 @@ async function renderDailyTab(){
     inp.addEventListener('change', async ()=>{
       const d=inp.dataset.notedate;
       const field=inp.dataset.editfield;
-      const dm2=await getDailyMap(productId);
-      if(dm2[d]){
-        const oldVal=dm2[d][field];
-        const emptyAsNull = ['searchPosition','buyouts','cancellations'].includes(field);
-        let newVal = inp.value==='' ? (emptyAsNull? null : 0) : +inp.value;
-        if(newVal!==null && newVal<0) newVal=0; // подстраховка — отрицательные значения не сохраняем
-        dm2[d][field] = newVal;
-        inp.value = newVal??'';
+      const oldVal=dm[d]?.[field];
+      const emptyAsNull = ['searchPosition','buyouts','cancellations'].includes(field);
+      let newVal = inp.value==='' ? (emptyAsNull? null : 0) : +inp.value;
+      if(newVal!==null && newVal<0) newVal=0; // подстраховка — отрицательные значения не сохраняем
+      inp.value = newVal??'';
+
+      let finalDay=null, finalMaxDate=null;
+      const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
+        if(!dmFresh[d]) return;
+        dmFresh[d][field] = newVal;
         if(AD_BREAKDOWN_WB.includes(field)){
-          dm2[d].adspend = (+dm2[d].adspend_ark||0) + (+dm2[d].adspend_search||0);
+          dmFresh[d].adspend = (+dmFresh[d].adspend_ark||0) + (+dmFresh[d].adspend_search||0);
         } else if(AD_BREAKDOWN_YM.includes(field)){
-          dm2[d].adspend = (+dm2[d].adspend_bpr||0) + (+dm2[d].adspend_bpk||0) + (+dm2[d].adspend_polki||0);
+          dmFresh[d].adspend = (+dmFresh[d].adspend_bpr||0) + (+dmFresh[d].adspend_bpk||0) + (+dmFresh[d].adspend_polki||0);
         }
         if(field==='orders'){
-          dm2[d].ordersRub = Math.round((+dm2[d].orders||0) * (+dm2[d].priceLK||0));
+          dmFresh[d].ordersRub = Math.round((+dmFresh[d].orders||0) * (+dmFresh[d].priceLK||0));
         }
-        if(FUNNEL_FIELDS.includes(field) && dm2[d].draft) delete dm2[d].draft;
-        const ok=await storeSet('daily:'+productId, dm2);
-        if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); dm2[d][field]=oldVal; inp.value=oldVal??''; return; }
-        // Если правится цена — синхронизируем её в карточку товара (вкладка «Товары»),
-        // но только если правится самый свежий день в истории, а не задним числом.
-        // Раньше это делал только массовый импорт из Excel, из-за чего у товаров,
-        // куда данные вносили вручную день за днём, «Текущая цена» оставалась пустой.
-        const PRICE_FIELDS=['priceLK','priceCustomer','priceOzonCard'];
-        if(PRICE_FIELDS.includes(field)){
-          const maxDate=Object.keys(dm2).sort().slice(-1)[0];
-          if(d===maxDate){
-            const p=state.products.find(x=>x.id===productId);
-            if(p){
-              if(field==='priceLK') p.currentPriceLK=dm2[d].priceLK;
-              if(field==='priceCustomer') p.currentPriceCustomer=dm2[d].priceCustomer;
-              if(field==='priceOzonCard') p.currentPriceOzonCard=dm2[d].priceOzonCard;
-              await storeSet('product:'+p.id, p);
-            }
-          }
+        if(FUNNEL_FIELDS.includes(field) && dmFresh[d].draft) delete dmFresh[d].draft;
+        finalDay=dmFresh[d];
+        finalMaxDate=Object.keys(dmFresh).sort().slice(-1)[0];
+      });
+      if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); inp.value=oldVal??''; return; }
+      // Если правится цена — синхронизируем её в карточку товара (вкладка «Товары»),
+      // но только если правится самый свежий день в истории, а не задним числом.
+      // Раньше это делал только массовый импорт из Excel, из-за чего у товаров,
+      // куда данные вносили вручную день за днём, «Текущая цена» оставалась пустой.
+      const PRICE_FIELDS=['priceLK','priceCustomer','priceOzonCard'];
+      if(PRICE_FIELDS.includes(field) && finalDay && d===finalMaxDate){
+        const priceValue=finalDay[field];
+        await mutateStoreValue('product:'+productId, ()=>null, (p)=>{
+          if(!p) return;
+          if(field==='priceLK') p.currentPriceLK=priceValue;
+          if(field==='priceCustomer') p.currentPriceCustomer=priceValue;
+          if(field==='priceOzonCard') p.currentPriceOzonCard=priceValue;
+        });
+        const p=state.products.find(x=>x.id===productId);
+        if(p){
+          if(field==='priceLK') p.currentPriceLK=priceValue;
+          if(field==='priceCustomer') p.currentPriceCustomer=priceValue;
+          if(field==='priceOzonCard') p.currentPriceOzonCard=priceValue;
         }
-        scheduleDailyTableRerender();
       }
+      scheduleDailyTableRerender();
     });
   });
   wrap.querySelectorAll('.bid-edit-input').forEach(inp=>{
@@ -2637,27 +2783,32 @@ async function renderDailyTab(){
     inp.addEventListener('change', async ()=>{
       const d=inp.dataset.notedate;
       const idx=+inp.dataset.bidindex;
-      const dm2=await getDailyMap(productId);
-      if(dm2[d]){
-        if(!dm2[d].adBids) dm2[d].adBids=[];
-        if(!dm2[d].adBids[idx]) dm2[d].adBids[idx]={label:`Ставка ${idx+1}`,value:null};
-        const oldVal=dm2[d].adBids[idx].value;
-        dm2[d].adBids[idx].value = inp.value.trim()===''? null : inp.value.trim();
-        const ok=await storeSet('daily:'+productId, dm2);
-        if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); dm2[d].adBids[idx].value=oldVal; inp.value=oldVal??''; }
-      }
+      const oldVal=dm[d]?.adBids?.[idx]?.value;
+      const newVal=inp.value.trim()===''? null : inp.value.trim();
+      const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
+        if(!dmFresh[d]) return;
+        if(!dmFresh[d].adBids) dmFresh[d].adBids=[];
+        if(!dmFresh[d].adBids[idx]) dmFresh[d].adBids[idx]={label:`Ставка ${idx+1}`,value:null};
+        dmFresh[d].adBids[idx].value = newVal;
+      });
+      if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); inp.value=oldVal??''; }
     });
   });
   wrap.querySelectorAll('.bidlabel-edit-input').forEach(inp=>{
     inp.addEventListener('change', async ()=>{
       const idx=+inp.dataset.bidindex;
       const newLabel=inp.value.trim() || `Ставка ${idx+1}`;
+      const oldLabel=product.adBids?.[idx]?.label;
       if(!product.adBids) product.adBids=[];
       if(!product.adBids[idx]) product.adBids[idx]={label:newLabel, value:null};
-      const oldLabel=product.adBids[idx].label;
-      product.adBids[idx].label=newLabel;
-      const ok=await storeSet('product:'+productId, product);
-      if(!ok){ alert('Не удалось сохранить — попробуйте ещё раз'); product.adBids[idx].label=oldLabel; inp.value=oldLabel; return; }
+      product.adBids[idx].label=newLabel; // мгновенно локально
+      const result=await mutateStoreValue('product:'+productId, ()=>null, (p)=>{
+        if(!p) return;
+        if(!p.adBids) p.adBids=[];
+        if(!p.adBids[idx]) p.adBids[idx]={label:newLabel, value:null};
+        p.adBids[idx].label=newLabel;
+      });
+      if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); product.adBids[idx].label=oldLabel; inp.value=oldLabel; return; }
       inp.value=newLabel;
     });
   });
@@ -3294,6 +3445,8 @@ function aggregateStatsFromEntries(entries, mp){
     buyoutRate: s.orders>0? s.buyouts/s.orders*100 : null,
     ordersRub:s.ordersRub, adspend:s.adspend,
     drr: pct(s.adspend, s.ordersRub),
+    cpc: s.clicks>0? s.adspend/s.clicks : null,
+    cpo: s.orders>0? s.adspend/s.orders : null,
     spp: sppAvg
   };
 }
@@ -3377,6 +3530,10 @@ async function renderCompareTab(){
       rec:'Расходы на рекламу выросли — проверьте ставки и эффективность кампаний с наибольшим расходом.'},
     {label:'ДРР', av:a.drr, bv:b.drr, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%',goodUp:false},
       rec:'ДРР вырос — реклама стала окупаться хуже, проверьте кампании с наибольшим расходом относительно заказов.'},
+    {label:'CPC, ₽', av:a.cpc, bv:b.cpc, fmtFn:v=>fmt1(v)+' ₽', opts:{decimals:1,suffix:'₽',goodUp:false},
+      rec:'Стоимость клика выросла — проверьте ставки в рекламных кампаниях и конкуренцию по ключевым запросам.'},
+    {label:'CPO, ₽', av:a.cpo, bv:b.cpo, fmtFn:v=>fmt(v)+' ₽', opts:{decimals:0,suffix:'₽',goodUp:false},
+      rec:'Стоимость заказа выросла — сопоставьте с CPC и конверсиями выше: дороже трафик или хуже конвертирует.'},
     {label:'СПП (среднее за период)', av:a.spp, bv:b.spp, fmtFn:v=>fmt1(v)+'%', opts:{suffix:'%',neutral:true}, rec:null}
   ];
 
@@ -3595,13 +3752,17 @@ document.getElementById('fixZerosBtn').addEventListener('click', async ()=>{
 
   const btn=document.getElementById('fixZerosBtn');
   btn.disabled=true; btn.textContent='Исправляю…';
-  targetDates.forEach(d=>{
-    if(fixBuyouts && dm[d].buyouts===0) dm[d].buyouts=null;
-    if(fixCancels && dm[d].cancellations===0) dm[d].cancellations=null;
+  // Пока шёл диалог подтверждения (confirm может провисеть сколько угодно, пока человек
+  // думает), данные могли измениться — пересчитываем, какие дни всё ещё нулевые, по самой
+  // свежей версии прямо в момент записи, а не по снимку, сделанному до подтверждения.
+  const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
+    Object.keys(dmFresh).filter(d=>!dmFresh[d].draft && (!untilDate || d<=untilDate)).forEach(d=>{
+      if(fixBuyouts && dmFresh[d].buyouts===0) dmFresh[d].buyouts=null;
+      if(fixCancels && dmFresh[d].cancellations===0) dmFresh[d].cancellations=null;
+    });
   });
-  const ok=await storeSet('daily:'+productId, dm);
   btn.disabled=false; btn.textContent='Проверить и исправить';
-  if(!ok){ alert('Не удалось сохранить — сбой хранилища. Попробуйте ещё раз.'); return; }
+  if(!result){ alert('Не удалось сохранить — сбой хранилища. Попробуйте ещё раз.'); return; }
   noteEl.textContent=`Готово. Исправлено${rangeNote}: ${parts.join(', ')}.`;
 });
 
@@ -3650,20 +3811,28 @@ document.getElementById('parseImportBtn').addEventListener('click', async ()=>{
   if(confirmBtn){
     confirmBtn.addEventListener('click', async ()=>{
       confirmBtn.disabled=true; confirmBtn.textContent='Импортирую…';
-      const dm=await getDailyMap(pendingImport.productId);
-      pendingImport.good.forEach(g=>{ dm[g.date]=g.entry; });
-      const ok=await storeSet('daily:'+pendingImport.productId, dm);
-      if(!ok){ alert('Сбой при сохранении — попробуйте ещё раз'); confirmBtn.disabled=false; confirmBtn.textContent=`Импортировать ${pendingImport.good.length} дн.`; return; }
-      const maxDate=Object.keys(dm).sort().slice(-1)[0];
-      const latest=dm[maxDate];
-      const p=state.products.find(x=>x.id===pendingImport.productId);
-      if(p && latest){
-        p.currentPriceLK=latest.priceLK||p.currentPriceLK;
-        p.currentPriceCustomer=latest.priceCustomer||p.currentPriceCustomer;
-        await storeSet('product:'+p.id, p);
+      const goodRows=pendingImport.good;
+      const productIdToImport=pendingImport.productId;
+      let finalMaxDate=null, finalLatest=null;
+      const result=await mutateStoreValue('daily:'+productIdToImport, ()=>({}), (dmFresh)=>{
+        goodRows.forEach(g=>{ dmFresh[g.date]=g.entry; });
+        finalMaxDate=Object.keys(dmFresh).sort().slice(-1)[0];
+        finalLatest=dmFresh[finalMaxDate];
+      });
+      if(!result){ alert('Сбой при сохранении — попробуйте ещё раз'); confirmBtn.disabled=false; confirmBtn.textContent=`Импортировать ${goodRows.length} дн.`; return; }
+      const p=state.products.find(x=>x.id===productIdToImport);
+      if(p && finalLatest){
+        const priceLK=finalLatest.priceLK||p.currentPriceLK;
+        const priceCustomer=finalLatest.priceCustomer||p.currentPriceCustomer;
+        p.currentPriceLK=priceLK; p.currentPriceCustomer=priceCustomer;
+        await mutateStoreValue('product:'+p.id, ()=>null, (pFresh)=>{
+          if(!pFresh) return;
+          pFresh.currentPriceLK=priceLK;
+          pFresh.currentPriceCustomer=priceCustomer;
+        });
         await loadProducts();
       }
-      wrap.innerHTML=`<div class="rec ok"><div class="dot"></div><div>Импортировано дней: ${pendingImport.good.length}. Откройте вкладку «Ежедневные данные», чтобы увидеть их в истории.</div></div>`;
+      wrap.innerHTML=`<div class="rec ok"><div class="dot"></div><div>Импортировано дней: ${goodRows.length}. Откройте вкладку «Ежедневные данные», чтобы увидеть их в истории.</div></div>`;
       document.getElementById('importFileInput').value='';
       pendingImport=null;
     });
