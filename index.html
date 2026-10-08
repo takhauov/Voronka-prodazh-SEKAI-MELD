@@ -6,7 +6,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
@@ -85,6 +84,15 @@
   .num-edit-input:focus, .bid-edit-input:focus, .comment-edit-input:focus, .promo-edit-input:focus, .stocklabel-input:focus, .stock-cell-input:focus{
     outline:2px solid var(--accent-bright,#3B82F6); outline-offset:-1px; border-radius:0;
   }
+  .num-edit-input.cell-dirty, .bid-edit-input.cell-dirty, .comment-edit-input.cell-dirty, .promo-edit-input.cell-dirty, .changetype-display.cell-dirty{background:#FFE9A8 !important;}
+  table.supplytable td{padding:4px 5px;}
+  table.supplytable td.sticky{min-width:150px;max-width:220px;white-space:normal;font-family:var(--font-body);font-weight:600;}
+  .supply-input{width:62px;padding:5px 6px;border:1px solid var(--border);border-radius:6px;background:rgba(255,255,255,.75);font-family:var(--font-mono);font-size:12px;-moz-appearance:textfield;appearance:textfield;}
+  .supply-input::-webkit-outer-spin-button,.supply-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .supply-input.cell-dirty{background:#FFE9A8 !important;}
+  .supply-rest{font-weight:600;text-align:right;min-width:44px;display:inline-block;}
+  .supply-rest.neg{color:var(--neg);}
+  .supply-move{padding:2px 6px !important;font-size:12px !important;margin-left:3px;}
   .badge.wb{background:var(--wb-bg);color:var(--wb-ink);}
   .badge.ozon{background:var(--ozon-bg);color:var(--ozon-ink);}
   .badge.ym{background:var(--ym-bg);color:var(--ym-ink);}
@@ -173,6 +181,17 @@
   .checkgroup{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;padding-top:4px;}
   .checkgroup label{display:flex;align-items:center;gap:5px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink);cursor:pointer;}
   @media(max-width:800px){.kpis{grid-template-columns:repeat(2,1fr);} .charts-row{grid-template-columns:1fr;}}
+  #funnelPrintHeader{display:none;}
+  @media print{
+    body{padding:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body.printing-funnel #loginScreen, body.printing-funnel .header-bar, body.printing-funnel nav,
+    body.printing-funnel .tabpane:not(#tab-funnel), body.printing-funnel #fbStatusBanner,
+    body.printing-funnel #funnelPrintBtn, body.printing-funnel #funnelFilterPanel{display:none !important;}
+    body.printing-funnel #tab-funnel{display:block !important;}
+    body.printing-funnel #funnelPrintHeader{display:block;margin-bottom:12px;}
+    body.printing-funnel .panel{break-inside:avoid;page-break-inside:avoid;}
+    body.printing-funnel .growth-card, body.printing-funnel .jcard, body.printing-funnel .rec{break-inside:avoid;page-break-inside:avoid;}
+  }
 </style>
 </head>
 <body>
@@ -209,7 +228,6 @@
     <button data-tab="stock">Остатки и динамика</button>
     <button data-tab="distrib">Распределение товара</button>
     <button data-tab="zakup">Планирование закупа</button>
-    <button data-tab="import">Импорт данных</button>
     <button data-tab="products">Товары</button>
     <button data-tab="help">Справка</button>
   </nav>
@@ -242,7 +260,7 @@
   <div id="tab-daily" class="tabpane" style="display:none;">
     <div class="panel">
       <h2>Ежедневные данные</h2>
-      <p class="hint">Все показатели редактируются прямо в таблице «История по товару» ниже. При открытии товара день за сегодня появляется сам (с ценой/ставками/акцией, подтянутыми с прошлого дня) — остаётся дозаполнить показатели воронки</p>
+      <p class="hint">Все показатели вносятся прямо в таблице «История по товару» ниже. Правки копятся в таблице (жёлтая подсветка) и записываются в базу одной кнопкой «Сохранить». При открытии товара день за сегодня появляется сам (с ценой/ставками/акцией, подтянутыми с прошлого дня) — остаётся дозаполнить показатели воронки. Любой прошлый день текущего или прошлых месяцев тоже можно заполнить — даже если раньше его не было</p>
       <div class="row">
         <div class="field"><label>Площадка</label><select id="daily_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
         <div class="field" style="min-width:220px;"><label>Товар</label><select id="daily_product"></select></div>
@@ -250,9 +268,13 @@
     </div>
     <div class="panel">
       <h2>История по товару</h2>
-      <p class="hint">Все показатели, кроме расчётных (СПП, CTR, конверсии, ДРР, CPC, CPO), редактируются прямо в таблице — правите значение и уходите из ячейки, сохраняется автоматически. В «Тип изменения» можно выбрать несколько значений сразу, зажав Ctrl (на Mac — Cmd) при клике</p>
+      <p class="hint">Расчётные показатели (СПП, CTR, конверсии, ДРР, CPC, CPO) считаются сами и пересчитываются сразу при вводе. Всё остальное правится в ячейках: впишите значение, перейдите дальше (Tab — вниз по столбцу дня), а когда закончите — нажмите «Сохранить» (или Ctrl+S). В «Тип изменения» можно выбрать несколько значений сразу, зажав Ctrl (на Mac — Cmd) при клике</p>
       <div class="row" style="margin-bottom:6px;">
         <div class="field"><label>Месяц</label><input id="daily_history_month" type="month"></div>
+      </div>
+      <div id="dailySaveBar" style="position:sticky;top:0;z-index:20;background:var(--surface);display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 0;margin-bottom:6px;border-bottom:1px solid var(--border);">
+        <button class="btn" id="dailySaveBtn" disabled>Сохранить</button>
+        <span id="dailyDirtyLabel" class="note" style="margin:0;"></span>
       </div>
       <div class="table-scroll" id="dailyTableWrap"><div class="empty">Выберите товар</div></div>
     </div>
@@ -265,11 +287,13 @@
 
   <!-- ВОРОНКА -->
   <div id="tab-funnel" class="tabpane" style="display:none;">
-    <div class="panel">
+    <div id="funnelPrintHeader"><h1 id="funnelPrintTitle" style="font-size:18px;"></h1><div class="note" id="funnelPrintSub"></div></div>
+    <div class="panel" id="funnelFilterPanel">
       <div class="row">
         <div class="field"><label>Площадка</label><select id="funnel_product_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
         <div class="field" style="min-width:220px;"><label>Товар</label><select id="funnel_product"></select></div>
         <div class="field"><label>Месяц</label><input id="funnel_month" type="month"></div>
+        <button class="btn secondary" id="funnelPrintBtn" title="Откроется окно печати — выберите «Сохранить как PDF»">Печать / PDF</button>
       </div>
     </div>
     <div class="panel">
@@ -340,42 +364,6 @@
     </div>
   </div>
 
-  <!-- ИМПОРТ ДАННЫХ -->
-  <div id="tab-import" class="tabpane" style="display:none;">
-    <div class="panel">
-      <div class="row">
-        <div class="field"><label>Площадка</label><select id="imp_product_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
-        <div class="field" style="min-width:220px;"><label>Товар</label><select id="imp_product"></select></div>
-      </div>
-    </div>
-    <div class="panel">
-      <h2>1. Скачать шаблон</h2>
-      <p class="hint">Шаблон подстраивается под площадку выбранного товара — свой набор полей рекламы для WB/Ozon/Я.Маркет. Заполните строки и сохраните файл</p>
-      <button class="btn secondary" id="downloadTemplateBtn">Скачать шаблон (.xlsx)</button>
-    </div>
-    <div class="panel">
-      <h2>2. Загрузить заполненный файл</h2>
-      <p class="hint">Даты, которые уже есть в истории товара, будут перезаписаны данными из файла — остальное добавится как новые дни</p>
-      <div class="row">
-        <input type="file" id="importFileInput" accept=".xlsx,.xls">
-        <button class="btn secondary" id="parseImportBtn">Проверить файл</button>
-      </div>
-      <div id="importPreviewWrap" style="margin-top:14px;"></div>
-    </div>
-    <div class="panel">
-      <h2>3. Исправить «Выкупили»/«Отмены» после старого импорта</h2>
-      <p class="hint">Если раньше при импорте пустая колонка «Выкупили» или «Отмены» превращалась в 0 (это было исправлено) — здесь можно задним числом вернуть эти дни в состояние «неизвестно», не перезагружая файл заново. Затронет только дни, где сейчас стоит 0 — дни с другими значениями не тронет.</p>
-      <div class="row">
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;"><input type="checkbox" id="fix_buyouts_cb"> Выкупили</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;"><input type="checkbox" id="fix_cancels_cb"> Отмены</label>
-        <div class="field"><label>Не позже даты (необязательно)</label><input type="date" id="fix_until_date"></div>
-        <button class="btn secondary" id="fixZerosBtn">Проверить и исправить</button>
-      </div>
-      <p class="hint">Если заполнить «Не позже даты» — тронет только дни до этой даты включительно (например, конец импортированного периода), чтобы не задеть настоящие нули, введённые уже вручную после обновления</p>
-      <div class="note" id="fixZerosNote"></div>
-    </div>
-  </div>
-
   <!-- ОСТАТКИ И ДИНАМИКА -->
   <div id="tab-stock" class="tabpane" style="display:none;">
     <div class="panel">
@@ -389,7 +377,7 @@
   <div id="tab-distrib" class="tabpane" style="display:none;">
     <div class="panel">
       <h2>Распределение товара</h2>
-      <p class="hint">Разовый калькулятор по одному товару за раз — ничего не сохраняется. Остаток и динамика подтягиваются из последних сохранённых данных на вкладке «Остатки и динамика» (WB/Ozon/ЯМ) и из строки на Фулфилменте. Логика: сначала считается, на сколько дней хватит остатков по всем площадкам вместе с учетом новой партии, а затем распределяет между площадками с учетом текущего остатка и динамики продаж.</p>
+      <p class="hint">Калькулятор по одному товару за раз — сам расчёт не сохраняется, но результат («Отгрузить») можно записать в план поставок ниже. Остаток и динамика подтягиваются из последних сохранённых данных на вкладке «Остатки и динамика» (WB/Ozon/ЯМ) и из строки на Фулфилменте. Логика: сначала считается, на сколько дней хватит остатков по всем площадкам вместе с учетом новой партии, а затем распределяет между площадками с учетом текущего остатка и динамики продаж.</p>
       <div class="row">
         <div class="field"><label>Товар на WB</label><select id="distrib_wb_product"><option value="">— не выбрано —</option></select></div>
         <div class="field"><label>Товар на Ozon</label><select id="distrib_ozon_product"><option value="">— не выбрано —</option></select></div>
@@ -403,6 +391,15 @@
       <button class="btn" id="distribCalcBtn" style="margin-top:12px;">Рассчитать</button>
     </div>
     <div id="distribResultWrap"></div>
+
+    <div class="panel" id="supplyPanel">
+      <h2>Поставки по площадкам</h2>
+      <p class="hint">Сотрудники отмечают, сколько товара планируют отгрузить в ближайшую поставку («Резерв») и сколько уже отгружено. <b>Остаток = План − Отгружено − Резерв</b> — столько ещё можно отгрузить на площадку, не забрав товар у других. Когда поставка уехала, нажмите «→» рядом с резервом: он прибавится к «Отгружено», а резерв обнулится (отгружено можно и вписать вручную). У каждой площадки своя кнопка «Сохранить» — сотрудники разных площадок не мешают друг другу. План поставок можно записать сюда прямо из расчёта выше.</p>
+      <div class="row">
+        <div class="field"><label>Месяц</label><input id="supply_month" type="month"></div>
+      </div>
+    </div>
+    <div id="supplyCards" class="row" style="align-items:flex-start;flex-wrap:wrap;gap:12px;"></div>
   </div>
 
   <!-- ПЛАНИРОВАНИЕ ЗАКУПА -->
@@ -452,14 +449,17 @@
       <h2>План и факт</h2>
       <p><b>По площадке</b> — общие цифры плана/факта по всем товарам одного маркетплейса сразу.</p>
       <p><b>По товару</b> — план и факт конкретного товара. План вводится вручную раз в месяц (в ₽ и шт.) либо считается кнопкой «Рассчитать автоматически» — по среднему темпу продаж за последние месяцы с поправкой на рост и на остаток товара на складе (с учётом даты поступления новой партии).</p>
+      <p><b>Остатки в плане</b> — для текущего и будущих месяцев: «Остаток на МП» подтягивается сам из «Остатков и динамики» (последнее сохранённое значение по этой площадке; для группы плана — сумма по карточкам группы), «Остаток на ФФ» вносится вручную — то количество, что на фулфилменте закреплено именно за этой площадкой. Для расчёта и предупреждения «план превышает остаток» берётся МП + ФФ + поступление (если заполнено). Если остаток на ФФ не заполнен, предупреждение не тревожит, а лишь напоминает его внести. Для прошедших месяцев поля остатков не показываются. Рядом с планом показан факт за прошлый месяц.</p>
       <p><b>Run-rate</b> — прогноз, куда придём к концу месяца, если ничего не менять (факт шт/день × дни в месяце). Показывается только для текущего месяца.</p>
       <p><b>Темп за 7 дней</b> — средняя скорость продаж за последнюю неделю и сравнение с неделей до неё — быстрее реагирует на изменения, чем Run-rate.</p>
-      <p><b>Группа плана</b> — для случаев, когда один и тот же товар продаётся с двух и более карточек (частый случай на Я.Маркете). Назначается на вкладке «Товары» кнопкой «Группа плана» — карточки с одинаковым названием группы получают общий план, общий остаток на складе и общее поступление, при этом ежедневные данные, воронка и точки роста у каждой карточки остаются свои.</p>
+      <p><b>Группа плана</b> — для случаев, когда один и тот же товар продаётся с двух и более карточек (частый случай на Я.Маркете). Назначается на вкладке «Товары» кнопкой «Группа плана» — карточки с одинаковым названием группы получают общий план, общий остаток на ФФ и общее поступление (остаток на МП суммируется по всем карточкам группы), при этом ежедневные данные, воронка и точки роста у каждой карточки остаются свои.</p>
       <p style="margin-left:16px;color:var(--ink-2);font-size:12.5px;">Если дубли появляются и пропадают периодически (например, полгода одна карточка, потом временно вторая, потом снова одна) — специально ничего откатывать не нужно: группу можно оставить назначенной навсегда. Если вторая карточка перестала использоваться (или удалена), в общий факт группы она просто перестаёт что-либо добавлять — план продолжает корректно считаться по оставшейся карточке. Единственное, о чём стоит помнить: план за месяцы, которые были введены <b>до</b> того, как назначили группу, при первом объединении карточек переносится в общий план группы автоматически — переносить вручную не придётся.</p>
     </div>
     <div class="panel">
       <h2>Ежедневные данные</h2>
-      <p>Основной раздел для ежедневного ввода. Данные по воронке вносятся за вчерашний день. Отдельной формы ввода нет — всё редактируется прямо в таблице «История по товару» ниже.</p>
+      <p>Основной раздел для ежедневного ввода. Данные по воронке вносятся за вчерашний день. Отдельной формы ввода нет — всё вносится прямо в таблице «История по товару» ниже.</p>
+      <p><b>Сохранение</b> — изменённые ячейки подсвечиваются жёлтым и остаются только на экране, пока вы не нажмёте «Сохранить» (или Ctrl+S): все правки записываются разом. Расчётные показатели при этом пересчитываются сразу. Если вы смените товар, месяц или вкладку, не сохранив правки, дашборд спросит: «Сохранить», «Не сохранять» или «Остаться». Если сотрудники одновременно правят один и тот же товар, при сохранении каждый записывает только свои ячейки, чужие уже сохранённые правки не затираются (если две правки в одной и той же ячейке — останется та, что сохранена позже). Чужие правки вы увидите после своего «Сохранить» или при повторном открытии товара.</p>
+      <p><b>Прошлые дни</b> — в таблице открыты для ввода все дни месяца до сегодняшнего, в том числе те, которых ещё нет в базе (например, до даты добавления товара). День создаётся при сохранении первой внесённой ячейки как черновик (🕓) — цена в такие дни автоматически не подставляется, её нужно вписать вручную. Будущие дни закрыты.</p>
       <p><b>Как появляется сегодняшний день</b> — при выборе товара дашборд сам проверяет, есть ли уже запись за сегодня, и если нет — создаёт её, подтягивая цену, ставки и акцию с последнего известного дня (если пропустили несколько дней подряд — достроит сразу всю цепочку). Ничего печатать для этого не нужно; повторные заходы в тот же день ничего не задваивают.</p>
       <p><b>Цена в ЛК / для покупателя / с Ozon картой</b> — уже стоит в строке за сегодня, подтянутая с прошлого дня. Если цена изменилась — просто впишите новую прямо в ячейку за сегодня, это обычная правка конкретного дня.</p>
       <p><b>Черновик</b> — день, в котором ещё не заполнены показатели воронки (показы, клики, корзины, заказы), даже если цена/ставки/акция/комментарий уже стоят. Как только вписываете хотя бы один из этих четырёх показателей — день перестаёт быть черновиком и участвует в анализе.</p>
@@ -468,7 +468,7 @@
       <p><b>Тип изменения</b> — можно выбрать сразу несколько значений, зажав Ctrl (на Mac — Cmd) при клике. <b>Комментарий</b> рядом — отдельное необязательное текстовое поле.</p>
       <p><b>Выкупили / Отмены</b> — для «Отмены» по умолчанию подставляется 0 при создании нового дня, менять не нужно, если это верно; «Выкупили» — без дефолта. Для обоих полей: если оставить пустым (не 0, а именно пусто) — сохранится как «неизвестно», а не как ноль. Если показатель не заполняется больше недели подряд — он перестаёт участвовать в «Точках роста».</p>
       <p><b>Аномалии</b> — сравнивает последний полностью заполненный (не черновой) день с днём перед ним и предупреждает о резких скачках (показы, CTR, конверсии, рекламные расходы, для Ozon — ещё и позиция в поиске).</p>
-      <p><b>История по товару</b> — вся история день за днём, с цветовой подсветкой изменений показателей. Расчётные показатели (СПП, CTR, конверсии, ДРР, CPC, CPO) остаются только для просмотра, всё остальное редактируется прямо в ячейках.</p>
+      <p><b>История по товару</b> — вся история день за днём, с цветовой подсветкой изменений показателей. Расчётные показатели (СПП, CTR, конверсии, ДРР, CPC, CPO) остаются только для просмотра, всё остальное вносится прямо в ячейках.</p>
     </div>
     <div class="panel">
       <h2>Воронка и точки роста</h2>
@@ -476,15 +476,12 @@
       <p><b>Диагноз воронки</b> — один общий вывод о том, что сейчас главная проблема (или что всё в порядке), плюс вероятные причины с примерной значимостью каждой. Сравнивает последние 2 недели фактических (не черновых) дней — неделю перед этим с самой последней неделей, а не половины выбранного месяца, поэтому работает даже в начале месяца.</p>
       <p><b>Точки роста</b> — подробный разбор по каждому этапу воронки отдельно: показывается только то, что ниже нормы, с причинами и что проверить. Пороги нормы можно настроить под конкретный товар на вкладке «Товары». % выкупа считается без учёта заказов младше 7 дней — время на доставку, иначе процент был бы искусственно занижен свежими, ещё не доехавшими заказами.</p>
       <p><b>Рекомендации</b> — про темп плана, ДРР и динамику конверсии, с конкретными цифрами.</p>
+      <p><b>Печать / PDF</b> — кнопка рядом с выбором товара и месяца открывает окно печати браузера только с этой вкладкой (воронка, графики, диагноз, точки роста, рекомендации, журнал). Чтобы получить файл, выберите принтер «Сохранить как PDF».</p>
       <p><b>Журнал изменений</b> — оценивает, помогло ли конкретное изменение карточки: сравнивает нужный показатель до/после, с поправкой на то, сколько дней нужно подождать для честной оценки этого типа правки.</p>
     </div>
     <div class="panel">
       <h2>Сравнение периодов</h2>
       <p>Сравнение показателей товара за два периода — по месяцам или по датам (диапазон не длиннее 31 дня). Показывает, что выросло/упало, и для просевших показателей — гипотезу и рекомендацию.</p>
-    </div>
-    <div class="panel">
-      <h2>Импорт данных</h2>
-      <p>Если есть данные за прошлые периоды — можно скачать Excel-шаблон под конкретную площадку, заполнить и загрузить обратно. Даты, которые уже есть в истории, будут перезаписаны файлом, остальные добавятся как новые.</p>
     </div>
     <div class="panel">
       <h2>Остатки и динамика</h2>
@@ -496,13 +493,14 @@
     </div>
     <div class="panel">
       <h2>Распределение товара</h2>
-      <p>Разовый калькулятор, ничего не сохраняет — считает, как поделить новую партию товара между WB/Ozon/ЯМ. Выбираешь товар по каждой площадке отдельно (можно не все три), строку на Фулфилменте — партия подтянется из её остатка автоматически, но её можно поправить вручную. Резерв (раньше «Авито/сайт/резерв», по умолчанию 10%) вычитается из партии первым, оставшееся делится между площадками.</p>
+      <p>Калькулятор считает (сам расчёт не сохраняется), как поделить новую партию товара между WB/Ozon/ЯМ. Выбираешь товар по каждой площадке отдельно (можно не все три), строку на Фулфилменте — партия подтянется из её остатка автоматически, но её можно поправить вручную. Резерв (раньше «Авито/сайт/резерв», по умолчанию 10%) вычитается из партии первым, оставшееся делится между площадками.</p>
+      <p><b>Поставки по площадкам</b> (ниже на этой вкладке) — замена Google-таблицы с планом поставок. Для каждой площадки (WB, Ozon, ЯМ) свой блок со своей кнопкой «Сохранить»: по каждому товару за месяц — План, Отгружено, Резерв и Остаток = План − Отгружено − Резерв (одинаково для всех площадок). Товары берутся автоматически из вкладки «Товары» (с учётом групп плана), как на «Остатки и динамика». Кнопка «→» переносит резерв в «Отгружено». «Отгрузить» в результате расчёта можно поправить вручную и записать в план текущего месяца кнопкой «Записать в план поставок».</p>
       <p>Остаток и динамика берутся из последних сохранённых данных на вкладке «Остатки и динамика» — если для какой-то площадки остаток ещё не сохранён или прошлая неделя не закрыта (динамика не посчиталась), это будет явно показано в результате, а не подставлено как ноль.</p>
     </div>
     <div class="panel">
       <h2>Планирование закупа</h2>
       <p>Список товаров собирается автоматически — та же логика, что на Фулфилменте: по «Группе плана», если задана, иначе по совпадению названия. Заново вносить товары не нужно. Три подраздела:</p>
-      <p><b>Обзор</b> — основная таблица, отсортирована по срочности. Остаток и скорость продаж подтягиваются из «Остатков и динамики» заново при каждом открытии — ничего не хранится отдельно.</p>
+      <p><b>Обзор</b> — основная таблица, отсортирована по срочности. Остаток и скорость продаж подтягиваются из «Остатков и динамики» заново при каждом открытии — ничего не хранится отдельно. Остаток берётся из последней сохранённой недели каждой площадки (пустая ячейка в ней считается нулём, старые недели не подтягиваются). Если площадка ещё не сохранена за текущую неделю, рядом с остатком появится значок ⚠ — тогда взята её прошлая неделя.</p>
       <p><b>Точка заказа</b> = скорость продаж × (срок изготовления + срок доставки) + страховой запас. Используется для «Дней до закупа» и как основа для «Закуп, шт», отдельным столбцом в таблице не показывается. <b>Дней до закупа</b> = (остаток по всем точкам + товар в пути − точка заказа) ÷ скорость продаж, округляется в меньшую сторону (в том числе для отрицательных — в сторону большей просрочки, с запасом на осторожность). Если скорости продаж нет (прошлая неделя не закрыта) — показывается «—», без ошибки. <b>Закуп, шт</b> — точка заказа, округлённая вверх до ближайших 10 (это целевой уровень запаса, к которому нужно стремиться, а не «сколько докупить сверх того, что есть»; округление вверх — чтобы не заказать меньше нужного). «Дней до закупа» при этом считается от точной, неокруглённой точки заказа — округление не искажает срочность.</p>
       <p>Светофор: «Норма» — больше 5 дней в запасе, «Скоро закупать» — от 0 до 5 дней, «Просрочено» — меньше 0.</p>
       <p><b>Товары</b> — здесь настраиваются страховой запас, срок изготовления, срок доставки на каждый товар (кнопка «Настройки»), видимость — кнопка «Скрыть» убирает товар из «Обзора» (например, если товар выведен из матрицы), не удаляя ни его историю, ни настройки — можно вернуть в любой момент кнопкой «Вернуть». Там же — ручная привязка к конкретным карточкам на WB/Ozon/ЯМ и к строке на Фулфилменте: нужна, когда автоматика не может сама понять, что несколько карточек — это один товар (например, из-за разных названий на разных площадках). Можно выбрать сразу несколько карточек через Ctrl+клик — например, если на одной площадке два дубля без общей «Группы плана». Как только товар вручную привязан в одной строке — прежние «осиротевшие» авто-строки для тех же карточек сами пропадают из списка, чтобы товар не дублировался.</p>
@@ -789,7 +787,6 @@ function refreshAllProductSelects(){
   fillFilteredProductSelect('plan_product_mp','plan_product');
   fillFilteredProductSelect('funnel_product_mp','funnel_product');
   fillFilteredProductSelect('cmp_product_mp','cmp_product');
-  fillFilteredProductSelect('imp_product_mp','imp_product');
 }
 function fillFilteredProductSelect(mpId, productId){
   const mp=document.getElementById(mpId).value;
@@ -799,15 +796,14 @@ function fillFilteredProductSelect(mpId, productId){
   sel.innerHTML = filtered.map(p=>`<option value="${p.id}">${p.name}</option>`).join('') || '<option value="">— нет товаров на этой площадке —</option>';
   if(cur && filtered.find(p=>p.id===cur)) sel.value=cur;
 }
-document.getElementById('daily_mp').addEventListener('change', ()=>{
+document.getElementById('daily_mp').addEventListener('change', async ()=>{
+  if(!(await dailyNavGuard())) return;
   fillFilteredProductSelect('daily_mp','daily_product');
   onDailyProductChange();
 });
 document.getElementById('plan_product_mp').addEventListener('change', ()=>{ fillFilteredProductSelect('plan_product_mp','plan_product'); renderPlanTab(); });
 document.getElementById('funnel_product_mp').addEventListener('change', ()=>{ fillFilteredProductSelect('funnel_product_mp','funnel_product'); renderFunnelTab(); });
 document.getElementById('cmp_product_mp').addEventListener('change', ()=>{ fillFilteredProductSelect('cmp_product_mp','cmp_product'); renderCompareTab(); });
-document.getElementById('imp_product_mp').addEventListener('change', ()=>{ fillFilteredProductSelect('imp_product_mp','imp_product'); resetImportPreview(); });
-document.getElementById('imp_product').addEventListener('change', resetImportPreview);
 
 function bidCountForMp(mp){ return mp==='ozon' ? 3 : 2; }
 function computeSPP(before, after){
@@ -890,6 +886,20 @@ async function computeRowVelocityForWeek(members, viewWeekDate){
     for(const d of days){ totalUnits+=+dm[d].orders||0; }
   }
   return totalUnits/7;
+}
+// Объясняет, почему не посчиталась скорость: какие дни прошлой недели (относительно viewWeekDate) не заполнены.
+// Возвращает массив строк вида «Название: 30.09 — нет записи; 01.10 — черновик».
+async function explainWeekGaps(members, viewWeekDate){
+  const prevWeekMonday=dateMinusDays(viewWeekDate,7);
+  const days=Array.from({length:7},(_,i)=>datePlusDays(prevWeekMonday,i));
+  const dailyMaps=await Promise.all(members.map(m=>getDailyMap(m.id)));
+  const out=[];
+  members.forEach((m,i)=>{
+    const dm=dailyMaps[i]||{};
+    const bad=days.filter(d=>!dm[d] || dm[d].draft).map(d=>`${d.slice(8,10)}.${d.slice(5,7)} — ${dm[d]?'черновик (не все данные)':'нет записи'}`);
+    if(bad.length) out.push(`${MP_LABEL[m.mp]||m.mp} «${m.name}»: ${bad.join('; ')}`);
+  });
+  return out;
 }
 async function getStockLabel(rowKey, defaultLabel){
   const v=await storeGet('stocklabel:'+rowKey);
@@ -976,11 +986,15 @@ async function renderStockTab(){
 }
 
 /* ---------------- РАСПРЕДЕЛЕНИЕ ПАРТИИ ---------------- */
+// Остаток берётся ТОЛЬКО из самой свежей сохранённой недели площадки. Пустая ячейка в этой неделе = 0
+// (старые недели не подтягиваются). Если у площадки нет ни одной сохранённой недели — null («нет данных»).
 async function getLatestStockValue(channel, rowKey){
-  const idx=(await getStockWeekIndex(channel)).sort().reverse();
+  const idx=(await getStockWeekIndex(channel)).slice().sort().reverse();
   for(const w of idx){
     const data=await storeGet(stockChannelKey(channel, w));
-    if(data && data[rowKey]!==undefined && data[rowKey]!==null) return {value:data[rowKey], week:w};
+    if(!data) continue;
+    const v=data[rowKey];
+    return {value:(v===undefined || v===null || v==='') ? 0 : +v, week:w};
   }
   return {value:null, week:null};
 }
@@ -1086,7 +1100,7 @@ async function runDistribCalc(){
       <div class="kpi"><div class="label">Целевая обеспеченность</div><div class="value">${targetDays? fmt1(targetDays)+' дн.' : '—'}</div></div>
     </div>
     <div class="table-scroll"><table>
-      <thead><tr><th>Площадка</th><th>Товар</th><th>Остаток</th><th>Динамика, шт/день</th><th>Довезти, шт</th></tr></thead>
+      <thead><tr><th>Площадка</th><th>Товар</th><th>Остаток</th><th>Динамика, шт/день</th><th>Отгрузить, шт</th></tr></thead>
       <tbody>${allocated.map(c=>{
         const productName = c.rowKey ? (c.productLabel||'—') : '—';
         return `<tr>
@@ -1094,12 +1108,258 @@ async function runDistribCalc(){
           <td class="txt">${productName||'—'}</td>
           <td>${c.stock!=null? fmt(c.stock)+' шт'+(c.stockWeek? ` (на ${fmtRuDate(c.stockWeek)})`:'') : (c.note||'—')}</td>
           <td>${c.velocity!=null? fmt1(c.velocity) : (c.rowKey?'—':'')}</td>
-          <td style="font-weight:600;">${c.rowKey? fmt(c.alloc)+' шт' : '—'}</td>
+          <td style="font-weight:600;">${c.rowKey? `<input type="number" min="0" step="10" class="supply-input distrib-alloc-input" style="width:80px;" data-ch="${c.ch}" value="${c.alloc}"> шт` : '—'}</td>
         </tr>`;
-      }).join('')}</tbody>
+      }).join('')}
+</tbody>
     </table></div>
-    <div class="note">Проверка: сумма «довезти» + резерв = ${fmt(allocated.reduce((s,c)=>s+c.alloc,0)+reserve)} шт (партия — ${fmt(batch)} шт)</div>
+    <div class="note" id="distribCheckNote">Проверка: сумма «отгрузить» + резерв = ${fmt(allocated.reduce((s,c)=>s+c.alloc,0)+reserve)} шт (партия — ${fmt(batch)} шт). Цифры «отгрузить» можно поправить вручную перед записью в план.</div>
+    <h2 style="margin-top:18px;">Записать в план поставок</h2>
+    <p class="hint" style="margin-top:0;">Значения «Отгрузить» запишутся в план текущего месяца (${monthNow()}) по выбранным выше товарам — в блок «Поставки по площадкам».</p>
+    <div class="row">
+      <div class="field"><label>Если в плане уже есть значение</label><select id="distrib_write_mode"><option value="replace">Заменить</option><option value="add">Прибавить к плану</option></select></div>
+      <button class="btn" id="distribWriteBtn">Записать в план поставок</button>
+    </div>
+    <div class="note" id="distribWriteMsg"></div>
   </div>`;
+  window.__distribCtx={keys:{wb:wbKey, ozon:ozonKey, ym:ymKey}};
+  const upd=()=>{
+    let sum=reserve; document.querySelectorAll('.distrib-alloc-input').forEach(i=>{ sum+=Math.max(0,Math.round(+i.value||0)); });
+    const note=document.getElementById('distribCheckNote');
+    note.textContent=`Проверка: сумма «отгрузить» + резерв = ${fmt(sum)} шт (партия — ${fmt(batch)} шт)`+(sum>batch?' — больше партии!':'')+'. Цифры «отгрузить» можно поправить вручную перед записью в план.';
+    note.style.color = sum>batch ? 'var(--neg)' : '';
+  };
+  document.querySelectorAll('.distrib-alloc-input').forEach(i=>i.addEventListener('input', upd));
+  document.getElementById('distribWriteBtn').addEventListener('click', writeDistribToSupply);
+}
+
+/* ---------------- ПОСТАВКИ ПО ПЛОЩАДКАМ ----------------
+   Для каждой площадки и месяца — отдельный документ: supply:{YYYY-MM}:{ch} = {rowKey:{plan,shipped,reserve}}.
+   Строки — те же товары/группы, что на «Остатки и динамика» (buildStockRows). У каждой площадки своя кнопка
+   «Сохранить», поэтому одновременное сохранение разных площадок с разных ПК не затирает друг друга.
+   Остаток = план − отгружено − резерв (одинаково для всех площадок). */
+const SUPPLY_CH=[
+  {ch:'wb',   label:'Wildberries'},
+  {ch:'ozon', label:'Ozon'},
+  {ch:'ym',   label:'Яндекс Маркет'},
+];
+const SUPPLY_FIELDS=[ {f:'plan',label:'План'}, {f:'shipped',label:'Отгружено'}, {f:'reserve',label:'Резерв'} ];
+let supplyWork=null;   // {month, data:{ch:{rows:[{rowKey,label}], local, ops:Map, saving}}}
+
+function supHtml(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function supplyDocKey(month, ch){ return 'supply:'+month+':'+ch; }
+function supOpKey(op){ return op.rowKey+'|'+op.field; }
+function applySupplyOp(doc, op){
+  if(!doc[op.rowKey]) doc[op.rowKey]={};
+  if(op.val===null || op.val===undefined) delete doc[op.rowKey][op.field];
+  else doc[op.rowKey][op.field]=op.val;
+}
+function supplyVal(entry, field){
+  const v=entry ? entry[field] : undefined;
+  return (v===undefined || v===null || v==='') ? null : +v;
+}
+function supplyRest(entry){
+  const p=supplyVal(entry,'plan'), sh=supplyVal(entry,'shipped'), rs=supplyVal(entry,'reserve');
+  if(p===null && sh===null && rs===null) return null;
+  return (p||0)-(sh||0)-(rs||0);
+}
+function supplyRestHtml(r){
+  if(r===null) return '<span class="supply-rest" style="color:var(--ink-3);">—</span>';
+  return `<span class="supply-rest ${r<0?'neg':''}" ${r<0?'title="Отгружено и резерв больше плана"':''}>${fmt(r)}</span>`;
+}
+function supplyTotalOps(){
+  return supplyWork ? SUPPLY_CH.reduce((s,c)=>s+(supplyWork.data[c.ch]? supplyWork.data[c.ch].ops.size:0),0) : 0;
+}
+
+function updateSupplyDirtyUI(ch){
+  const d=supplyWork && supplyWork.data[ch];
+  const btn=document.querySelector(`.supply-save[data-ch="${ch}"]`);
+  const label=document.querySelector(`.supply-dirty[data-ch="${ch}"]`);
+  if(!btn || !d) return;
+  const n=d.ops.size;
+  btn.disabled=(n===0 || d.saving);
+  label.textContent = n>0 ? `Несохранённых правок: ${n}` : 'Все изменения сохранены';
+  label.style.color = n>0 ? 'var(--warn)' : 'var(--ink-3)';
+}
+
+async function renderSupplyPanel(){
+  const monthInput=document.getElementById('supply_month');
+  if(!monthInput.value) monthInput.value=monthNow();
+  const month=monthInput.value;
+  const wrap=document.getElementById('supplyCards');
+  wrap.innerHTML='<div class="panel" style="margin:0;"><div class="empty">Загрузка…</div></div>';
+  if(state.products.length===0){ supplyWork=null; wrap.innerHTML='<div class="panel" style="margin:0;"><div class="empty">Нет товаров — добавьте на вкладке «Товары»</div></div>'; return; }
+  const data={};
+  await Promise.all(SUPPLY_CH.map(async c=>{
+    const [rowsDef, doc]=await Promise.all([ buildStockRows(c.ch), storeGet(supplyDocKey(month,c.ch)) ]);
+    const rows=await Promise.all(rowsDef.map(async rd=>({ rowKey:rd.rowKey, label: await getStockLabel(rd.rowKey, rd.defaultLabel) })));
+    data[c.ch]={ rows, local:JSON.parse(JSON.stringify(doc||{})), ops:new Map(), saving:false };
+  }));
+  supplyWork={ month, data };
+  wrap.innerHTML=SUPPLY_CH.map(c=>`<div class="panel supply-card" data-ch="${c.ch}" style="flex:1 1 440px;min-width:0;margin:0;"></div>`).join('');
+  SUPPLY_CH.forEach(c=>renderSupplyCard(c.ch));
+}
+
+function renderSupplyCard(ch){
+  const card=document.querySelector(`.supply-card[data-ch="${ch}"]`);
+  const d=supplyWork && supplyWork.data[ch];
+  if(!card || !d) return;
+  const meta=SUPPLY_CH.find(c=>c.ch===ch);
+  const scrollY=(card.querySelector('.table-scroll')||{}).scrollTop||0;
+  let h=`<h2>${meta.label}</h2>
+    <div style="position:sticky;top:0;z-index:20;background:var(--surface);display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--border);">
+      <button class="btn supply-save" data-ch="${ch}" disabled>Сохранить</button>
+      <span class="note supply-dirty" data-ch="${ch}" style="margin:0;"></span>
+    </div>`;
+  if(d.rows.length===0){
+    h+='<div class="empty">Нет товаров для этой площадки</div>';
+  } else {
+    h+=`<div class="table-scroll"><table class="supplytable"><thead><tr><th class="sticky">Товар</th>${SUPPLY_FIELDS.map(f=>`<th>${f.label}</th>`).join('')}<th title="Резерв → Отгружено"></th><th>Остаток</th></tr></thead><tbody>`;
+    d.rows.forEach(r=>{
+      const entry=d.local[r.rowKey]||{};
+      h+=`<tr><td class="sticky">${supHtml(r.label)}</td>`;
+      SUPPLY_FIELDS.forEach(f=>{
+        const v=supplyVal(entry,f.f);
+        const dirty=d.ops.has(r.rowKey+'|'+f.f);
+        h+=`<td><input type="number" min="0" step="1" class="supply-input${dirty?' cell-dirty':''}" data-ch="${ch}" data-row="${supHtml(r.rowKey)}" data-field="${f.f}" value="${v===null?'':v}"></td>`;
+      });
+      h+=`<td><button class="btn secondary supply-move" data-act="move" data-ch="${ch}" data-row="${supHtml(r.rowKey)}" title="Резерв отгружен: прибавить к «Отгружено» и обнулить резерв">→</button></td>`;
+      h+=`<td data-rest="${ch}|${supHtml(r.rowKey)}">${supplyRestHtml(supplyRest(entry))}</td></tr>`;
+    });
+    h+='</tbody></table></div>';
+  }
+  card.innerHTML=h;
+  updateSupplyDirtyUI(ch);
+}
+
+function setSupplyLocal(ch, rowKey, field, val){
+  const d=supplyWork.data[ch];
+  const op={rowKey, field, val};
+  d.ops.set(supOpKey(op), op);
+  applySupplyOp(d.local, op);
+}
+
+const supplyCardsEl=document.getElementById('supplyCards');
+supplyCardsEl.addEventListener('input', (e)=>{
+  const inp=e.target.closest('.supply-input');
+  if(!inp || !supplyWork) return;
+  const ch=inp.dataset.ch, row=inp.dataset.row;
+  const raw=inp.value.trim();
+  let val=null;
+  if(raw!==''){ val=Math.max(0, Math.round(+raw)); if(!isFinite(val)) val=null; }
+  setSupplyLocal(ch, row, inp.dataset.field, val);
+  inp.classList.add('cell-dirty');
+  const cell=supplyCardsEl.querySelector(`[data-rest="${ch}|${row}"]`);
+  if(cell) cell.innerHTML=supplyRestHtml(supplyRest(supplyWork.data[ch].local[row]||{}));
+  updateSupplyDirtyUI(ch);
+});
+supplyCardsEl.addEventListener('click', (e)=>{
+  const save=e.target.closest('.supply-save');
+  if(save){ saveSupplyChannel(save.dataset.ch); return; }
+  const b=e.target.closest('button[data-act="move"]');
+  if(!b || !supplyWork) return;
+  const ch=b.dataset.ch, row=b.dataset.row;
+  const entry=supplyWork.data[ch].local[row]||{};
+  const rs=supplyVal(entry,'reserve');
+  if(!rs) return;
+  setSupplyLocal(ch,row,'shipped',(supplyVal(entry,'shipped')||0)+rs);
+  setSupplyLocal(ch,row,'reserve',null);
+  renderSupplyCard(ch);
+});
+
+async function saveSupplyChannel(ch){
+  const d=supplyWork && supplyWork.data[ch];
+  if(!d || d.ops.size===0 || d.saving) return true;
+  d.saving=true;
+  const month=supplyWork.month;
+  const savedOps=[...d.ops.values()];
+  const btn=document.querySelector(`.supply-save[data-ch="${ch}"]`);
+  if(btn) btn.textContent='Сохраняю…';
+  updateSupplyDirtyUI(ch);
+  const result=await mutateStoreValue(supplyDocKey(month,ch), ()=>({}), (fresh)=>{ savedOps.forEach(op=>applySupplyOp(fresh, op)); });
+  d.saving=false;
+  if(!result){
+    if(btn) btn.textContent='Сохранить';
+    updateSupplyDirtyUI(ch);
+    alert('Не удалось сохранить ('+SUPPLY_CH.find(c=>c.ch===ch).label+'). Правки остались в таблице — нажмите «Сохранить» ещё раз.');
+    return false;
+  }
+  if(supplyWork && supplyWork.month===month){
+    savedOps.forEach(op=>{ const k=supOpKey(op); if(d.ops.get(k)===op) d.ops.delete(k); });
+    d.local=JSON.parse(JSON.stringify(result));
+    [...d.ops.values()].forEach(op=>applySupplyOp(d.local, op));
+    renderSupplyCard(ch);
+  }
+  return true;
+}
+async function saveSupplyAll(){
+  if(!supplyWork) return true;
+  const res=await Promise.all(SUPPLY_CH.map(c=>saveSupplyChannel(c.ch)));
+  return res.every(Boolean);
+}
+async function resolveSupplyUnsaved(){
+  const n=supplyTotalOps();
+  if(n===0) return true;
+  const choice=await askUnsaved(n, 'Поставки по площадкам');
+  if(choice==='stay') return false;
+  if(choice==='save') return await saveSupplyAll();
+  SUPPLY_CH.forEach(c=>{ if(supplyWork.data[c.ch]) supplyWork.data[c.ch].ops=new Map(); });
+  return true;
+}
+document.getElementById('supply_month').addEventListener('change', async (e)=>{
+  const newMonth=e.target.value;
+  const oldMonth=supplyWork? supplyWork.month : monthNow();
+  if(!(await resolveSupplyUnsaved()) || !newMonth){ e.target.value=oldMonth; return; }
+  renderSupplyPanel();
+});
+document.addEventListener('keydown', (e)=>{
+  if((e.ctrlKey||e.metaKey) && (e.key==='s'||e.key==='S') && document.getElementById('tab-distrib').style.display!=='none'){
+    e.preventDefault();
+    if(document.activeElement && typeof document.activeElement.blur==='function') document.activeElement.blur();
+    // Ctrl+S сохраняет все площадки, где есть правки (каждая — отдельным документом)
+    setTimeout(saveSupplyAll, 0);
+  }
+});
+
+// Запись плана из результата расчёта: текущий месяц, выбранные в калькуляторе товары
+async function writeDistribToSupply(){
+  const ctx=window.__distribCtx;
+  const msg=document.getElementById('distribWriteMsg');
+  if(!ctx) return;
+  const month=monthNow();
+  const mode=document.getElementById('distrib_write_mode').value;
+  const targets=[];
+  document.querySelectorAll('.distrib-alloc-input').forEach(inp=>{
+    const ch=inp.dataset.ch;
+    const rowKey=ctx.keys[ch];
+    if(rowKey) targets.push({ch, rowKey, val:Math.max(0, Math.round(+inp.value||0))});
+  });
+  if(targets.length===0){ alert('Нет значений для записи'); return; }
+
+  if(mode==='replace'){
+    const have=[];
+    for(const t of targets){
+      const doc=(await storeGet(supplyDocKey(month,t.ch)))||{};
+      const old=supplyVal(doc[t.rowKey],'plan');
+      if(old>0 && old!==t.val) have.push(`${SUPPLY_CH.find(c=>c.ch===t.ch).label} — было ${fmt(old)}, станет ${fmt(t.val)}`);
+    }
+    if(have.length && !confirm(`В плане за текущий месяц уже есть значения:\n${have.join('\n')}\nЗаменить?`)) return;
+  }
+  const results=await Promise.all(targets.map(t=>mutateStoreValue(supplyDocKey(month,t.ch), ()=>({}), (doc)=>{
+    if(!doc[t.rowKey]) doc[t.rowKey]={};
+    const cur=+doc[t.rowKey].plan||0;
+    doc[t.rowKey].plan = mode==='add' ? cur+t.val : t.val;
+  })));
+  if(results.some(r=>!r)){ alert('Не удалось записать план по части площадок. Проверьте таблицу ниже и повторите.'); }
+  const okTargets=targets.filter((t,i)=>results[i]);
+  msg.innerHTML=`Записано в «Поставки по площадкам» за ${month}: ${okTargets.map(t=>`${SUPPLY_CH.find(c=>c.ch===t.ch).label} — ${fmt(t.val)}`).join(', ')}.`;
+  msg.style.color='var(--pos)';
+  if(supplyTotalOps()===0){
+    document.getElementById('supply_month').value=month;
+    renderSupplyPanel();
+  } else {
+    msg.innerHTML+=' В таблице ниже есть несохранённые правки — после их сохранения переоткройте месяц, чтобы увидеть новый план.';
+  }
 }
 
 async function renderStockChannelCard(c){
@@ -1345,17 +1605,21 @@ async function computeZakupRow(row, smoothingMode){
     getZakupShipments(),
   ]);
   const totalStock=(stockWb.value||0)+(stockOzon.value||0)+(stockYm.value||0)+(stockFf.value||0);
+  const thisMonday=mondayOf(todayISO());
+  const staleChannels=[['WB',stockWb],['Ozon',stockOzon],['ЯМ',stockYm],['ФФ',stockFf]]
+    .filter(([,r])=>r && r.week && r.week<thisMonday).map(([n,r])=>`${n} — за ${fmtRuDate(r.week)}`);
   const cycle=(+settings.prodDays||0)+(+settings.deliveryDays||0);
   const safetyStock = settings.safetyStockMode==='dynamic'
     ? (velocity!=null ? velocity*(+settings.safetyStockDays||15) : null)
     : (+settings.safetyStock||0);
   const reorderPoint = (velocity!=null && safetyStock!=null) ? Math.round(velocity*cycle + safetyStock) : null;
   const inTransitQty=inTransitQtyFor(row.rowKey, shipments);
+  const velocityGaps = velocity===null ? await explainWeekGaps([...wbM,...ozonM,...ymM], mondayOf(todayISO())) : [];
   const daysToOrder = (velocity && velocity>0 && reorderPoint!=null) ? (totalStock+inTransitQty-reorderPoint)/velocity : null;
   let status='unknown';
   if(daysToOrder!=null){ status = daysToOrder>5? 'ok' : (daysToOrder>=0? 'warn' : 'danger'); }
   const orderQty = reorderPoint!=null ? Math.ceil(reorderPoint/10)*10 : null;
-  return { ...row, settings, totalStock, velocity, cycle, safetyStock, reorderPoint, inTransitQty, daysToOrder, status, orderQty };
+  return { ...row, settings, totalStock, staleChannels, velocityGaps, velocity, cycle, safetyStock, reorderPoint, inTransitQty, daysToOrder, status, orderQty };
 }
 
 const ZAKUP_STATUS_LABEL={ok:'Норма', warn:'Скоро закупать', danger:'Просрочено', unknown:'Нет данных'};
@@ -1379,16 +1643,16 @@ async function renderZakupOverview(){
   });
   const rowsHtml=computed.map(r=>`<tr>
     <td class="txt">${r.name}</td>
-    <td>${fmt(r.totalStock)} шт</td>
+    <td>${fmt(r.totalStock)} шт${r.staleChannels.length? ` <span title="Остатки за текущую неделю ещё не сохранены: ${r.staleChannels.join('; ')}. Взяты последние сохранённые." style="color:var(--warn);cursor:help;">⚠</span>`:''}</td>
     <td>${r.inTransitQty>0? fmt(r.inTransitQty)+' шт' : '—'}</td>
-    <td>${r.velocity!=null? fmt1(r.velocity)+' шт/день' : '—'}</td>
+    <td>${r.velocity!=null? fmt1(r.velocity)+' шт/день' : `—${r.velocityGaps.length? `<div style="font-size:10.5px;color:var(--ink-3);white-space:normal;min-width:200px;font-family:var(--font-body);">нет данных за прошлую неделю:<br>${r.velocityGaps.map(g=>g.replace(/&/g,'&amp;').replace(/</g,'&lt;')).join('<br>')}</div>`:''}`}</td>
     <td>${r.daysToOrder!=null? fmt(Math.floor(r.daysToOrder))+' дн.' : '—'}</td>
     <td><span class="badge" style="background:var(--${ZAKUP_STATUS_CLASS[r.status]}-bg,var(--bg));color:var(--${ZAKUP_STATUS_CLASS[r.status]},var(--ink-3));">${ZAKUP_STATUS_LABEL[r.status]}</span></td>
     <td>${r.orderQty!=null? fmt(r.orderQty)+' шт' : '—'}</td>
   </tr>`).join('');
   wrap.innerHTML=`<div class="panel">
     <div class="row" style="justify-content:space-between;align-items:center;">
-      <p class="hint" style="margin:0;">Отсортировано по срочности — у кого меньше дней до закупа, тот выше. Пересчитывается заново при каждом открытии, по самым свежим данным «Остатков и динамики».</p>
+      <p class="hint" style="margin:0;">Отсортировано по срочности — у кого меньше дней до закупа, тот выше. Пересчитывается заново при каждом открытии, по самым свежим данным «Остатков и динамики». Остаток берётся из последней сохранённой недели каждой площадки, пустая ячейка = 0. Значок ⚠ — площадка ещё не сохранена за текущую неделю, взята прошлая.</p>
       <div class="field" style="min-width:220px;">
         <label>Сглаживание скорости продаж</label>
         <select id="zakupSmoothing">
@@ -1484,7 +1748,7 @@ async function renderZakupProducts(){
   }).join('');
 
   wrap.innerHTML=`<div class="panel">
-    <p class="hint">Список товаров собирается сам, добавлять здесь ничего не нужно. «Скрыть» убирает товар из «Обзора» и «Заявки на закуп» (например, если товар выведен из матрицы) — историю и настройки при этом не теряет, можно вернуть в любой момент. Если на одной площадке две карточки одного товара с одинаковой «Группой плана» — они и так учитываются вместе автоматически. Ручная привязка в «Настройках» нужна только когда автоматика не может сама понять, что это один товар — там тоже можно выбрать сразу несколько карточек через Ctrl+клик.</p>
+    <p class="hint">Список товаров собирается сам, добавлять здесь ничего не нужно. «Скрыть» убирает товар из «Обзора» (например, если товар выведен из матрицы) — историю и настройки при этом не теряет, можно вернуть в любой момент. Если на одной площадке две карточки одного товара с одинаковой «Группой плана» — они и так учитываются вместе автоматически. Ручная привязка в «Настройках» нужна только когда автоматика не может сама понять, что это один товар — там тоже можно выбрать сразу несколько карточек через Ctrl+клик.</p>
     <div class="table-scroll"><table>
       <thead><tr><th>Товар</th><th>Площадки</th><th>Действия</th></tr></thead>
       <tbody>${rowsHtml}</tbody>
@@ -1916,6 +2180,12 @@ async function planFactFor(product, month){
   return {factUnits, factRub, adSpend};
 }
 
+let planStockCtx={mp:null, week:null}; // остаток на МП (авто) для открытого сейчас товара/месяца
+function prevMonthStr(month){
+  let [y,m]=month.split('-').map(Number);
+  m-=1; if(m===0){ m=12; y-=1; }
+  return `${y}-${pad2(m)}`;
+}
 function computeAvailableStock(month, stockQty, arrivalDate, arrivalQty){
   const stock=+stockQty||0;
   const arr=+arrivalQty||0;
@@ -1990,7 +2260,12 @@ async function computeAutoPlan(productId, month){
   const desiredUnits=Math.round(dailyRate*dim);
   const price=+document.getElementById('plan_planned_price').value||product?.currentPriceLK||0;
 
-  const stockQtyRaw=document.getElementById('plan_stock').value;
+  const ffEl=document.getElementById('plan_stock_ff');
+  const ffRaw=ffEl? ffEl.value : '';
+  const mpStock=planStockCtx.mp;
+  const stockKnown = !!ffEl && (mpStock!==null || ffRaw!=='');
+  const stockBreak = stockKnown ? ` (МП ${fmt(mpStock||0)} + ФФ ${fmt(+ffRaw||0)})` : '';
+  const stockQtyRaw = stockKnown ? String((mpStock||0)+(+ffRaw||0)) : '';
   const arrivalDate=document.getElementById('plan_arrival_date').value;
   const arrivalQtyRaw=document.getElementById('plan_arrival_qty').value;
   const stockQty=stockQtyRaw?+stockQtyRaw:0;
@@ -2001,7 +2276,7 @@ async function computeAutoPlan(productId, month){
   let arrivalNote=null;
 
   if(stockQtyRaw===''){
-    noteText+=' Внесите остаток на складе, чтобы план учитывал доступное количество товара.';
+    noteText+=' Нет данных об остатках (ни на МП в «Остатках и динамике», ни на ФФ) — план посчитан без ограничения по остатку товара.';
   } else {
     const monthStart=`${month}-01`;
     const monthEnd=`${month}-${pad2(dim)}`;
@@ -2033,7 +2308,7 @@ async function computeAutoPlan(productId, month){
 
     if(achievable<desiredUnits){
       finalUnits=achievable;
-      noteText=`План с учётом текущего доступного остатка товара: при темпе ${fmt1(dailyRate)} шт/день и остатке ${fmt(stockQty)} шт.${arrivalCounted?` + поступлении ${fmt(arrivalQty)} шт. (доступно после приёмки, ${fmt(daysAfterArrival)} дн. из ${dim})`:''} реально продать за месяц получится ${fmt(achievable)} шт. вместо расчётных ${fmt(desiredUnits)} шт.${stockLeftAfterPhase1===0 && daysBeforeArrival>0 ? ' Часть дней в начале месяца товар может закончиться ещё до поступления.' : ''}`;
+      noteText=`План с учётом текущего доступного остатка товара: при темпе ${fmt1(dailyRate)} шт/день и остатке ${fmt(stockQty)} шт.${stockBreak}${arrivalCounted?` + поступлении ${fmt(arrivalQty)} шт. (доступно после приёмки, ${fmt(daysAfterArrival)} дн. из ${dim})`:''} реально продать за месяц получится ${fmt(achievable)} шт. вместо расчётных ${fmt(desiredUnits)} шт.${stockLeftAfterPhase1===0 && daysBeforeArrival>0 ? ' Часть дней в начале месяца товар может закончиться ещё до поступления.' : ''}`;
     }
   }
   if(arrivalNote) noteText+=' '+arrivalNote;
@@ -2159,12 +2434,21 @@ async function renderPlanTab(){
   document.getElementById('plan_product_month').value=month;
   if(!productId){ editorWrap.innerHTML='<div class="panel"><div class="empty">Выберите товар</div></div>'; summaryWrap.innerHTML=''; return; }
   const planMap=await getPlanMap(product);
-  const plan=planMap[month] || {planRub:'', planUnits:'', stockQty:'', arrivalDate:'', arrivalQty:''};
+  const plan=planMap[month] || {planRub:'', planUnits:'', stockFF:'', arrivalDate:'', arrivalQty:''};
+  const isPastMonth = month<monthNow();
+  const prevMonth=prevMonthStr(month);
+  const [prevFact, mpStockInfo]=await Promise.all([
+    planFactFor(product, prevMonth),
+    isPastMonth ? Promise.resolve({value:null, week:null}) : sumLatestStock(product.mp, channelRowKeysFor(groupMembersFor(product), product.mp))
+  ]);
+  planStockCtx={mp:mpStockInfo.value, week:mpStockInfo.week||null};
+  const ffStockVal=(plan.stockFF!==undefined && plan.stockFF!==null)? plan.stockFF : '';
   const plannedPrice = (plan.plannedPrice!==undefined && plan.plannedPrice!==null && plan.plannedPrice!=='') ? plan.plannedPrice : '';
   const groupBanner = product.planGroup
-    ? `<div class="note" style="margin-bottom:12px;">Общий план на группу «${product.planGroup}»: ${productsInGroup(product.planGroup).map(p=>p.name).join(', ')}. Остаток на складе и поступление тоже общие на группу.</div>`
+    ? `<div class="note" style="margin-bottom:12px;">Общий план на группу «${product.planGroup}»: ${productsInGroup(product.planGroup).map(p=>p.name).join(', ')}. Остаток на МП суммируется по всем карточкам группы, остаток на ФФ и поступление вносятся общие на группу.</div>`
     : '';
   editorWrap.innerHTML = `<div class="panel">${groupBanner}<h2>План на ${month}</h2><p class="hint">Вносится раз в месяц, можно отредактировать в любой момент</p>
+    <div class="note" style="margin:0 0 10px;"><b>Факт за прошлый месяц (${prevMonth}):</b> ${fmt(prevFact.factUnits)} шт / ${fmt(prevFact.factRub)} ₽</div>
     <div class="row">
       <div class="field"><label>Плановая цена, ₽</label><input id="plan_planned_price" type="number" min="0" value="${plannedPrice}"></div>
       <div class="field"><label>План, шт</label><input id="plan_units" type="number" min="0" value="${plan.planUnits}"></div>
@@ -2173,10 +2457,12 @@ async function renderPlanTab(){
     </div>
     <p class="hint">Плановая цена по умолчанию подтягивается из текущей цены товара — можно поправить вручную. При изменении «Плановая цена» или «План, шт» — «План, ₽» пересчитывается автоматически (плановая цена × план, шт), с возможностью поправить и его отдельно</p>
     <div class="row" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-      <div class="field"><label>Остаток на складе, шт.</label><input id="plan_stock" type="number" min="0" value="${plan.stockQty||''}"></div>
+      ${isPastMonth ? '' : `<div class="field"><label>Остаток на МП, шт. (авто)</label><input id="plan_stock_mp" type="number" disabled value="${mpStockInfo.value!==null? mpStockInfo.value : ''}" placeholder="нет данных"></div>
+      <div class="field"><label>Остаток на ФФ, шт.</label><input id="plan_stock_ff" type="number" min="0" value="${ffStockVal}"></div>`}
       <div class="field"><label>Дата поступления</label><input id="plan_arrival_date" type="date" value="${plan.arrivalDate||''}"></div>
       <div class="field"><label>Поступит, шт.</label><input id="plan_arrival_qty" type="number" min="0" value="${plan.arrivalQty||''}"></div>
     </div>
+    ${isPastMonth ? '' : `<div class="note">Остаток на МП подтягивается автоматически из «Остатков и динамики» — последнее сохранённое значение${mpStockInfo.week? ' (на неделю '+fmtRuDate(mpStockInfo.week)+')' : ''}; для товаров из группы плана — сумма по всем карточкам группы на этой площадке. Остаток на ФФ — сколько на фулфилменте закреплено именно за этой площадкой (вносится вручную).</div>`}
     <div class="note">Поступление считается доступным для продажи через 5 дней после даты (время на приёмку складом)</div>
     <div class="row" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
       <div class="field"><label>Рост к среднему факту, %</label><input id="plan_growth_pct" type="number" value="10"></div>
@@ -2198,11 +2484,15 @@ async function renderPlanTab(){
     const planUnits=+document.getElementById('plan_units').value||0;
     const plannedPriceRaw=document.getElementById('plan_planned_price').value;
     const plannedPriceVal = plannedPriceRaw!==''? +plannedPriceRaw : null;
-    const stockQty=document.getElementById('plan_stock').value?+document.getElementById('plan_stock').value:'';
+    const ffEl2=document.getElementById('plan_stock_ff');
+    const stockFFNew = ffEl2 ? (ffEl2.value? +ffEl2.value : '') : undefined; // на прошлых месяцах поля нет — оставляем как было
     const arrivalDate=document.getElementById('plan_arrival_date').value||'';
     const arrivalQty=document.getElementById('plan_arrival_qty').value?+document.getElementById('plan_arrival_qty').value:'';
-    const newEntry={planRub, planUnits, plannedPrice:plannedPriceVal, stockQty, arrivalDate, arrivalQty};
-    await mutateStoreValue(planKeyFor(product), ()=>({}), (pmFresh)=>{ pmFresh[month]=newEntry; });
+    const newEntry={planRub, planUnits, plannedPrice:plannedPriceVal, arrivalDate, arrivalQty};
+    await mutateStoreValue(planKeyFor(product), ()=>({}), (pmFresh)=>{
+      const old=pmFresh[month]||{};
+      pmFresh[month]={...newEntry, stockFF: stockFFNew!==undefined ? stockFFNew : (old.stockFF??''), stockQty: old.stockQty??''}; // stockQty — старое поле «Остаток на складе», больше не используется, не трогаем
+    });
     renderPlanTab();
   });
 
@@ -2238,19 +2528,30 @@ async function renderPlanTab(){
   }
 
   let stockWarning='';
-  if(plan.stockQty!==undefined && plan.stockQty!==''){
-    const {available, arrivalCounted, arrivalNote}=computeAvailableStock(month, plan.stockQty, plan.arrivalDate, plan.arrivalQty);
-    if(planUnits>available){
-      stockWarning=`<div class="rec warn" style="margin-top:14px;"><div class="dot"></div><div>План (${fmt(planUnits)} шт.) превышает доступный остаток товара — ${fmt(available)} шт.${arrivalCounted?` (остаток ${fmt(+plan.stockQty||0)} + поступление ${fmt(+plan.arrivalQty||0)})`:''}. Физически продать больше доступного не получится.</div></div>`;
-    }
-    if(arrivalNote){
-      stockWarning+=`<div class="rec info" style="margin-top:8px;"><div class="dot"></div><div>${arrivalNote}</div></div>`;
+  if(!isPastMonth){
+    const mpS=mpStockInfo.value;
+    const ffFilled=(plan.stockFF!==undefined && plan.stockFF!==null && plan.stockFF!=='');
+    if(mpS!==null || ffFilled){
+      const totalStock=(mpS||0)+(ffFilled? +plan.stockFF : 0);
+      const {available, arrivalCounted, arrivalNote}=computeAvailableStock(month, totalStock, plan.arrivalDate, plan.arrivalQty);
+      const breakdown=`МП ${fmt(mpS||0)} + ФФ ${fmt(ffFilled? +plan.stockFF : 0)}${arrivalCounted?` + поступление ${fmt(+plan.arrivalQty||0)}`:''}`;
+      if(planUnits>available){
+        if(ffFilled){
+          stockWarning=`<div class="rec warn" style="margin-top:14px;"><div class="dot"></div><div>План (${fmt(planUnits)} шт.) превышает доступный остаток товара — ${fmt(available)} шт. (${breakdown}). Физически продать больше доступного не получится.</div></div>`;
+        } else {
+          stockWarning=`<div class="rec info" style="margin-top:14px;"><div class="dot"></div><div>План (${fmt(planUnits)} шт.) больше остатка на МП и поступления — ${fmt(available)} шт. (${breakdown}). Остаток на ФФ не заполнен, поэтому тревоги нет: внесите его в план, чтобы проверка учитывала и ФФ.</div></div>`;
+        }
+      }
+      if(arrivalNote){
+        stockWarning+=`<div class="rec info" style="margin-top:8px;"><div class="dot"></div><div>${arrivalNote}</div></div>`;
+      }
     }
   }
 
   if(myToken!==planRenderToken || currentPlanMode()!=='product') return;
   summaryWrap.innerHTML = `<div class="panel"><h2>Факт по плану</h2>
     <div class="kpis">
+      <div class="kpi"><div class="label">Факт за ${prevMonth}</div><div class="value">${fmt(prevFact.factUnits)} шт / ${fmt(prevFact.factRub)} ₽</div></div>
       <div class="kpi"><div class="label">Факт, ₽</div><div class="value">${fmt(factRub)} ₽</div>${planRub? `<div class="bar"><div style="width:${Math.min(100,factRub/planRub*100)}%;background:${progressBarColor(factRub/planRub*100)};"></div></div>`:''}</div>
       <div class="kpi"><div class="label">Факт, шт</div><div class="value">${fmt(factUnits)}</div>${planUnits? `<div class="bar"><div style="width:${Math.min(100,factUnits/planUnits*100)}%;background:${progressBarColor(factUnits/planUnits*100)};"></div></div>`:''}</div>
       <div class="kpi"><div class="label">Выполнение плана</div><div class="value">${donePct!==null? fmt1(donePct)+'%' : '—'}</div></div>
@@ -2315,6 +2616,7 @@ async function ensureTodayDraft(productId){
 }
 
 async function onDailyProductChange(){
+  if(!(await dailyNavGuard())) return;
   const productId=document.getElementById('daily_product').value;
   if(productId) await ensureTodayDraft(productId);
   await renderAnomalies();
@@ -2439,72 +2741,249 @@ function cellBadge(diff, {suffix='', decimals=1, goodUp=true, neutral=false}={})
   return `<span class="cellbadge ${cls}">${sign}${Math.abs(diff).toFixed(decimals)}${suffix}</span>`;
 }
 
-let dailyTableRerenderTimer=null;
-function scheduleDailyTableRerender(){
-  if(dailyTableRerenderTimer) clearTimeout(dailyTableRerenderTimer);
-  dailyTableRerenderTimer=setTimeout(async ()=>{
-    dailyTableRerenderTimer=null;
-    // Запоминаем, какая ячейка была выбрана/в фокусе до пересборки таблицы —
-    // полная пересборка (innerHTML) иначе сбрасывает выделение, даже если
-    // пользователь просто смотрит на ячейку, а не редактирует её.
-    const wrapBefore=document.getElementById('dailyTableWrap');
-    const active=(wrapBefore && wrapBefore.contains(document.activeElement)) ? document.activeElement : null;
-    const focusInfo = active ? {
-      notedate: active.dataset ? active.dataset.notedate : null,
-      editfield: active.dataset ? active.dataset.editfield : null,
-      bidindex: active.dataset ? active.dataset.bidindex : null,
-      selStart: (typeof active.selectionStart==='number') ? active.selectionStart : null,
-    } : null;
+/* ===== Ежедневные данные: локальные правки + сохранение одной кнопкой =====
+   Все правки в таблице сначала применяются к локальной копии (dailyWork.local) и копятся
+   списком операций (dailyWork.ops). В базу ничего не пишется, пока не нажата «Сохранить».
+   При сохранении операции применяются заново поверх САМОЙ СВЕЖЕЙ версии документа
+   (в транзакции, через mutateStoreValue), поэтому чужие уже сохранённые правки других ячеек
+   не затираются. */
+let dailyWork=null;   // {productId, local, ops:Map}
+let dailyCtx=null;    // последний подтверждённый выбор {mp, productId, month}
+let dailySaving=false;
+const FUNNEL_FIELDS=['impressions','clicks','carts','orders'];
+const AD_BREAKDOWN_WB=['adspend_ark','adspend_search'];
+const AD_BREAKDOWN_YM=['adspend_bpr','adspend_bpk','adspend_polki'];
+const PRICE_FIELDS=['priceLK','priceCustomer','priceOzonCard'];
 
-    await renderDailyTab();
-
-    // Возвращаем фокус (и позицию курсора) на ту же ячейку после пересборки.
-    if(focusInfo && focusInfo.notedate){
-      const wrapAfter=document.getElementById('dailyTableWrap');
-      if(wrapAfter){
-        let selector = `[data-notedate="${CSS.escape(focusInfo.notedate)}"]`;
-        if(focusInfo.editfield) selector += `[data-editfield="${CSS.escape(focusInfo.editfield)}"]`;
-        if(focusInfo.bidindex!=null && focusInfo.bidindex!=='') selector += `[data-bidindex="${CSS.escape(focusInfo.bidindex)}"]`;
-        const el = wrapAfter.querySelector(selector);
-        if(el && typeof el.focus==='function'){
-          el.focus();
-          if(focusInfo.selStart!=null && typeof el.setSelectionRange==='function'){
-            try{ el.setSelectionRange(focusInfo.selStart, focusInfo.selStart); }catch(e){}
-          }
-        }
-      }
+function blankDailyEntry(product){
+  const bidCount=bidCountForMp(product?.mp);
+  return {
+    priceLK:0, priceCustomer:0, priceOzonCard:0,
+    impressions:0, uniqueVisitors:0, searchPosition:null, clicks:0, carts:0, orders:0, ordersRub:0,
+    buyouts:0, cancellations:0, adspend:0, adspend_ark:0, adspend_search:0, adspend_bpr:0, adspend_bpk:0, adspend_polki:0,
+    changeNote:'', changeTypes:[], promo:null,
+    adBids: Array.from({length:bidCount},(_,i)=>({label:`Ставка ${i+1}`,value:null})),
+    draft:true
+  };
+}
+// Применяет одну правку к объекту дней dmObj. Если дня ещё нет — создаёт пустой черновик.
+function applyDailyOp(dmObj, op, product){
+  const d=op.date;
+  if(!dmObj[d]) dmObj[d]=blankDailyEntry(product);
+  const day=dmObj[d];
+  if(op.kind==='field'){
+    const field=op.field;
+    day[field]=op.value;
+    if(AD_BREAKDOWN_WB.includes(field)){
+      day.adspend=(+day.adspend_ark||0)+(+day.adspend_search||0);
+    } else if(AD_BREAKDOWN_YM.includes(field)){
+      day.adspend=(+day.adspend_bpr||0)+(+day.adspend_bpk||0)+(+day.adspend_polki||0);
     }
-  }, 1800);
+    if(field==='orders') day.ordersRub=Math.round((+day.orders||0)*(+day.priceLK||0));
+    if(FUNNEL_FIELDS.includes(field) && day.draft) delete day.draft;
+  } else if(op.kind==='changeTypes'){
+    day.changeTypes=op.value;
+  } else if(op.kind==='changeNote'){
+    day.changeNote=op.value;
+  } else if(op.kind==='promo'){
+    day.promo=op.value;
+  } else if(op.kind==='bid'){
+    if(!day.adBids) day.adBids=[];
+    if(!day.adBids[op.idx]) day.adBids[op.idx]={label:`Ставка ${op.idx+1}`,value:null};
+    day.adBids[op.idx].value=op.value;
+  }
+}
+function dailyOpKey(op){ return [op.kind, op.date, op.field!==undefined? op.field : (op.idx!==undefined? op.idx : '')].join('|'); }
+function dirtyCls(date, kind, key){
+  return (dailyWork && dailyWork.ops.has([kind,date,key].join('|'))) ? ' cell-dirty' : '';
+}
+function dailyOpIsNoop(op){
+  const day=dailyWork.local[op.date];
+  if(!day) return false; // дня ещё нет — запись создаст его
+  if(op.kind==='field') return (day[op.field]??null)===(op.value??null);
+  if(op.kind==='changeNote') return (day.changeNote||'')===op.value;
+  if(op.kind==='promo') return (day.promo??null)===(op.value??null);
+  if(op.kind==='bid') return (day.adBids?.[op.idx]?.value??null)===(op.value??null);
+  return false;
+}
+function recordDailyOp(op){
+  if(!dailyWork) return;
+  if(dailyOpIsNoop(op)) return;
+  const product=state.products.find(p=>p.id===dailyWork.productId);
+  const key=dailyOpKey(op);
+  dailyWork.ops.delete(key); dailyWork.ops.set(key, op); // порядок = порядок правок (важно для «Заказы шт» → «Заказы ₽»)
+  applyDailyOp(dailyWork.local, op, product);
+  updateDailyDirtyUI();
+}
+function updateDailyDirtyUI(){
+  const n = dailyWork ? dailyWork.ops.size : 0;
+  const saveBtn=document.getElementById('dailySaveBtn');
+  const label=document.getElementById('dailyDirtyLabel');
+  if(!saveBtn) return;
+  saveBtn.disabled = (n===0 || dailySaving);
+  label.textContent = n>0 ? `Есть несохранённые изменения (${n}) — ячейки подсвечены жёлтым. Нажмите «Сохранить» (или Ctrl+S).` : 'Все изменения сохранены.';
+  label.style.color = n>0 ? 'var(--warn)' : 'var(--ink-3)';
 }
 
+async function saveDailyChanges(){
+  if(!dailyWork || dailyWork.ops.size===0 || dailySaving) return true;
+  dailySaving=true;
+  const productId=dailyWork.productId;
+  const product=state.products.find(p=>p.id===productId);
+  const savedOps=[...dailyWork.ops.values()];
+  const saveBtn=document.getElementById('dailySaveBtn');
+  const origText=saveBtn.textContent;
+  saveBtn.textContent='Сохраняю…';
+  updateDailyDirtyUI();
+  let maxDate=null;
+  const result=await mutateStoreValue('daily:'+productId, ()=>({}), (fresh)=>{
+    savedOps.forEach(op=>applyDailyOp(fresh, op, product));
+    maxDate=Object.keys(fresh).sort().slice(-1)[0];
+  });
+  dailySaving=false;
+  saveBtn.textContent=origText;
+  if(!result){
+    updateDailyDirtyUI();
+    alert('Не удалось сохранить — сбой хранилища. Ваши правки остались в таблице и не потеряны, нажмите «Сохранить» ещё раз.');
+    return false;
+  }
+  // Цена: если правился самый свежий день — синхронизируем в карточку товара (вкладка «Товары», Run-rate и др.)
+  const priceOps=savedOps.filter(o=>o.kind==='field' && PRICE_FIELDS.includes(o.field) && o.date===maxDate);
+  if(priceOps.length){
+    const latest=result[maxDate];
+    await mutateStoreValue('product:'+productId, ()=>null, (pr)=>{
+      if(!pr) return;
+      priceOps.forEach(o=>{
+        if(o.field==='priceLK') pr.currentPriceLK=latest.priceLK;
+        if(o.field==='priceCustomer') pr.currentPriceCustomer=latest.priceCustomer;
+        if(o.field==='priceOzonCard') pr.currentPriceOzonCard=latest.priceOzonCard;
+      });
+    });
+    if(product){
+      priceOps.forEach(o=>{
+        if(o.field==='priceLK') product.currentPriceLK=latest.priceLK;
+        if(o.field==='priceCustomer') product.currentPriceCustomer=latest.priceCustomer;
+        if(o.field==='priceOzonCard') product.currentPriceOzonCard=latest.priceOzonCard;
+      });
+    }
+  }
+  if(dailyWork && dailyWork.productId===productId){
+    // убираем сохранённые правки; то, что успели изменить за время сохранения, остаётся несохранённым
+    savedOps.forEach(op=>{ const k=dailyOpKey(op); if(dailyWork.ops.get(k)===op) dailyWork.ops.delete(k); });
+    dailyWork.local=JSON.parse(JSON.stringify(result));
+    [...dailyWork.ops.values()].forEach(op=>applyDailyOp(dailyWork.local, op, product));
+    updateDailyDirtyUI();
+    renderDailyTableLocal();
+    renderAnomalies();
+  }
+  return true;
+}
+
+function askUnsaved(n, where){
+  where=where||'Ежедневные данные';
+  return new Promise(resolve=>{
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    ov.innerHTML=`<div class="panel" style="max-width:440px;margin:0;">
+      <h2>Есть несохранённые изменения</h2>
+      <p class="hint">В таблице «${where}» несохранённых правок: ${n}. Что сделать?</p>
+      <div class="row">
+        <button class="btn" data-ch="save">Сохранить</button>
+        <button class="btn secondary" data-ch="discard">Не сохранять</button>
+        <button class="btn secondary" data-ch="stay">Остаться</button>
+      </div></div>`;
+    document.body.appendChild(ov);
+    ov.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ ov.remove(); resolve(b.dataset.ch); }));
+  });
+}
+// true — можно продолжать (сохранили или отказались от правок), false — остаёмся на месте
+async function resolveDailyUnsaved(){
+  if(!dailyWork || dailyWork.ops.size===0) return true;
+  const choice=await askUnsaved(dailyWork.ops.size);
+  if(choice==='stay') return false;
+  if(choice==='save') return await saveDailyChanges();
+  dailyWork.ops=new Map();
+  updateDailyDirtyUI();
+  return true;
+}
+function restoreDailySelectors(){
+  if(!dailyCtx) return;
+  document.getElementById('daily_mp').value=dailyCtx.mp;
+  fillFilteredProductSelect('daily_mp','daily_product');
+  document.getElementById('daily_product').value=dailyCtx.productId;
+  document.getElementById('daily_history_month').value=dailyCtx.month;
+}
+async function dailyNavGuard(){
+  const ok=await resolveDailyUnsaved();
+  if(!ok) restoreDailySelectors();
+  return ok;
+}
+window.addEventListener('beforeunload', (e)=>{
+  if((dailyWork && dailyWork.ops.size>0) || (supplyWork && supplyWork.ops.size>0)){ e.preventDefault(); e.returnValue=''; }
+});
+document.getElementById('dailySaveBtn').addEventListener('click', saveDailyChanges);
+document.addEventListener('keydown', (e)=>{
+  if((e.ctrlKey||e.metaKey) && (e.key==='s'||e.key==='S') && document.getElementById('tab-daily').style.display!=='none'){
+    e.preventDefault();
+    // уйти из активной ячейки, чтобы её значение попало в правки, затем сохранить
+    if(document.activeElement && typeof document.activeElement.blur==='function') document.activeElement.blur();
+    setTimeout(saveDailyChanges, 0);
+  }
+});
+
+// Локальная перерисовка таблицы (без обращения к базе) с возвратом фокуса на ту же ячейку
+function rerenderDailyLocalKeepFocus(){
+  setTimeout(()=>{
+    const wrap=document.getElementById('dailyTableWrap');
+    if(!wrap) return;
+    const active=wrap.contains(document.activeElement) ? document.activeElement : null;
+    if(active && active.tagName==='SELECT' && active.multiple) return; // идёт выбор типов изменения — не мешаем
+    const focusInfo = (active && active.dataset && active.dataset.notedate) ? {
+      notedate: active.dataset.notedate, editfield: active.dataset.editfield, bidindex: active.dataset.bidindex,
+      cls: active.className, tag: active.tagName
+    } : null;
+    const sx=wrap.scrollLeft, sy=wrap.scrollTop, wy=window.scrollY;
+    renderDailyTableLocal();
+    wrap.scrollLeft=sx; wrap.scrollTop=sy; window.scrollTo(window.scrollX, wy);
+    if(focusInfo){
+      let selector=`[data-notedate="${CSS.escape(focusInfo.notedate)}"]`;
+      if(focusInfo.editfield) selector+=`[data-editfield="${CSS.escape(focusInfo.editfield)}"]`;
+      if(focusInfo.bidindex!=null && focusInfo.bidindex!=='') selector+=`[data-bidindex="${CSS.escape(focusInfo.bidindex)}"]`;
+      if(!focusInfo.editfield && !focusInfo.bidindex){
+        const c=String(focusInfo.cls||'').split(' ')[0];
+        if(c) selector=`.${c}`+selector;
+      }
+      const el=wrap.querySelector(selector);
+      if(el && typeof el.focus==='function'){
+        el.focus({preventScroll:true});
+        if(el.tagName==='INPUT' && typeof el.select==='function') el.select();
+      }
+    }
+  }, 0);
+}
+
+// Полная загрузка из базы (смена товара/месяца, вход на вкладку, после «Отменить»)
 async function renderDailyTab(){
   await renderAnomalies();
   const productId=document.getElementById('daily_product').value;
   const wrap=document.getElementById('dailyTableWrap');
-  if(!productId){ wrap.innerHTML='<div class="empty">Выберите товар</div>'; return; }
+  if(!productId){ dailyWork=null; updateDailyDirtyUI(); wrap.innerHTML='<div class="empty">Выберите товар</div>'; return; }
+  const dm=await getDailyMap(productId);
+  if(document.getElementById('daily_product').value!==productId) return; // пока грузилось, выбрали другой товар
+  dailyWork={productId, local:JSON.parse(JSON.stringify(dm)), ops:new Map()};
+  dailyCtx={mp:document.getElementById('daily_mp').value, productId, month:document.getElementById('daily_history_month').value || monthNow()};
+  updateDailyDirtyUI();
+  renderDailyTableLocal();
+}
+
+function renderDailyTableLocal(){
+  const wrap=document.getElementById('dailyTableWrap');
+  if(!dailyWork){ wrap.innerHTML='<div class="empty">Выберите товар</div>'; return; }
+  const productId=dailyWork.productId;
   const product=state.products.find(p=>p.id===productId);
   const isOzon = product?.mp==='ozon';
-  const dm=await getDailyMap(productId);
-  if(Object.keys(dm).length===0){
-    wrap.innerHTML=`<div class="empty">У этого товара пока нет ни одной записи.<br><button class="btn" id="createFirstDayBtn" style="margin-top:10px;">Создать первый день (сегодня)</button></div>`;
-    document.getElementById('createFirstDayBtn').addEventListener('click', async ()=>{
-      const today=todayISO();
-      const bidCount=bidCountForMp(product?.mp);
-      const newDay={
-        priceLK:0, priceCustomer:0, priceOzonCard:0,
-        impressions:0, uniqueVisitors:0, searchPosition:null, clicks:0, carts:0, orders:0, ordersRub:0,
-        buyouts:0, cancellations:0, adspend:0, adspend_ark:0, adspend_search:0, adspend_bpr:0, adspend_bpk:0, adspend_polki:0,
-        changeNote:'', changeTypes:[], promo:null,
-        adBids: Array.from({length:bidCount},(_,i)=>({label:`Ставка ${i+1}`,value:null})),
-        draft:true
-      };
-      const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{ if(!dmFresh[today]) dmFresh[today]=newDay; });
-      if(!result){ alert('Не удалось создать день — сбой хранилища, попробуйте ещё раз'); return; }
-      renderDailyTab();
-    });
-    return;
-  }
-
+  const dm=dailyWork.local;
+  const today=todayISO();
   const month=document.getElementById('daily_history_month').value || monthNow();
   document.getElementById('daily_history_month').value=month;
   const enrichedByDate={};
@@ -2513,6 +2992,7 @@ async function renderDailyTab(){
   const dim=daysInMonth(month);
   const dates=Array.from({length:dim},(_,i)=>`${month}-${String(i+1).padStart(2,'0')}`);
   const hasAnyDataThisMonth = dates.some(d=>enrichedByDate[d]);
+  const monthHasPastDays = `${month}-01`<=today;
 
   const bidCount=bidCountForMp(product?.mp);
   const bidLabels=Array.from({length:bidCount},(_,i)=>product?.adBids?.[i]?.label || `Ставка ${i+1}`);
@@ -2617,33 +3097,33 @@ async function renderDailyTab(){
       const e=enrichedByDate[d]||null;
       const val=r.get(e);
       if(r.isEditableChangeType){
-        if(!e) return `<td></td>`;
+        if(!e && d>today) return `<td></td>`;
         const selected=val||[];
         const displayText=selected.length? selected.map(t=>CHANGE_TYPES[t]?.label).filter(Boolean).join(', ') : '—';
-        return `<td><div class="changetype-display" data-notedate="${d}" tabindex="0" style="cursor:pointer;min-height:16px;padding:2px;font-size:11px;color:inherit;white-space:normal;">${displayText}</div></td>`;
+        return `<td><div class="changetype-display${dirtyCls(d,'changeTypes','')}" data-notedate="${d}" tabindex="0" style="cursor:pointer;min-height:16px;padding:2px;font-size:11px;color:inherit;white-space:normal;">${displayText}</div></td>`;
       }
       if(r.isEditableComment){
-        if(!e) return `<td></td>`;
+        if(!e && d>today) return `<td></td>`;
         const safe=(val||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        return `<td class="txt"><textarea class="comment-edit-input" data-notedate="${d}" rows="1" style="width:180px;min-width:140px;resize:both;overflow:hidden;border:none;background:transparent;font-family:inherit;font-size:11.5px;color:inherit;white-space:normal;overflow-wrap:break-word;padding:2px;">${safe}</textarea></td>`;
+        return `<td class="txt"><textarea class="comment-edit-input${dirtyCls(d,'changeNote','')}" data-notedate="${d}" rows="1" style="width:180px;min-width:140px;resize:both;overflow:hidden;border:none;background:transparent;font-family:inherit;font-size:11.5px;color:inherit;white-space:normal;overflow-wrap:break-word;padding:2px;">${safe}</textarea></td>`;
       }
       if(r.isEditablePromo){
-        if(!e) return `<td></td>`;
+        if(!e && d>today) return `<td></td>`;
         const cur=val||'';
-        return `<td><select class="promo-edit-input" data-notedate="${d}" style="border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;padding:2px;">
+        return `<td><select class="promo-edit-input${dirtyCls(d,'promo','')}" data-notedate="${d}" style="border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;padding:2px;">
           <option value=""${cur===''?' selected':''}>—</option>
           <option value="yes"${cur==='yes'?' selected':''}>Участвую</option>
           <option value="no"${cur==='no'?' selected':''}>Не участвую</option>
         </select></td>`;
       }
       if(r.editField){
-        if(!e) return `<td></td>`;
-        return `<td><input type="number" min="0" class="num-edit-input" data-notedate="${d}" data-editfield="${r.editField}" value="${val??''}" style="width:76px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:left;padding:2px;"></td>`;
+        if(!e && d>today) return `<td></td>`;
+        return `<td><input type="number" min="0" class="num-edit-input${dirtyCls(d,'field',r.editField)}" data-notedate="${d}" data-editfield="${r.editField}" value="${val??''}" style="width:76px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:left;padding:2px;"></td>`;
       }
       if(r.isEditableBid){
-        if(!e) return `<td></td>`;
+        if(!e && d>today) return `<td></td>`;
         const safe=(val??'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        return `<td class="txt"><textarea class="bid-edit-input" data-notedate="${d}" data-bidindex="${r.bidIndex}" rows="1" style="width:100px;min-width:80px;resize:both;overflow:hidden;border:none;background:transparent;font-family:inherit;font-size:11.5px;color:inherit;white-space:normal;overflow-wrap:break-word;padding:2px;">${safe}</textarea></td>`;
+        return `<td class="txt"><textarea class="bid-edit-input${dirtyCls(d,'bid',r.bidIndex)}" data-notedate="${d}" data-bidindex="${r.bidIndex}" rows="1" style="width:100px;min-width:80px;resize:both;overflow:hidden;border:none;background:transparent;font-family:inherit;font-size:11.5px;color:inherit;white-space:normal;overflow-wrap:break-word;padding:2px;">${safe}</textarea></td>`;
       }
       if(r.isText) return `<td class="txt">${r.fmt(val)}</td>`;
       let out=r.fmt(val);
@@ -2668,13 +3148,12 @@ async function renderDailyTab(){
     return `<tr class="${rowClass}">${labelCell}${aggCell}${cells}</tr>`;
   }).join('');
 
-  if(!hasAnyDataThisMonth){
-    wrap.innerHTML=`<div class="empty">Нет данных за ${month} — выберите другой месяц</div>`;
+  if(!hasAnyDataThisMonth && !monthHasPastDays){
+    wrap.innerHTML=`<div class="empty">Месяц ${month} ещё не наступил — выберите другой месяц</div>`;
   } else {
     wrap.innerHTML=`<table class="daytable"><thead><tr><th class="sticky">Показатель</th><th class="sticky2">Итого / Среднее</th>${theadCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
   }
 
-  const FUNNEL_FIELDS=['impressions','clicks','carts','orders'];
   wrap.querySelectorAll('.changetype-display').forEach(div=>{
     div.addEventListener('click', ()=>{
       const d=div.dataset.notedate;
@@ -2689,109 +3168,47 @@ async function renderDailyTab(){
       sel.innerHTML=optionsHtml;
       div.replaceWith(sel);
       sel.focus();
-      sel.addEventListener('blur', async ()=>{
+      sel.addEventListener('blur', ()=>{
         const newTypes=[...sel.selectedOptions].map(o=>o.value);
-        const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
-          if(dmFresh[d]) dmFresh[d].changeTypes=newTypes;
-        });
-        if(!result) alert('Не удалось сохранить — попробуйте ещё раз');
-        renderDailyTab();
+        const same=newTypes.length===selected.length && newTypes.every(t=>selected.includes(t));
+        if(!same) recordDailyOp({kind:'changeTypes', date:d, value:newTypes});
+        rerenderDailyLocalKeepFocus();
       }, {once:true});
     });
   });
   wrap.querySelectorAll('.comment-edit-input').forEach(inp=>{
     inp.style.height=inp.scrollHeight+'px';
     inp.addEventListener('input', ()=>{ inp.style.height='auto'; inp.style.height=inp.scrollHeight+'px'; });
-    inp.addEventListener('change', async ()=>{
-      const d=inp.dataset.notedate;
-      const newNote=inp.value.trim();
-      const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
-        if(dmFresh[d]) dmFresh[d].changeNote=newNote;
-      });
-      if(!result) alert('Не удалось сохранить комментарий — попробуйте ещё раз');
+    inp.addEventListener('change', ()=>{
+      recordDailyOp({kind:'changeNote', date:inp.dataset.notedate, value:inp.value.trim()});
+      rerenderDailyLocalKeepFocus();
     });
   });
   wrap.querySelectorAll('.promo-edit-input').forEach(sel=>{
-    sel.addEventListener('change', async ()=>{
-      const d=sel.dataset.notedate;
-      const newVal=sel.value===''? null : sel.value;
-      const oldVal=dm[d]?.promo;
-      const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
-        if(dmFresh[d]) dmFresh[d].promo=newVal;
-      });
-      if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); sel.value=oldVal??''; return; }
-      scheduleDailyTableRerender();
+    sel.addEventListener('change', ()=>{
+      recordDailyOp({kind:'promo', date:sel.dataset.notedate, value: sel.value===''? null : sel.value});
+      rerenderDailyLocalKeepFocus();
     });
   });
-  const AD_BREAKDOWN_WB=['adspend_ark','adspend_search'];
-  const AD_BREAKDOWN_YM=['adspend_bpr','adspend_bpk','adspend_polki'];
   wrap.querySelectorAll('.num-edit-input').forEach(inp=>{
     inp.addEventListener('wheel', (e)=>{ e.preventDefault(); }, {passive:false});
     inp.addEventListener('focus', ()=>{ if(inp.value==='0') inp.value=''; });
-    inp.addEventListener('change', async ()=>{
-      const d=inp.dataset.notedate;
+    inp.addEventListener('change', ()=>{
       const field=inp.dataset.editfield;
-      const oldVal=dm[d]?.[field];
       const emptyAsNull = ['searchPosition','buyouts','cancellations'].includes(field);
       let newVal = inp.value==='' ? (emptyAsNull? null : 0) : +inp.value;
-      if(newVal!==null && newVal<0) newVal=0; // подстраховка — отрицательные значения не сохраняем
+      if(newVal!==null && newVal<0) newVal=0; // отрицательные значения не принимаем
       inp.value = newVal??'';
-
-      let finalDay=null, finalMaxDate=null;
-      const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
-        if(!dmFresh[d]) return;
-        dmFresh[d][field] = newVal;
-        if(AD_BREAKDOWN_WB.includes(field)){
-          dmFresh[d].adspend = (+dmFresh[d].adspend_ark||0) + (+dmFresh[d].adspend_search||0);
-        } else if(AD_BREAKDOWN_YM.includes(field)){
-          dmFresh[d].adspend = (+dmFresh[d].adspend_bpr||0) + (+dmFresh[d].adspend_bpk||0) + (+dmFresh[d].adspend_polki||0);
-        }
-        if(field==='orders'){
-          dmFresh[d].ordersRub = Math.round((+dmFresh[d].orders||0) * (+dmFresh[d].priceLK||0));
-        }
-        if(FUNNEL_FIELDS.includes(field) && dmFresh[d].draft) delete dmFresh[d].draft;
-        finalDay=dmFresh[d];
-        finalMaxDate=Object.keys(dmFresh).sort().slice(-1)[0];
-      });
-      if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); inp.value=oldVal??''; return; }
-      // Если правится цена — синхронизируем её в карточку товара (вкладка «Товары»),
-      // но только если правится самый свежий день в истории, а не задним числом.
-      // Раньше это делал только массовый импорт из Excel, из-за чего у товаров,
-      // куда данные вносили вручную день за днём, «Текущая цена» оставалась пустой.
-      const PRICE_FIELDS=['priceLK','priceCustomer','priceOzonCard'];
-      if(PRICE_FIELDS.includes(field) && finalDay && d===finalMaxDate){
-        const priceValue=finalDay[field];
-        await mutateStoreValue('product:'+productId, ()=>null, (p)=>{
-          if(!p) return;
-          if(field==='priceLK') p.currentPriceLK=priceValue;
-          if(field==='priceCustomer') p.currentPriceCustomer=priceValue;
-          if(field==='priceOzonCard') p.currentPriceOzonCard=priceValue;
-        });
-        const p=state.products.find(x=>x.id===productId);
-        if(p){
-          if(field==='priceLK') p.currentPriceLK=priceValue;
-          if(field==='priceCustomer') p.currentPriceCustomer=priceValue;
-          if(field==='priceOzonCard') p.currentPriceOzonCard=priceValue;
-        }
-      }
-      scheduleDailyTableRerender();
+      recordDailyOp({kind:'field', date:inp.dataset.notedate, field, value:newVal});
+      rerenderDailyLocalKeepFocus();
     });
   });
   wrap.querySelectorAll('.bid-edit-input').forEach(inp=>{
     inp.style.height=inp.scrollHeight+'px';
     inp.addEventListener('input', ()=>{ inp.style.height='auto'; inp.style.height=inp.scrollHeight+'px'; });
-    inp.addEventListener('change', async ()=>{
-      const d=inp.dataset.notedate;
-      const idx=+inp.dataset.bidindex;
-      const oldVal=dm[d]?.adBids?.[idx]?.value;
-      const newVal=inp.value.trim()===''? null : inp.value.trim();
-      const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
-        if(!dmFresh[d]) return;
-        if(!dmFresh[d].adBids) dmFresh[d].adBids=[];
-        if(!dmFresh[d].adBids[idx]) dmFresh[d].adBids[idx]={label:`Ставка ${idx+1}`,value:null};
-        dmFresh[d].adBids[idx].value = newVal;
-      });
-      if(!result){ alert('Не удалось сохранить — попробуйте ещё раз'); inp.value=oldVal??''; }
+    inp.addEventListener('change', ()=>{
+      recordDailyOp({kind:'bid', date:inp.dataset.notedate, idx:+inp.dataset.bidindex, value: inp.value.trim()===''? null : inp.value.trim()});
+      rerenderDailyLocalKeepFocus();
     });
   });
   wrap.querySelectorAll('.bidlabel-edit-input').forEach(inp=>{
@@ -2813,7 +3230,10 @@ async function renderDailyTab(){
     });
   });
 }
-document.getElementById('daily_history_month').addEventListener('change', renderDailyTab);
+document.getElementById('daily_history_month').addEventListener('change', async ()=>{
+  if(!(await dailyNavGuard())) return;
+  renderDailyTab();
+});
 
 /* ---------------- ВОРОНКА ---------------- */
 async function monthEntries(productId, month){
@@ -2895,23 +3315,25 @@ async function renderFunnelTab(){
   const cr1Data=enrMonth.map(e=>e.cr1!==null?+e.cr1.toFixed(1):0);
   const cr2Data=enrMonth.map(e=>e.cr2!==null?+e.cr2.toFixed(1):0);
   const imprData=entries.map(([,e])=>+e.impressions||0);
+  const hoverLinePlugin={id:'hoverLine',afterDatasetsDraw(c){const a=c.tooltip&&c.tooltip.getActiveElements&&c.tooltip.getActiveElements();if(!a||!a.length)return;const x=a[0].element.x,{top,bottom}=c.chartArea,g=c.ctx;g.save();g.beginPath();g.moveTo(x,top);g.lineTo(x,bottom);g.lineWidth=1;g.strokeStyle='rgba(60,60,60,.35)';g.setLineDash([4,3]);g.stroke();g.restore();}};
+  function chartTipOpts(unitByLabel){return {mode:'index',intersect:false,callbacks:{label:ctx=>{const u=unitByLabel[ctx.dataset.label]||'';const v=ctx.parsed.y;return ' '+ctx.dataset.label+': '+(u==='%'?fmt1(v)+'%':u==='₽'?fmt(v)+' ₽':fmt(v));}}};}
   if(drrChart) drrChart.destroy();
   if(crChart) crChart.destroy();
   drrChart=new Chart(document.getElementById('drrChart'),{type:'line',data:{labels,datasets:[
-    {label:'ДРР',data:drrData,yAxisID:'y',borderColor:'#B4740E',backgroundColor:'rgba(180,116,14,0.08)',fill:true,borderWidth:2,pointRadius:0,tension:.3},
-    {label:'Заказы, ₽',data:ordersRubData,yAxisID:'y1',borderColor:'#3355CC',borderWidth:1.5,pointRadius:0,tension:.3}
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:10,font:{size:10.5}}}},
+    {label:'ДРР',data:drrData,yAxisID:'y',borderColor:'#B4740E',backgroundColor:'rgba(180,116,14,0.08)',fill:true,borderWidth:2,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderWidth:1.5,tension:.3},
+    {label:'Заказы, ₽',data:ordersRubData,yAxisID:'y1',borderColor:'#3355CC',borderWidth:1.5,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderWidth:1.5,tension:.3}
+  ]},plugins:[hoverLinePlugin],options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{tooltip:chartTipOpts({'ДРР':'%','Заказы, ₽':'₽','CTR':'%','CR в корзину':'%','CR в заказ':'%'}),legend:{display:true,position:'bottom',labels:{boxWidth:10,font:{size:10.5}}}},
     scales:{
       y:{position:'left',ticks:{callback:v=>v+'%'},grid:{color:'#E2E4DE'}},
       y1:{position:'right',ticks:{callback:v=>fmt(v)},grid:{drawOnChartArea:false}},
       x:{grid:{display:false}}
     }}});
   crChart=new Chart(document.getElementById('crChart'),{type:'line',data:{labels,datasets:[
-    {label:'Показы',data:imprData,yAxisID:'y1',borderColor:'#929699',borderWidth:1.5,pointRadius:0,tension:.3},
-    {label:'CTR',data:ctrData,yAxisID:'y',borderColor:'#0057FF',borderWidth:2,pointRadius:0,tension:.3},
-    {label:'CR в корзину',data:cr1Data,yAxisID:'y',borderColor:'#1F8A5F',borderWidth:2,pointRadius:0,tension:.3},
-    {label:'CR в заказ',data:cr2Data,yAxisID:'y',borderColor:'#B4740E',borderWidth:2,pointRadius:0,tension:.3}
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:10,font:{size:10.5}}}},
+    {label:'Показы',data:imprData,yAxisID:'y1',borderColor:'#929699',borderWidth:1.5,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderWidth:1.5,tension:.3},
+    {label:'CTR',data:ctrData,yAxisID:'y',borderColor:'#0057FF',borderWidth:2,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderWidth:1.5,tension:.3},
+    {label:'CR в корзину',data:cr1Data,yAxisID:'y',borderColor:'#1F8A5F',borderWidth:2,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderWidth:1.5,tension:.3},
+    {label:'CR в заказ',data:cr2Data,yAxisID:'y',borderColor:'#B4740E',borderWidth:2,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderWidth:1.5,tension:.3}
+  ]},plugins:[hoverLinePlugin],options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{tooltip:chartTipOpts({'ДРР':'%','Заказы, ₽':'₽','CTR':'%','CR в корзину':'%','CR в заказ':'%'}),legend:{display:true,position:'bottom',labels:{boxWidth:10,font:{size:10.5}}}},
     scales:{
       y:{position:'left',ticks:{callback:v=>v+'%'},grid:{color:'#E2E4DE'}},
       y1:{position:'right',ticks:{callback:v=>fmt(v)},grid:{drawOnChartArea:false}},
@@ -2924,6 +3346,21 @@ async function renderFunnelTab(){
   await renderChangesJournal(productId, product, month, entries);
 }
 document.getElementById('funnel_product').addEventListener('change', renderFunnelTab);
+document.getElementById('funnelPrintBtn').addEventListener('click', ()=>{
+  const sel=document.getElementById('funnel_product');
+  const product=state.products.find(p=>p.id===sel.value);
+  if(!product){ alert('Выберите товар'); return; }
+  const month=document.getElementById('funnel_month').value || monthNow();
+  const title=`Воронка и точки роста — ${product.name} (${MP_LABEL[product.mp]}), ${month}`;
+  document.getElementById('funnelPrintTitle').textContent=title;
+  document.getElementById('funnelPrintSub').textContent='Сформировано '+fmtRuDate(todayISO());
+  const oldTitle=document.title;
+  document.title=title;
+  document.body.classList.add('printing-funnel');
+  const done=()=>{ document.body.classList.remove('printing-funnel'); document.title=oldTitle; window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  setTimeout(()=>window.print(), 50);
+});
 document.getElementById('funnel_month').addEventListener('change', renderFunnelTab);
 
 function avgMetricInRange(enrichedArr, fromDate, toDate, metricKey){
@@ -3570,7 +4007,7 @@ function syncProductSelector(mpId, productId){
   fillFilteredProductSelect(mpId, productId);
   document.getElementById(productId).value=selectedProductId;
 }
-['daily_product','plan_product','funnel_product','cmp_product','imp_product'].forEach(id=>{
+['daily_product','plan_product','funnel_product','cmp_product'].forEach(id=>{
   document.getElementById(id).addEventListener('change', ()=>{
     const v=document.getElementById(id).value;
     if(v) selectedProductId=v;
@@ -3581,6 +4018,15 @@ let productsReadyPromise=null;
 
 document.getElementById('tabs').addEventListener('click', async (e)=>{
   if(e.target.tagName!=='BUTTON') return;
+  {
+    const curTab=document.querySelector('#tabs button.active');
+    if(curTab && curTab.dataset.tab==='daily' && e.target.dataset.tab!=='daily'){
+      if(!(await resolveDailyUnsaved())) return; // остаёмся на «Ежедневных данных»
+    }
+    if(curTab && curTab.dataset.tab==='distrib' && e.target.dataset.tab!=='distrib'){
+      if(!(await resolveSupplyUnsaved())) return;
+    }
+  }
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
   e.target.classList.add('active');
   document.querySelectorAll('.tabpane').forEach(p=>p.style.display='none');
@@ -3590,257 +4036,15 @@ document.getElementById('tabs').addEventListener('click', async (e)=>{
   if(e.target.dataset.tab==='daily'){ syncProductSelector('daily_mp','daily_product'); onDailyProductChange(); }
   if(e.target.dataset.tab==='funnel'){ syncProductSelector('funnel_product_mp','funnel_product'); renderFunnelTab(); }
   if(e.target.dataset.tab==='compare'){ syncProductSelector('cmp_product_mp','cmp_product'); renderCompareTab(); }
-  if(e.target.dataset.tab==='import'){ syncProductSelector('imp_product_mp','imp_product'); resetImportPreview(); }
   if(e.target.dataset.tab==='products'){ renderProductsTable(); }
   if(e.target.dataset.tab==='stock'){ renderStockTab(); }
-  if(e.target.dataset.tab==='distrib'){ populateDistribTab(); }
+  if(e.target.dataset.tab==='distrib'){ populateDistribTab(); renderSupplyPanel(); }
   if(e.target.dataset.tab==='zakup'){ renderZakupOverview(); }
-});
-
-/* ---------------- ИМПОРТ ДАННЫХ ИЗ ФАЙЛА ---------------- */
-const TEMPLATE_COLUMNS={
-  wb:['Дата','Цена в ЛК','Цена для покупателя','Показы','Клики','Корзины','Заказы, шт','Заказы, руб','Выкупили, шт','Отмены, шт','АРК, факт руб','Поиск, факт руб','Акция (да/нет)','Что изменили'],
-  ozon:['Дата','Цена в ЛК','Цена с Ozon картой','Цена для покупателя','Показы','Уникальные посетители','Позиция в поиске и каталоге','Клики','Корзины','Заказы, шт','Заказы, руб','Выкупили, шт','Отмены, шт','Рекламные расходы, руб','Акция (да/нет)','Что изменили'],
-  ym:['Дата','Цена в ЛК','Цена для покупателя','Показы','Клики','Корзины','Заказы, шт','Заказы, руб','Выкупили, шт','Отмены, шт','БПР, факт руб','БПК, факт руб','Полки, факт руб','Акция (да/нет)','Что изменили']
-};
-const TEMPLATE_EXAMPLE={
-  wb:['ПРИМЕР — удалите строку',7400,3849,1200,55,6,2,7698,2,0,120,80,'да','Заменили главное фото'],
-  ozon:['ПРИМЕР — удалите строку',3200,3050,2990,4000,900,15,60,5,2,5980,2,0,150,'нет',''],
-  ym:['ПРИМЕР — удалите строку',5100,4850,1500,40,4,1,4850,1,0,90,60,30,'нет','']
-};
-
-function parseNum(v){
-  if(v===undefined||v===null||v==='') return 0;
-  if(typeof v==='number') return v;
-  const n=parseFloat(String(v).replace(',','.').replace(/\s/g,''));
-  return isNaN(n)?0:n;
-}
-function parseNumOrNull(v){
-  if(v===undefined||v===null||v===''||(typeof v==='string'&&v.trim()==='')) return null;
-  return parseNum(v);
-}
-function excelSerialToISO(serial){
-  // Считаем календарную дату напрямую по формуле (дни с 30.12.1899 → миллисекунды UTC),
-  // не полагаясь на то, как именно SheetJS конструирует объект Date из ячейки — это и было источником сдвига на день
-  const ms = (serial - 25569) * 86400 * 1000;
-  const d = new Date(ms);
-  return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())}`;
-}
-function parseImportDate(v){
-  if(typeof v==='number'){ return excelSerialToISO(v); }
-  if(v instanceof Date && !isNaN(v)){
-    // запасной путь на случай, если ячейка всё же придёт как объект Date, а не как число
-    return excelSerialToISO(Math.round((v.getTime()/86400000) + 25569));
-  }
-  const s=String(v).trim();
-  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const m1=s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-  if(m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
-  return null;
-}
-
-function buildTemplateWorkbook(mp){
-  const cols=TEMPLATE_COLUMNS[mp];
-  const example=TEMPLATE_EXAMPLE[mp];
-  const ws=XLSX.utils.aoa_to_sheet([cols, example]);
-  ws['!cols']=cols.map(()=>({wch:16}));
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Данные');
-
-  const instructions=[
-    ['Как заполнять'],
-    ['1. Не меняйте порядок и названия столбцов.'],
-    ['2. Удалите строку-пример (первая строка данных) перед заполнением — если забудете, она просто будет пропущена при загрузке.'],
-    ['3. Дата — в формате ГГГГ-ММ-ДД или ДД.ММ.ГГГГ.'],
-    ['4. Пустая ячейка в числовом поле считается нулём.'],
-    ['5. «Акция» — впишите «да» или «нет», можно оставить пустым.'],
-    ['6. «Что изменили» — необязательное текстовое поле, тип правки потом можно указать вручную при редактировании дня в дашборде.'],
-    ['7. Строки с датами, которые уже есть в истории товара, при загрузке заменят прежние данные за эти дни — остальные добавятся как новые дни.']
-  ];
-  const ws2=XLSX.utils.aoa_to_sheet(instructions);
-  ws2['!cols']=[{wch:90}];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Инструкция');
-  return wb;
-}
-
-document.getElementById('downloadTemplateBtn').addEventListener('click', ()=>{
-  const productId=document.getElementById('imp_product').value;
-  const product=state.products.find(p=>p.id===productId);
-  if(!product){ alert('Выберите товар'); return; }
-  const wb=buildTemplateWorkbook(product.mp);
-  const safeName=product.name.replace(/[^\wа-яА-ЯёЁ\-]+/g,'_').slice(0,40);
-  XLSX.writeFile(wb, `шаблон_${MP_LABEL[product.mp]}_${safeName}.xlsx`);
-});
-
-let pendingImport=null;
-
-function resetImportPreview(){
-  pendingImport=null;
-  document.getElementById('importPreviewWrap').innerHTML='';
-  document.getElementById('importFileInput').value='';
-}
-
-function mapRowToEntry(mp, cols, rowArr){
-  const get=(name)=>{ const idx=cols.indexOf(name); return idx>=0? rowArr[idx] : undefined; };
-  const dateRaw=get('Дата');
-  const date=parseImportDate(dateRaw);
-  if(!date){
-    const isExamplePlaceholder = typeof dateRaw==='string' && dateRaw.toLowerCase().includes('пример');
-    return {error: isExamplePlaceholder? 'пропущена строка-пример' : `не удалось распознать дату "${dateRaw}"`};
-  }
-  const priceLK=parseNum(get('Цена в ЛК'));
-  const priceCustomer=parseNum(get('Цена для покупателя'));
-  const orders=parseNum(get('Заказы, шт'));
-  const entry={
-    priceLK, priceCustomer,
-    impressions:parseNum(get('Показы')),
-    clicks:parseNum(get('Клики')),
-    carts:parseNum(get('Корзины')),
-    orders,
-    ordersRub: orders>0? parseNum(get('Заказы, руб')) : 0,
-    buyouts:parseNumOrNull(get('Выкупили, шт')),
-    cancellations:parseNumOrNull(get('Отмены, шт')),
-    changeNote:(get('Что изменили')||'').toString().trim(),
-    changeTypes:[]
-  };
-  const promoRaw=(get('Акция (да/нет)')||'').toString().trim().toLowerCase();
-  entry.promo = promoRaw==='да' ? 'yes' : promoRaw==='нет' ? 'no' : null;
-
-  if(mp==='ozon'){
-    entry.priceOzonCard=parseNum(get('Цена с Ozon картой'));
-    entry.uniqueVisitors=parseNum(get('Уникальные посетители'));
-    entry.searchPosition=parseNumOrNull(get('Позиция в поиске и каталоге'));
-    entry.adspend=parseNum(get('Рекламные расходы, руб'));
-  } else if(mp==='wb'){
-    entry.adspend_ark=parseNum(get('АРК, факт руб'));
-    entry.adspend_search=parseNum(get('Поиск, факт руб'));
-    entry.adspend=entry.adspend_ark+entry.adspend_search;
-  } else if(mp==='ym'){
-    entry.adspend_bpr=parseNum(get('БПР, факт руб'));
-    entry.adspend_bpk=parseNum(get('БПК, факт руб'));
-    entry.adspend_polki=parseNum(get('Полки, факт руб'));
-    entry.adspend=entry.adspend_bpr+entry.adspend_bpk+entry.adspend_polki;
-  }
-  return {date, entry};
-}
-
-document.getElementById('fixZerosBtn').addEventListener('click', async ()=>{
-  const noteEl=document.getElementById('fixZerosNote');
-  const productId=document.getElementById('imp_product').value;
-  const product=state.products.find(p=>p.id===productId);
-  if(!product){ alert('Выберите товар'); return; }
-  const fixBuyouts=document.getElementById('fix_buyouts_cb').checked;
-  const fixCancels=document.getElementById('fix_cancels_cb').checked;
-  if(!fixBuyouts && !fixCancels){ alert('Отметьте хотя бы одно поле — «Выкупили» и/или «Отмены»'); return; }
-  const untilDate=document.getElementById('fix_until_date').value;
-
-  const dm=await getDailyMap(productId);
-  const targetDates=Object.keys(dm).filter(d=>!dm[d].draft && (!untilDate || d<=untilDate));
-  let affectedBuyouts=0, affectedCancels=0;
-  targetDates.forEach(d=>{
-    if(fixBuyouts && dm[d].buyouts===0) affectedBuyouts++;
-    if(fixCancels && dm[d].cancellations===0) affectedCancels++;
-  });
-  const totalAffected=affectedBuyouts+affectedCancels;
-  if(totalAffected===0){ noteEl.textContent='Дней с нулём по выбранным полям (в указанных рамках) не найдено — исправлять нечего.'; return; }
-
-  const parts=[];
-  if(fixBuyouts) parts.push(`«Выкупили»: ${affectedBuyouts} дн.`);
-  if(fixCancels) parts.push(`«Отмены»: ${affectedCancels} дн.`);
-  const rangeNote=untilDate ? ` (до ${untilDate} включительно)` : ' (по всей истории товара)';
-  if(!confirm(`Будет сброшено в «неизвестно» по товару «${product.name}»${rangeNote}: ${parts.join(', ')}. Дни, где значение не равно 0, не тронутся. Продолжить?`)) return;
-
-  const btn=document.getElementById('fixZerosBtn');
-  btn.disabled=true; btn.textContent='Исправляю…';
-  // Пока шёл диалог подтверждения (confirm может провисеть сколько угодно, пока человек
-  // думает), данные могли измениться — пересчитываем, какие дни всё ещё нулевые, по самой
-  // свежей версии прямо в момент записи, а не по снимку, сделанному до подтверждения.
-  const result=await mutateStoreValue('daily:'+productId, ()=>({}), (dmFresh)=>{
-    Object.keys(dmFresh).filter(d=>!dmFresh[d].draft && (!untilDate || d<=untilDate)).forEach(d=>{
-      if(fixBuyouts && dmFresh[d].buyouts===0) dmFresh[d].buyouts=null;
-      if(fixCancels && dmFresh[d].cancellations===0) dmFresh[d].cancellations=null;
-    });
-  });
-  btn.disabled=false; btn.textContent='Проверить и исправить';
-  if(!result){ alert('Не удалось сохранить — сбой хранилища. Попробуйте ещё раз.'); return; }
-  noteEl.textContent=`Готово. Исправлено${rangeNote}: ${parts.join(', ')}.`;
-});
-
-document.getElementById('parseImportBtn').addEventListener('click', async ()=>{
-  const productId=document.getElementById('imp_product').value;
-  const product=state.products.find(p=>p.id===productId);
-  const wrap=document.getElementById('importPreviewWrap');
-  const file=document.getElementById('importFileInput').files[0];
-  if(!product){ alert('Выберите товар'); return; }
-  if(!file){ alert('Выберите файл .xlsx'); return; }
-
-  const buf=await file.arrayBuffer();
-  const wb=XLSX.read(buf, {type:'array'});
-  const sheet=wb.Sheets[wb.SheetNames[0]];
-  const rows=XLSX.utils.sheet_to_json(sheet, {header:1, raw:true});
-  if(rows.length<2){ wrap.innerHTML='<div class="empty">В файле нет данных</div>'; return; }
-  const cols=rows[0].map(c=>String(c).trim());
-  const dataRows=rows.slice(1).filter(r=>r.some(c=>c!==undefined && c!==''));
-
-  const existingDm=await getDailyMap(productId);
-  const good=[], bad=[];
-  dataRows.forEach((r,i)=>{
-    const res=mapRowToEntry(product.mp, cols, r);
-    if(res.error){ bad.push({row:i+2, error:res.error}); }
-    else good.push(res);
-  });
-
-  const newCount=good.filter(g=>!existingDm[g.date]).length;
-  const overwriteCount=good.length-newCount;
-
-  let html=`<div class="note" style="margin-bottom:10px;">Готово к загрузке: ${good.length} дн. (новых — ${newCount}, будет перезаписано — ${overwriteCount}). Пропущено строк: ${bad.length}.</div>`;
-  if(bad.length>0){
-    html+='<div class="rec warn"><div class="dot"></div><div>'+bad.map(b=>`строка ${b.row}: ${b.error}`).join('<br>')+'</div></div>';
-  }
-  if(good.length>0){
-    const preview=[...good].sort((a,b)=>a.date.localeCompare(b.date));
-    html+=`<div class="table-scroll"><table><thead><tr><th>Дата</th><th>Статус</th><th>Заказы шт</th><th>Заказы ₽</th><th>Реклама ₽</th></tr></thead><tbody>
-      ${preview.map(g=>`<tr><td>${g.date}</td><td class="txt">${existingDm[g.date]?'<span class="badge warn" style="background:var(--warn-bg);color:var(--warn);">перезапись</span>':'<span class="badge" style="background:var(--pos-bg);color:var(--pos);">новый</span>'}</td><td>${fmt(g.entry.orders)}</td><td>${fmt(g.entry.ordersRub)} ₽</td><td>${fmt(g.entry.adspend)} ₽</td></tr>`).join('')}
-    </tbody></table></div>
-    <button class="btn" id="confirmImportBtn" style="margin-top:12px;">Импортировать ${good.length} дн.</button>`;
-  }
-  wrap.innerHTML=html;
-  pendingImport={productId, good};
-
-  const confirmBtn=document.getElementById('confirmImportBtn');
-  if(confirmBtn){
-    confirmBtn.addEventListener('click', async ()=>{
-      confirmBtn.disabled=true; confirmBtn.textContent='Импортирую…';
-      const goodRows=pendingImport.good;
-      const productIdToImport=pendingImport.productId;
-      let finalMaxDate=null, finalLatest=null;
-      const result=await mutateStoreValue('daily:'+productIdToImport, ()=>({}), (dmFresh)=>{
-        goodRows.forEach(g=>{ dmFresh[g.date]=g.entry; });
-        finalMaxDate=Object.keys(dmFresh).sort().slice(-1)[0];
-        finalLatest=dmFresh[finalMaxDate];
-      });
-      if(!result){ alert('Сбой при сохранении — попробуйте ещё раз'); confirmBtn.disabled=false; confirmBtn.textContent=`Импортировать ${goodRows.length} дн.`; return; }
-      const p=state.products.find(x=>x.id===productIdToImport);
-      if(p && finalLatest){
-        const priceLK=finalLatest.priceLK||p.currentPriceLK;
-        const priceCustomer=finalLatest.priceCustomer||p.currentPriceCustomer;
-        p.currentPriceLK=priceLK; p.currentPriceCustomer=priceCustomer;
-        await mutateStoreValue('product:'+p.id, ()=>null, (pFresh)=>{
-          if(!pFresh) return;
-          pFresh.currentPriceLK=priceLK;
-          pFresh.currentPriceCustomer=priceCustomer;
-        });
-        await loadProducts();
-      }
-      wrap.innerHTML=`<div class="rec ok"><div class="dot"></div><div>Импортировано дней: ${goodRows.length}. Откройте вкладку «Ежедневные данные», чтобы увидеть их в истории.</div></div>`;
-      document.getElementById('importFileInput').value='';
-      pendingImport=null;
-    });
-  }
 });
 
 async function startApp(){
   document.getElementById('plan_mp_month').value=monthNow();
+  document.getElementById('supply_month').value=monthNow();
   document.getElementById('plan_product_month').value=monthNow();
   document.getElementById('funnel_month').value=monthNow();
   document.getElementById('daily_history_month').value=monthNow();
@@ -3910,6 +4114,8 @@ if(USE_FIREBASE){
     if(e.key==='Enter') document.getElementById('loginBtn').click();
   });
   document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+    if(!(await resolveDailyUnsaved())) return;
+    if(!(await resolveSupplyUnsaved())) return;
     await firebase.auth().signOut();
   });
 } else {
