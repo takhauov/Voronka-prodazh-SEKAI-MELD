@@ -494,7 +494,7 @@
     <div class="panel">
       <h2>Распределение товара</h2>
       <p>Калькулятор считает (сам расчёт не сохраняется), как поделить новую партию товара между WB/Ozon/ЯМ. Выбираешь товар по каждой площадке отдельно (можно не все три), строку на Фулфилменте — партия подтянется из её остатка автоматически, но её можно поправить вручную. Резерв (раньше «Авито/сайт/резерв», по умолчанию 10%) вычитается из партии первым, оставшееся делится между площадками.</p>
-      <p><b>Поставки по площадкам</b> (ниже на этой вкладке) — замена Google-таблицы с планом поставок. Для каждой площадки (WB, Ozon, ЯМ) свой блок со своей кнопкой «Сохранить»: по каждому товару за месяц — План, Отгружено, Резерв и Остаток = План − Отгружено − Резерв (одинаково для всех площадок). Товары берутся автоматически из вкладки «Товары» (с учётом групп плана), как на «Остатки и динамика». Кнопка «→» переносит резерв в «Отгружено». «Отгрузить» в результате расчёта можно поправить вручную и записать в план текущего месяца кнопкой «Записать в план поставок».</p>
+      <p><b>Поставки по площадкам</b> (ниже на этой вкладке) — замена Google-таблицы с планом поставок. Для каждой площадки (WB, Ozon, ЯМ) свой блок со своей кнопкой «Сохранить»: по каждому товару за месяц — План, Отгружено, Резерв и Остаток = План − Отгружено − Резерв (одинаково для всех площадок). Товары берутся автоматически из вкладки «Товары» (с учётом групп плана), как на «Остатки и динамика». Кнопка «→» переносит резерв в «Отгружено». Кнопка «Скрыть» убирает из списка товар, которого уже нет в продаже (данные не удаляются; скрытые можно вернуть по ссылке «Скрытые товары» внизу блока площадки). «Отгрузить» в результате расчёта можно поправить вручную и записать в план текущего месяца кнопкой «Записать в план поставок».</p>
       <p>Остаток и динамика берутся из последних сохранённых данных на вкладке «Остатки и динамика» — если для какой-то площадки остаток ещё не сохранён или прошлая неделя не закрыта (динамика не посчиталась), это будет явно показано в результате, а не подставлено как ноль.</p>
     </div>
     <div class="panel">
@@ -887,17 +887,18 @@ async function computeRowVelocityForWeek(members, viewWeekDate){
   }
   return totalUnits/7;
 }
-// Объясняет, почему не посчиталась скорость: какие дни прошлой недели (относительно viewWeekDate) не заполнены.
-// Возвращает массив строк вида «Название: 30.09 — нет записи; 01.10 — черновик».
-async function explainWeekGaps(members, viewWeekDate){
+// Какие площадки не закрыли прошлую неделю (по viewWeekDate): возвращает массив названий площадок без повторов.
+async function weekGapPlatforms(members, viewWeekDate){
   const prevWeekMonday=dateMinusDays(viewWeekDate,7);
   const days=Array.from({length:7},(_,i)=>datePlusDays(prevWeekMonday,i));
   const dailyMaps=await Promise.all(members.map(m=>getDailyMap(m.id)));
   const out=[];
   members.forEach((m,i)=>{
     const dm=dailyMaps[i]||{};
-    const bad=days.filter(d=>!dm[d] || dm[d].draft).map(d=>`${d.slice(8,10)}.${d.slice(5,7)} — ${dm[d]?'черновик (не все данные)':'нет записи'}`);
-    if(bad.length) out.push(`${MP_LABEL[m.mp]||m.mp} «${m.name}»: ${bad.join('; ')}`);
+    if(days.some(d=>!dm[d] || dm[d].draft)){
+      const name=MP_LABEL[m.mp]||m.mp;
+      if(!out.includes(name)) out.push(name);
+    }
   });
   return out;
 }
@@ -1191,9 +1192,9 @@ async function renderSupplyPanel(){
   if(state.products.length===0){ supplyWork=null; wrap.innerHTML='<div class="panel" style="margin:0;"><div class="empty">Нет товаров — добавьте на вкладке «Товары»</div></div>'; return; }
   const data={};
   await Promise.all(SUPPLY_CH.map(async c=>{
-    const [rowsDef, doc]=await Promise.all([ buildStockRows(c.ch), storeGet(supplyDocKey(month,c.ch)) ]);
+    const [rowsDef, doc, hiddenList]=await Promise.all([ buildStockRows(c.ch), storeGet(supplyDocKey(month,c.ch)), storeGet('supplyhidden:'+c.ch) ]);
     const rows=await Promise.all(rowsDef.map(async rd=>({ rowKey:rd.rowKey, label: await getStockLabel(rd.rowKey, rd.defaultLabel) })));
-    data[c.ch]={ rows, local:JSON.parse(JSON.stringify(doc||{})), ops:new Map(), saving:false };
+    data[c.ch]={ rows, local:JSON.parse(JSON.stringify(doc||{})), ops:new Map(), saving:false, hidden:new Set(hiddenList||[]), showHidden:false };
   }));
   supplyWork={ month, data };
   wrap.innerHTML=SUPPLY_CH.map(c=>`<div class="panel supply-card" data-ch="${c.ch}" style="flex:1 1 440px;min-width:0;margin:0;"></div>`).join('');
@@ -1211,22 +1212,29 @@ function renderSupplyCard(ch){
       <button class="btn supply-save" data-ch="${ch}" disabled>Сохранить</button>
       <span class="note supply-dirty" data-ch="${ch}" style="margin:0;"></span>
     </div>`;
-  if(d.rows.length===0){
-    h+='<div class="empty">Нет товаров для этой площадки</div>';
+  const hiddenCount=d.rows.filter(r=>d.hidden.has(r.rowKey)).length;
+  const visibleRows=d.rows.filter(r=>d.showHidden || !d.hidden.has(r.rowKey));
+  if(visibleRows.length===0){
+    h+='<div class="empty">'+(d.rows.length===0?'Нет товаров для этой площадки':'Все товары скрыты')+'</div>';
   } else {
-    h+=`<div class="table-scroll"><table class="supplytable"><thead><tr><th class="sticky">Товар</th>${SUPPLY_FIELDS.map(f=>`<th>${f.label}</th>`).join('')}<th title="Резерв → Отгружено"></th><th>Остаток</th></tr></thead><tbody>`;
-    d.rows.forEach(r=>{
+    h+=`<div class="table-scroll"><table class="supplytable"><thead><tr><th class="sticky">Товар</th>${SUPPLY_FIELDS.map(f=>`<th>${f.label}</th>`).join('')}<th title="Резерв → Отгружено"></th><th>Остаток</th><th></th></tr></thead><tbody>`;
+    visibleRows.forEach(r=>{
       const entry=d.local[r.rowKey]||{};
-      h+=`<tr><td class="sticky">${supHtml(r.label)}</td>`;
+      const isHidden=d.hidden.has(r.rowKey);
+      h+=`<tr${isHidden?' style="opacity:.55;"':''}><td class="sticky">${supHtml(r.label)}</td>`;
       SUPPLY_FIELDS.forEach(f=>{
         const v=supplyVal(entry,f.f);
         const dirty=d.ops.has(r.rowKey+'|'+f.f);
         h+=`<td><input type="number" min="0" step="1" class="supply-input${dirty?' cell-dirty':''}" data-ch="${ch}" data-row="${supHtml(r.rowKey)}" data-field="${f.f}" value="${v===null?'':v}"></td>`;
       });
       h+=`<td><button class="btn secondary supply-move" data-act="move" data-ch="${ch}" data-row="${supHtml(r.rowKey)}" title="Резерв отгружен: прибавить к «Отгружено» и обнулить резерв">→</button></td>`;
-      h+=`<td data-rest="${ch}|${supHtml(r.rowKey)}">${supplyRestHtml(supplyRest(entry))}</td></tr>`;
+      h+=`<td data-rest="${ch}|${supHtml(r.rowKey)}">${supplyRestHtml(supplyRest(entry))}</td>`;
+      h+=`<td><button class="btn secondary supply-move" data-act="${isHidden?'unhide':'hide'}" data-ch="${ch}" data-row="${supHtml(r.rowKey)}" title="${isHidden?'Вернуть товар в список':'Скрыть товар, которого уже нет в продаже (данные не удаляются)'}" style="white-space:nowrap;">${isHidden?'Вернуть':'Скрыть'}</button></td></tr>`;
     });
     h+='</tbody></table></div>';
+  }
+  if(hiddenCount>0){
+    h+=`<div style="margin-top:8px;"><button class="btn secondary supply-move" data-act="toggle-hidden" data-ch="${ch}" style="padding:4px 10px !important;">${d.showHidden?'Не показывать скрытые':'Скрытые товары ('+hiddenCount+')'}</button></div>`;
   }
   card.innerHTML=h;
   updateSupplyDirtyUI(ch);
@@ -1256,6 +1264,8 @@ supplyCardsEl.addEventListener('input', (e)=>{
 supplyCardsEl.addEventListener('click', (e)=>{
   const save=e.target.closest('.supply-save');
   if(save){ saveSupplyChannel(save.dataset.ch); return; }
+  const hb=e.target.closest('button[data-act="hide"],button[data-act="unhide"],button[data-act="toggle-hidden"]');
+  if(hb && supplyWork){ handleSupplyHide(hb); return; }
   const b=e.target.closest('button[data-act="move"]');
   if(!b || !supplyWork) return;
   const ch=b.dataset.ch, row=b.dataset.row;
@@ -1266,6 +1276,23 @@ supplyCardsEl.addEventListener('click', (e)=>{
   setSupplyLocal(ch,row,'reserve',null);
   renderSupplyCard(ch);
 });
+
+// Скрытие товаров — общее для всех сотрудников, сохраняется сразу (отдельно от кнопки «Сохранить»), данные не удаляются
+async function handleSupplyHide(btn){
+  const ch=btn.dataset.ch, act=btn.dataset.act, row=btn.dataset.row;
+  const d=supplyWork.data[ch];
+  if(act==='toggle-hidden'){ d.showHidden=!d.showHidden; renderSupplyCard(ch); return; }
+  btn.disabled=true;
+  const res=await mutateStoreValue('supplyhidden:'+ch, ()=>[], (list)=>{
+    const i=list.indexOf(row);
+    if(act==='hide' && i===-1) list.push(row);
+    if(act==='unhide' && i!==-1) list.splice(i,1);
+  });
+  if(!res){ btn.disabled=false; alert('Не удалось сохранить. Попробуйте ещё раз.'); return; }
+  d.hidden=new Set(res);
+  if(d.hidden.size===0) d.showHidden=false;
+  renderSupplyCard(ch);
+}
 
 async function saveSupplyChannel(ch){
   const d=supplyWork && supplyWork.data[ch];
@@ -1614,7 +1641,7 @@ async function computeZakupRow(row, smoothingMode){
     : (+settings.safetyStock||0);
   const reorderPoint = (velocity!=null && safetyStock!=null) ? Math.round(velocity*cycle + safetyStock) : null;
   const inTransitQty=inTransitQtyFor(row.rowKey, shipments);
-  const velocityGaps = velocity===null ? await explainWeekGaps([...wbM,...ozonM,...ymM], mondayOf(todayISO())) : [];
+  const velocityGaps = velocity===null ? await weekGapPlatforms([...wbM,...ozonM,...ymM], mondayOf(todayISO())) : [];
   const daysToOrder = (velocity && velocity>0 && reorderPoint!=null) ? (totalStock+inTransitQty-reorderPoint)/velocity : null;
   let status='unknown';
   if(daysToOrder!=null){ status = daysToOrder>5? 'ok' : (daysToOrder>=0? 'warn' : 'danger'); }
@@ -1645,7 +1672,7 @@ async function renderZakupOverview(){
     <td class="txt">${r.name}</td>
     <td>${fmt(r.totalStock)} шт${r.staleChannels.length? ` <span title="Остатки за текущую неделю ещё не сохранены: ${r.staleChannels.join('; ')}. Взяты последние сохранённые." style="color:var(--warn);cursor:help;">⚠</span>`:''}</td>
     <td>${r.inTransitQty>0? fmt(r.inTransitQty)+' шт' : '—'}</td>
-    <td>${r.velocity!=null? fmt1(r.velocity)+' шт/день' : `—${r.velocityGaps.length? `<div style="font-size:10.5px;color:var(--ink-3);white-space:normal;min-width:200px;font-family:var(--font-body);">нет данных за прошлую неделю:<br>${r.velocityGaps.map(g=>g.replace(/&/g,'&amp;').replace(/</g,'&lt;')).join('<br>')}</div>`:''}`}</td>
+    <td>${r.velocity!=null? fmt1(r.velocity)+' шт/день' : `—${r.velocityGaps.length? `<div style="font-size:10.5px;color:var(--ink-3);white-space:normal;font-family:var(--font-body);">нет данных: ${r.velocityGaps.join(', ')}</div>`:''}`}</td>
     <td>${r.daysToOrder!=null? fmt(Math.floor(r.daysToOrder))+' дн.' : '—'}</td>
     <td><span class="badge" style="background:var(--${ZAKUP_STATUS_CLASS[r.status]}-bg,var(--bg));color:var(--${ZAKUP_STATUS_CLASS[r.status]},var(--ink-3));">${ZAKUP_STATUS_LABEL[r.status]}</span></td>
     <td>${r.orderQty!=null? fmt(r.orderQty)+' шт' : '—'}</td>
@@ -2448,7 +2475,6 @@ async function renderPlanTab(){
     ? `<div class="note" style="margin-bottom:12px;">Общий план на группу «${product.planGroup}»: ${productsInGroup(product.planGroup).map(p=>p.name).join(', ')}. Остаток на МП суммируется по всем карточкам группы, остаток на ФФ и поступление вносятся общие на группу.</div>`
     : '';
   editorWrap.innerHTML = `<div class="panel">${groupBanner}<h2>План на ${month}</h2><p class="hint">Вносится раз в месяц, можно отредактировать в любой момент</p>
-    <div class="note" style="margin:0 0 10px;"><b>Факт за прошлый месяц (${prevMonth}):</b> ${fmt(prevFact.factUnits)} шт / ${fmt(prevFact.factRub)} ₽</div>
     <div class="row">
       <div class="field"><label>Плановая цена, ₽</label><input id="plan_planned_price" type="number" min="0" value="${plannedPrice}"></div>
       <div class="field"><label>План, шт</label><input id="plan_units" type="number" min="0" value="${plan.planUnits}"></div>
@@ -2467,6 +2493,7 @@ async function renderPlanTab(){
     <div class="row" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
       <div class="field"><label>Рост к среднему факту, %</label><input id="plan_growth_pct" type="number" value="10"></div>
       <button class="btn secondary" id="autoPlanBtn">Рассчитать автоматически</button>
+      <div class="note" style="margin:0 0 0 6px;align-self:center;"><b>Факт за прошлый месяц (${prevMonth}):</b> ${fmt(prevFact.factUnits)} шт / ${fmt(prevFact.factRub)} ₽</div>
     </div>
     <div class="note" id="autoPlanNote"></div>
     </div>`;
@@ -2551,7 +2578,6 @@ async function renderPlanTab(){
   if(myToken!==planRenderToken || currentPlanMode()!=='product') return;
   summaryWrap.innerHTML = `<div class="panel"><h2>Факт по плану</h2>
     <div class="kpis">
-      <div class="kpi"><div class="label">Факт за ${prevMonth}</div><div class="value">${fmt(prevFact.factUnits)} шт / ${fmt(prevFact.factRub)} ₽</div></div>
       <div class="kpi"><div class="label">Факт, ₽</div><div class="value">${fmt(factRub)} ₽</div>${planRub? `<div class="bar"><div style="width:${Math.min(100,factRub/planRub*100)}%;background:${progressBarColor(factRub/planRub*100)};"></div></div>`:''}</div>
       <div class="kpi"><div class="label">Факт, шт</div><div class="value">${fmt(factUnits)}</div>${planUnits? `<div class="bar"><div style="width:${Math.min(100,factUnits/planUnits*100)}%;background:${progressBarColor(factUnits/planUnits*100)};"></div></div>`:''}</div>
       <div class="kpi"><div class="label">Выполнение плана</div><div class="value">${donePct!==null? fmt1(donePct)+'%' : '—'}</div></div>
