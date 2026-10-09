@@ -450,8 +450,10 @@
       <p><b>По площадке</b> — общие цифры плана/факта по всем товарам одного маркетплейса сразу.</p>
       <p><b>По товару</b> — план и факт конкретного товара. План вводится вручную раз в месяц (в ₽ и шт.) либо считается кнопкой «Рассчитать автоматически» — по среднему темпу продаж за последние месяцы с поправкой на рост и на остаток товара на складе (с учётом даты поступления новой партии).</p>
       <p><b>Остатки в плане</b> — для текущего и будущих месяцев: «Остаток на МП» подтягивается сам из «Остатков и динамики» (последнее сохранённое значение по этой площадке; для группы плана — сумма по карточкам группы), «Остаток на ФФ» вносится вручную — то количество, что на фулфилменте закреплено именно за этой площадкой. Для расчёта и предупреждения «план превышает остаток» берётся МП + ФФ + поступление (если заполнено). Если остаток на ФФ не заполнен, предупреждение не тревожит, а лишь напоминает его внести. Для прошедших месяцев поля остатков не показываются. Рядом с планом показан факт за прошлый месяц.</p>
+      <p><b>Факт за прошлый месяц</b> показан в блоке расчёта плана, рядом с кнопкой «Рассчитать автоматически» (шт и ₽) — как ориентир при выборе нового плана.</p>
       <p><b>Run-rate</b> — прогноз, куда придём к концу месяца, если ничего не менять (факт шт/день × дни в месяце). Показывается только для текущего месяца.</p>
       <p><b>Темп за 7 дней</b> — средняя скорость продаж за последнюю неделю и сравнение с неделей до неё — быстрее реагирует на изменения, чем Run-rate.</p>
+      <p><b>Скрыть товар (вкладка «Товары»)</b> — для товаров, выводимых из продажи. Скрытый товар пропадает из списков выбора в «План и факт», «Ежедневные данные», «Воронка», «Сравнение», из «Остатков и динамики», «Поставок по площадкам» и «Планирования закупа». Данные и история не удаляются; чтобы вернуть, нажми «Показать скрытые» над таблицей и «Вернуть» у нужного товара.</p>
       <p><b>Группа плана</b> — для случаев, когда один и тот же товар продаётся с двух и более карточек (частый случай на Я.Маркете). Назначается на вкладке «Товары» кнопкой «Группа плана» — карточки с одинаковым названием группы получают общий план, общий остаток на ФФ и общее поступление (остаток на МП суммируется по всем карточкам группы), при этом ежедневные данные, воронка и точки роста у каждой карточки остаются свои.</p>
       <p style="margin-left:16px;color:var(--ink-2);font-size:12.5px;">Если дубли появляются и пропадают периодически (например, полгода одна карточка, потом временно вторая, потом снова одна) — специально ничего откатывать не нужно: группу можно оставить назначенной навсегда. Если вторая карточка перестала использоваться (или удалена), в общий факт группы она просто перестаёт что-либо добавлять — план продолжает корректно считаться по оставшейся карточке. Единственное, о чём стоит помнить: план за месяцы, которые были введены <b>до</b> того, как назначили группу, при первом объединении карточек переносится в общий план группы автоматически — переносить вручную не придётся.</p>
     </div>
@@ -472,6 +474,7 @@
     </div>
     <div class="panel">
       <h2>Воронка и точки роста</h2>
+      <p><b>Графики</b> — на линиях отмечены точки по дням: наведите курсор на точку (или на вертикальную линию в нужном дне), чтобы увидеть значения за этот день.</p>
       <p><b>Воронка за месяц</b> — показы → клики → корзины → заказы → выкупы, с процентом перехода на каждом этапе.</p>
       <p><b>Диагноз воронки</b> — один общий вывод о том, что сейчас главная проблема (или что всё в порядке), плюс вероятные причины с примерной значимостью каждой. Сравнивает последние 2 недели фактических (не черновых) дней — неделю перед этим с самой последней неделей, а не половины выбранного месяца, поэтому работает даже в начале месяца.</p>
       <p><b>Точки роста</b> — подробный разбор по каждому этапу воронки отдельно: показывается только то, что ниже нормы, с причинами и что проверить. Пороги нормы можно настроить под конкретный товар на вкладке «Товары». % выкупа считается без учёта заказов младше 7 дней — время на доставку, иначе процент был бы искусственно занижен свежими, ещё не доехавшими заказами.</p>
@@ -501,6 +504,7 @@
       <h2>Планирование закупа</h2>
       <p>Список товаров собирается автоматически — та же логика, что на Фулфилменте: по «Группе плана», если задана, иначе по совпадению названия. Заново вносить товары не нужно. Три подраздела:</p>
       <p><b>Обзор</b> — основная таблица, отсортирована по срочности. Остаток и скорость продаж подтягиваются из «Остатков и динамики» заново при каждом открытии — ничего не хранится отдельно. Остаток берётся из последней сохранённой недели каждой площадки (пустая ячейка в ней считается нулём, старые недели не подтягиваются). Если площадка ещё не сохранена за текущую неделю, рядом с остатком появится значок ⚠ — тогда взята её прошлая неделя.</p>
+      <p><b>Если в «Скорости» нет цифры</b>, под ней написано «нет данных: …» и перечислены площадки, где за прошлую календарную неделю (пн–вс) есть незаполненные или черновые дни. Заполните и сохраните эти дни в «Ежедневных данных» — скорость посчитается сама.</p>
       <p><b>Точка заказа</b> = скорость продаж × (срок изготовления + срок доставки) + страховой запас. Используется для «Дней до закупа» и как основа для «Закуп, шт», отдельным столбцом в таблице не показывается. <b>Дней до закупа</b> = (остаток по всем точкам + товар в пути − точка заказа) ÷ скорость продаж, округляется в меньшую сторону (в том числе для отрицательных — в сторону большей просрочки, с запасом на осторожность). Если скорости продаж нет (прошлая неделя не закрыта) — показывается «—», без ошибки. <b>Закуп, шт</b> — точка заказа, округлённая вверх до ближайших 10 (это целевой уровень запаса, к которому нужно стремиться, а не «сколько докупить сверх того, что есть»; округление вверх — чтобы не заказать меньше нужного). «Дней до закупа» при этом считается от точной, неокруглённой точки заказа — округление не искажает срочность.</p>
       <p>Светофор: «Норма» — больше 5 дней в запасе, «Скоро закупать» — от 0 до 5 дней, «Просрочено» — меньше 0.</p>
       <p><b>Товары</b> — здесь настраиваются страховой запас, срок изготовления, срок доставки на каждый товар (кнопка «Настройки»), видимость — кнопка «Скрыть» убирает товар из «Обзора» (например, если товар выведен из матрицы), не удаляя ни его историю, ни настройки — можно вернуть в любой момент кнопкой «Вернуть». Там же — ручная привязка к конкретным карточкам на WB/Ozon/ЯМ и к строке на Фулфилменте: нужна, когда автоматика не может сама понять, что несколько карточек — это один товар (например, из-за разных названий на разных площадках). Можно выбрать сразу несколько карточек через Ctrl+клик — например, если на одной площадке два дубля без общей «Группы плана». Как только товар вручную привязан в одной строке — прежние «осиротевшие» авто-строки для тех же карточек сами пропадают из списка, чтобы товар не дублировался.</p>
@@ -776,11 +780,12 @@ async function getPlanMap(product){ return (await storeGet(planKeyFor(product)))
 function productsInGroup(groupName){ return state.products.filter(p=>p.planGroup && p.planGroup===groupName); }
 async function getDailyMap(productId){ return (await storeGet('daily:'+productId)) || {}; }
 
+function activeProducts(){ return state.products.filter(p=>!p.hidden); }
 function productLabel(p){ return `[${MP_LABEL[p.mp]}] ${p.name}`; }
 function fillProductSelect(sel){
   const cur=sel.value;
-  sel.innerHTML = state.products.map(p=>`<option value="${p.id}">${productLabel(p)}</option>`).join('') || '<option value="">— нет товаров —</option>';
-  if(cur && state.products.find(p=>p.id===cur)) sel.value=cur;
+  sel.innerHTML = activeProducts().map(p=>`<option value="${p.id}">${productLabel(p)}</option>`).join('') || '<option value="">— нет товаров —</option>';
+  if(cur && activeProducts().find(p=>p.id===cur)) sel.value=cur;
 }
 function refreshAllProductSelects(){
   fillFilteredProductSelect('daily_mp','daily_product');
@@ -792,7 +797,7 @@ function fillFilteredProductSelect(mpId, productId){
   const mp=document.getElementById(mpId).value;
   const sel=document.getElementById(productId);
   const cur=sel.value;
-  const filtered=state.products.filter(p=>p.mp===mp);
+  const filtered=activeProducts().filter(p=>p.mp===mp);
   sel.innerHTML = filtered.map(p=>`<option value="${p.id}">${p.name}</option>`).join('') || '<option value="">— нет товаров на этой площадке —</option>';
   if(cur && filtered.find(p=>p.id===cur)) sel.value=cur;
 }
@@ -860,7 +865,7 @@ async function buildStockRows(channel){
     const rows=await getFFRows();
     return rows.map(r=>({ rowKey:'ff_'+r.id, ffId:r.id, defaultLabel:r.name||'', members:[] }));
   }
-  const list = state.products.filter(p=>p.mp===channel);
+  const list = activeProducts().filter(p=>p.mp===channel);
   const seen=new Set();
   const rowsDef=[];
   for(const p of list){
@@ -1522,7 +1527,7 @@ function fmtRuDate(iso){
 function canonicalZakupKey(name){ return 'zk_'+sanitizeGroupKey((name||'').trim().toLowerCase()); }
 function buildZakupRows(){
   const seen=new Map(); // key -> {rowKey, name, members:[]}
-  for(const p of state.products){
+  for(const p of activeProducts()){
     const groupKey = p.planGroup ? 'zk_group_'+sanitizeGroupKey(p.planGroup) : canonicalZakupKey(p.name);
     if(!seen.has(groupKey)){
       seen.set(groupKey, { rowKey:groupKey, name:p.planGroup||p.name, members:[] });
@@ -1954,14 +1959,16 @@ async function renderProductsTable(){
   seasonSel.innerHTML='<option value="">— не выбрано, заполню позже —</option>'+seasonGroups.map(g=>`<option value="${g}">${g}</option>`).join('');
   const wrap=document.getElementById('productsTableWrap');
   if(state.products.length===0){ wrap.innerHTML='<div class="empty">Пока нет товаров — добавьте первый выше</div>'; return; }
-  const rows = state.products.map(p=>{
+  const hiddenCount=state.products.filter(p=>p.hidden).length;
+  const showHidden=!!window.__showHiddenProducts;
+  const rows = state.products.filter(p=>showHidden || !p.hidden).map(p=>{
     const th=getThresholds(p);
-    return `<tr>
+    return `<tr${p.hidden?' style="opacity:.6;"':''}>
       <td class="txt"><span class="badge ${p.mp}">${MP_LABEL[p.mp]}</span></td>
-      <td class="txt">${p.name}${p.planGroup?` <span class="badge" style="background:var(--funnel-bg);color:var(--funnel);">группа: ${p.planGroup}</span>`:''}${p.seasonalityGroup?` <span class="badge" style="background:var(--warn-bg);color:var(--warn);">сезон: ${p.seasonalityGroup}</span>`:''}</td>
+      <td class="txt">${p.name}${p.hidden?' <span class="badge" style="background:var(--bg-2,#eee);color:var(--ink-3);">скрыт</span>':''}${p.planGroup?` <span class="badge" style="background:var(--funnel-bg);color:var(--funnel);">группа: ${p.planGroup}</span>`:''}${p.seasonalityGroup?` <span class="badge" style="background:var(--warn-bg);color:var(--warn);">сезон: ${p.seasonalityGroup}</span>`:''}</td>
       <td>${p.currentPriceLK? fmt(p.currentPriceLK)+' ₽' : '—'}</td>
       <td>${p.currentPriceCustomer? fmt(p.currentPriceCustomer)+' ₽' : '—'}</td>
-      <td><button class="btn secondary" data-rename="${p.id}">Переименовать</button> <button class="btn secondary" data-thresh-toggle="${p.id}">Пороги</button> <button class="btn secondary" data-group-toggle="${p.id}">Группа плана</button> <button class="btn secondary" data-season-toggle="${p.id}">Сезонность</button> <button class="btn danger" data-del="${p.id}">Удалить</button></td>
+      <td><button class="btn secondary" data-rename="${p.id}">Переименовать</button> <button class="btn secondary" data-thresh-toggle="${p.id}">Пороги</button> <button class="btn secondary" data-group-toggle="${p.id}">Группа плана</button> <button class="btn secondary" data-season-toggle="${p.id}">Сезонность</button> <button class="btn secondary" data-hide="${p.id}">${p.hidden?'Вернуть':'Скрыть'}</button> <button class="btn danger" data-del="${p.id}">Удалить</button></td>
     </tr>
     <tr class="thresh-row" data-thresh-row="${p.id}" style="display:none;">
       <td colspan="5">
@@ -1996,7 +2003,19 @@ async function renderProductsTable(){
       </td>
     </tr>`;
   }).join('');
-  wrap.innerHTML = `<table><thead><tr><th>Площадка</th><th>Товар</th><th>Текущая цена ЛК</th><th>Текущая цена покупателю</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  const hideBar = (hiddenCount||showHidden) ? `<div style="margin:0 0 10px;"><button class="btn secondary" id="toggleHiddenProducts">${showHidden?'Не показывать скрытые':'Показать скрытые ('+hiddenCount+')'}</button> <span class="note" style="display:inline;">Скрытые товары не попадают в списки выбора, остатки, поставки и закуп; данные и история сохраняются.</span></div>` : '';
+  wrap.innerHTML = hideBar + `<table><thead><tr><th>Площадка</th><th>Товар</th><th>Текущая цена ЛК</th><th>Текущая цена покупателю</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  const tgl=wrap.querySelector('#toggleHiddenProducts');
+  if(tgl) tgl.addEventListener('click', ()=>{ window.__showHiddenProducts=!window.__showHiddenProducts; renderProductsTable(); });
+  wrap.querySelectorAll('[data-hide]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id=b.dataset.hide; const p=state.products.find(x=>x.id===id);
+    const newHidden=!p.hidden;
+    if(newHidden && !confirm('Скрыть товар «'+p.name+'»? Он пропадёт из списков выбора (план, ежедневный отчёт, остатки, поставки, закуп). Данные и история сохранятся, вернуть можно кнопкой «Показать скрытые».')) return;
+    b.disabled=true;
+    const result=await mutateStoreValue('product:'+id, ()=>null, (pFresh)=>{ if(pFresh){ if(newHidden) pFresh.hidden=true; else delete pFresh.hidden; } });
+    if(!result){ b.disabled=false; alert('Не удалось сохранить — сбой хранилища. Попробуйте ещё раз.'); return; }
+    await loadProducts(); refreshAllProductSelects(); renderProductsTable();
+  }));
   wrap.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
     const id=b.dataset.del;
     if(!confirm('Удалить товар и все данные по нему?')) return;
