@@ -119,6 +119,13 @@
   #tab-help p b{color:var(--help-b);font-weight:600;}
 
   .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+  /* карточки площадок (остатки, поставки): по умолчанию сетка 2×2, на узком экране — одна колонка */
+  .mp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch;}
+  .mp-grid > .panel{min-width:0 !important;margin:0;}
+  #supplyCards.mp-grid{align-items:start;}
+  #supplyCards .supply-input{width:54px;}
+  #supplyCards table.supplytable td.sticky{min-width:120px;}
+  @media (max-width:900px){ .mp-grid{grid-template-columns:minmax(0,1fr);} }
   .field{display:flex;flex-direction:column;gap:4px;min-width:130px;}
   .field label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);font-weight:600;}
   input,select,textarea{font-family:var(--font-body);font-size:13px;padding:8px 10px;border-radius:10px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);outline:0;}
@@ -157,6 +164,13 @@
   table.daytable td.sticky, table.daytable th.sticky{min-width:190px;max-width:190px;white-space:normal;}
   td.sticky2, th.sticky2{position:sticky;left:190px;background:var(--surface);z-index:2;box-shadow:2px 0 6px rgba(0,0,0,.35);font-weight:600;min-width:100px;}
   table:not(.daytable) tbody tr:nth-child(even) td.sticky{background:var(--row-alt);}
+  /* таблицы, которые прокручиваются вбок: первый столбец (название товара) закреплён, чтобы его было видно при сдвиге.
+     «Ежедневные данные» и «Поставки» уже закрепляют свои столбцы сами, «Товары» в «Настройках» устроены иначе. */
+  .table-scroll > table:not(.daytable):not(.supplytable):not(.pgtable) th:first-child,
+  .table-scroll > table:not(.daytable):not(.supplytable):not(.pgtable) td:first-child{position:sticky;left:0;z-index:2;background:var(--surface);box-shadow:2px 0 6px rgba(0,0,0,.25);}
+  .table-scroll > table:not(.daytable):not(.supplytable):not(.pgtable) tbody tr:nth-child(even) td:first-child{background:var(--row-alt);}
+  :root[data-theme="light"] .table-scroll > table:not(.daytable):not(.supplytable):not(.pgtable) th:first-child,
+  :root[data-theme="light"] .table-scroll > table:not(.daytable):not(.supplytable):not(.pgtable) td:first-child{box-shadow:2px 0 6px rgba(20,30,60,.06);}
   table.daytable tr.row-editable{background:var(--row-edit);}
   table.daytable tr.row-editable td.sticky, table.daytable tr.row-editable td.sticky2{background:var(--row-edit);}
   table.daytable tr.row-highlight{background:var(--row-hl);}
@@ -769,7 +783,7 @@
         <div class="field"><label>Месяц</label><input id="supply_month" type="month"></div>
       </div>
     </div>
-    <div id="supplyCards" class="row" style="align-items:flex-start;flex-wrap:wrap;gap:12px;"></div>
+    <div id="supplyCards" class="mp-grid"></div>
   </div>
 
   <!-- ПЛАНИРОВАНИЕ ЗАКУПА -->
@@ -850,7 +864,7 @@
       <p><b>По площадкам</b> — заказано ₽, ДРР и выполнение плана площадки. Цвет полосы — темп: зелёный — идём по плану или быстрее, жёлтый — 85–99% нужного темпа, красный — меньше 85%.</p>
       <p><b>Заказы по дням</b> — итог последнего заполненного дня (есть хоть один не черновой день) и столбики за 14 дней; наведите на столбик, чтобы увидеть цифры.</p>
       <p><b>Запас на площадках</b> (скоро) — товары с наименьшим запасом в днях: остаток ÷ средние заказы в день за 14 дней. Появится вместе с API, когда остатки будут обновляться ежедневно и по каждой карточке; сейчас остаток вносится раз в неделю, и расчёт был бы неточным. Подсказки «Заканчивается» и счётчик товаров с малым запасом тоже вернутся вместе с API.</p>
-      <p><b>Поставки</b> — из «Поставок по площадкам» за текущий месяц: план, отгружено, резерв и сколько осталось отгрузить (скрытые строки не учитываются).</p>
+      <p><b>Поставки на площадки</b> — скоро: появятся вместе с API площадок и покажут поставки на WB, Ozon и ЯМ со статусом (планируется → в пути → принята). План распределения товара по-прежнему ведётся в «Поставках по площадкам».</p>
       <p><b>Подсказки</b> строятся правилами, без ИИ: <b>аномалии</b> из «Ежедневных данных» (те же правила: последний заполненный день против среднего за 7 дней; только тревожные сигналы — падения, рост ДРР, ухудшение позиции; рост показов виден только в «Ежедневных данных»; по одной, самой сильной, на карточку — остальные видны в «Ежедневных данных»; показываются, если последний заполненный день — не старше 3 дней; наведите, чтобы прочитать, что проверить, клик открывает товар), прогноз ниже плана, ДРР площадки или товара выше предела, падение заказов товара на 30% и больше за 7 дней к предыдущим 7 дням (если неделей раньше было от 5 шт и все последние 7 дней заполнены), остатки не обновлены за текущую неделю. <b>Требуют внимания</b> — незаполненные или черновые дни за 3 дня до вчера (вчерашний и сегодняшний дни не считаются — их заполняют в течение дня), товары с ДРР выше предела и просроченные задачи (пока демо).</p>
       <p><b>Светлая / тёмная тема</b> — кнопка справа от поиска (солнце / луна). Тема своя у каждого сотрудника и запоминается в его браузере; по умолчанию — светлая.</p>
       <p><b>Площадки вверху</b> (WB, Ozon, Я.Маркет) — статус загрузки данных по API: зелёная точка — подключено (в подсказке время последнего обновления), красная — ошибка загрузки, жёлтая — не подключено, данные вносятся вручную. Подключение появится на этапе «Интеграции».</p>
@@ -1432,7 +1446,7 @@ async function renderStockTab(){
   if(state.products.length===0){
     html+=`<div class="panel"><div class="empty">Нет товаров — добавьте в «Настройках» (раздел «Товары»)</div></div>`;
   } else {
-    html+=`<div class="row" style="align-items:stretch;flex-wrap:wrap;">`;
+    html+=`<div class="mp-grid">`;
     const cardHtmls=await Promise.all(STOCK_CHANNELS.map(c=>renderStockChannelCard(c)));
     html+=cardHtmls.join('');
     html+=`</div>`;
@@ -4941,12 +4955,11 @@ async function renderHomeTab(){
       : '<div class="empty">Нет данных: сохраните остатки на «Остатки и динамика» и заполните продажи в «Ежедневных данных»</div>'}
     <div class="note">Остаток — из последней сохранённой недели площадки (пустая ячейка = 0), скорость — средние заказы в день за 14 дней по вчера.</div></div>`;
 
-  const supplyCard=`<div class="panel hm-card"><div class="hm-h">Поставки — ${MONTHS_NOM[mIdx]}<a class="hm-more" data-go="distrib">Поставки по площадкам</a></div>
-    ${supply.map(s=>`<div class="hm-mp"><div class="hm-row hm-between"><span><span class="badge ${s.ch}">${MP_LABEL[s.ch]}</span></span>
-      ${s.any ? `<span class="muted sm">план <b>${fmt(s.plan)}</b> · отгружено <b>${fmt(s.shipped)}</b> · резерв <b>${fmt(s.reserve)}</b> · осталось <b class="${s.rest>0?'amb':'pos'}">${fmt(s.rest)}</b> шт</span>` : '<span class="muted sm">план поставок на месяц не заполнен</span>'}</div>
-      ${s.any && s.plan>0 ? `<div class="hm-bar thin"><i style="width:${Math.min(100,(s.shipped)/s.plan*100)}%"></i></div>` : ''}
-      ${s.items.length ? `<div class="sm muted" style="margin-top:4px;">Осталось отгрузить: ${s.items.sort((a,b)=>b.r-a.r).slice(0,3).map(it=>`${hmEsc(rowName(it.rk))} — ${fmt(it.r)} шт`).join('; ')}${s.items.length>3?` и ещё ${s.items.length-3}`:''}</div>`:''}</div>`).join('')}
-  </div>`;
+  // Поставки на МП со статусами — появятся вместе с API / разделом «Склад и поставки»
+  const supplyCard=`<div class="panel hm-card"><div class="hm-h">Поставки на площадки <span class="ad-soon">скоро</span><a class="hm-more" data-go="distrib">Поставки по площадкам</a></div>
+    <div class="muted sm" style="margin-bottom:10px;">Покажет поставки на WB, Ozon и ЯМ со статусом: планируется → в пути → принята, и что ещё не принято складом.</div>
+    <div class="hm-list">${['wb','ozon','ym'].map(ch=>`<div><span class="badge ${ch}">${MP_LABEL[ch]}</span><span class="hm-name" style="color:var(--tx3);">—</span><span class="hm-r" style="color:var(--tx3);">—</span></div>`).join('')}</div>
+    <div class="note">Появится вместе с API площадок. План распределения по-прежнему ведётся в «Поставках по площадкам».</div></div>`;
 
   const insCard=`<div class="panel hm-card hm-inscard"><div class="hm-h">Подсказки <span class="badge b-gray">по правилам</span>${ins.length?`<span class="hm-cnt">${ins.length}</span>`:''}</div>
     <div class="hm-insl">${ins.length ? ins.map(i=>`<a class="hm-ins ${i.lvl}" data-go="${i.tab}"${i.pid?` data-pid="${i.pid}"`:''}${i.full?` title="${hmEsc(i.full)}"`:''}><b>${i.anom?'<span class="hm-anom">аномалия</span> ':''}${hmEsc(i.anom? i.t.replace('Аномалия: ','') : i.t)}</b><span>${hmEsc(i.d)}</span></a>`).join('')
