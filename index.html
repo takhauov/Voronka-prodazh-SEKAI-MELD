@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
-<script>try{ if(localStorage.getItem('voronka_theme')==='light') document.documentElement.dataset.theme='light'; }catch(e){}</script>
+<script>(function(){ let t=null; try{ t=localStorage.getItem('voronka_theme'); }catch(e){} if(t!=='dark') document.documentElement.dataset.theme='light'; })();</script>
 <style>
   /* ===== Палитра в стиле BrandOS (тёмная тема) ===== */
   :root{
@@ -418,6 +418,54 @@
   .ad-mark{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
   .ad-mark.ok{color:var(--pos);background:var(--pos-bg);} .ad-mark.bad{color:var(--neg);background:var(--neg-bg);} .ad-mark.none{color:var(--warn);background:var(--warn-bg);} .ad-mark.off{color:var(--tx3);background:var(--bg-2);}
 
+  /* ===== Помощник «Спросить» ===== */
+  .ask-scrim{position:fixed;inset:0;background:rgba(3,4,10,.45);z-index:90;display:none;}
+  .ask-scrim.on{display:block;}
+  .ask-panel{position:fixed;top:0;right:0;bottom:0;width:780px;max-width:92vw;background:var(--card2);border-left:1px solid var(--line2);z-index:95;transform:translateX(105%);transition:transform .25s;display:flex;flex-direction:column;box-shadow:-20px 0 60px rgba(0,0,0,.35);}
+  .ask-panel.open{transform:none;}
+  .ask-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line);font-size:16px;color:var(--tx);}
+  .ask-head .muted{font-weight:400;}
+  .ask-x{margin-left:auto;width:34px;height:34px;border-radius:10px;border:1px solid var(--line2);background:transparent;color:var(--tx2);font-size:20px;line-height:1;cursor:pointer;}
+  .ask-x:hover{color:var(--tx);border-color:var(--blue);}
+  .ask-body{flex:1;overflow-y:auto;padding:14px 18px 24px;}
+  .ask-grp{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);font-weight:700;margin:6px 0 8px;}
+  .ask-qs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .ask-q{padding:7px 12px;border-radius:20px;border:1px solid var(--line2);background:transparent;color:var(--tx);font-family:var(--font-body);font-size:12.5px;cursor:pointer;text-align:left;}
+  .ask-q:hover{border-color:var(--blue);}
+  .ask-q.on{background:var(--grad);color:#fff;border-color:transparent;}
+  .ask-q.soon{color:var(--tx3);}
+  .ask-opts{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:12px;background:var(--panel-sub);margin:4px 0 14px;}
+  .ask-opt label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);font-weight:700;margin-bottom:5px;}
+  .ask-pick{position:relative;}
+  .ask-pick input{width:100%;}
+  .ask-recent{margin-top:6px;font-size:12px;color:var(--tx3);display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+  .ask-chip{padding:3px 9px;border-radius:14px;border:1px solid var(--line2);background:transparent;color:var(--tx2);font-family:var(--font-body);font-size:11.5px;cursor:pointer;}
+  .ask-chip:hover{color:var(--tx);border-color:var(--blue);}
+  .ask-chip.on{color:var(--tx-strong);border-color:var(--blue);background:rgba(79,140,255,.12);}
+  .ask-card{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--card);}
+  .ask-title{font-weight:600;color:var(--tx);margin-bottom:6px;font-size:13.5px;}
+  .ask-lead{font-size:13px;color:var(--tx);line-height:1.55;margin-bottom:8px;}
+  .ask-sub{font-size:12px;color:var(--tx3);margin:6px 0;}
+  .ask-h{font-size:12px;font-weight:700;color:var(--tx2);margin:10px 0 2px;}
+  .ask-note{font-size:11.5px;color:var(--tx3);margin-top:8px;line-height:1.5;}
+  .ask-tw{max-width:100%;overflow-x:auto;}
+  .ask-tbl{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px;table-layout:auto;}
+  .ask-tbl th{white-space:normal;}
+  .ask-tbl td{overflow-wrap:break-word;}
+  .ask-tbl td:first-child{min-width:44px;}
+  .ask-tbl td.t:nth-child(2){min-width:150px;}
+  .ask-ml{font-size:10.5px;color:var(--tx3);white-space:normal;}
+  .ask-tbl th{font-size:10px;padding:6px 6px;}
+  .ask-tbl td{padding:6px 6px;font-size:12px;white-space:normal;}
+  .ask-tbl .num{text-align:right;white-space:nowrap;}
+  .ask-list{margin:6px 0 0 18px;padding:0;font-size:12.5px;line-height:1.6;color:var(--tx);}
+  .ask-list a, .ask-tbl a{color:var(--blue);cursor:pointer;}
+  .ask-links{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;}
+  .an-askcell{text-align:right;}
+  .an-ask{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--tx2);font-family:var(--font-body);font-size:12px;cursor:pointer;white-space:nowrap;}
+  .an-ask .hm-qi{width:14px;height:14px;}
+  .an-ask:hover{color:var(--blue);border-color:var(--blue);}
+
   /* ===== Вход ===== */
   #loginScreen{position:relative;z-index:1;}
   #loginScreen .panel{background:var(--card2);border-color:var(--line2);border-radius:18px;padding:26px;box-shadow:0 30px 80px rgba(0,0,0,.5);}
@@ -781,6 +829,12 @@
   <!-- СПРАВКА -->
   <div id="tab-help" class="tabpane" style="display:none;">
     <div class="panel">
+      <h2>Спросить</h2>
+      <p>Помощник с готовыми вопросами. Ответы считаются формулами по «Ежедневным данным» и плану — без ИИ, сразу и бесплатно; в базу ничего не записывается. Открывается кнопкой «Спросить» в быстрых действиях на «Главной» или кнопкой «Спросить» в последнем столбце строки товара в «Аналитике и рекламе» (тогда товар уже выбран). Показывается один, текущий ответ: при смене вопроса, товара, периода или площадки он обновляется; история ответов не хранится.</p>
+      <p><b>По товару</b> (товар выбирается поиском по названию или из «Недавних»): «Почему изменились заказы» — заказы = показы × CTR × клик→корзина × корзина→заказ, помощник показывает, какой множитель изменился сильнее всего; «Как изменение цены повлияло на продажи» — последняя смена цены в ЛК от 1% за 60 дней, средние за день 7 дней до и после; «Что с СПП» — скидка площадки (1 − цена для покупателя ÷ цена в ЛК), её скачки от 3 п.п. и заказы; «Где карточка теряет покупателей» — этапы воронки против «Порогов» товара; «Что дали последние изменения карточки» — записи «Тип изменения» и «Комментарий» за 60 дней и что стало с главной метрикой и заказами.</p>
+      <p><b>Общие</b> (с выбором площадки): «Что проверить в первую очередь» — карточки по сумме потерь (недобор заказов к прошлому периоду + реклама сверх предела ДРР) и тревожным аномалиям; «Успеваем ли по плану» — прогноз Run-rate и кто сильнее всего отстаёт от ровного темпа; «Где реклама неэффективна» — ДРР выше предела или расход без заказов и сколько потрачено сверх предела; «Лидеры роста и падения» — по изменению заказано ₽. Сравнение — выбранные 7/14/28 дней против такого же периода перед ними; у каждой карточки период заканчивается на её последнем заполненном дне, чтобы незаполненные дни не выглядели падением. В вопросе про цену по умолчанию берётся последняя смена, после которой прошло хотя бы 3 заполненных дня (более свежие — кнопками). «Просроченные задачи» и «Что с остатками» — скоро (вместе с разделом «Задачи» и остатками из API).</p>
+    </div>
+    <div class="panel">
       <h2>Аналитика и реклама</h2>
       <p>Таблица по карточкам одной площадки (кнопки WB / Ozon / Я.Маркет) из «Ежедневных данных». <b>Период</b> — «С начала месяца», 7, 14 или 28 дней (по умолчанию 7), всегда <b>по вчера включительно</b>. Тренд сравнивает период с таким же периодом перед ним, а «С начала месяца» — с теми же днями прошлого месяца; даты сравнения написаны вверху. Сверху: заказано ₽, тренд, расход на рекламу, ДРР.</p>
       <p><b>Одна таблица по каждой карточке:</b> заказано ₽, тренд (процент — при наведении), заказано шт, расход на рекламу (все типы вместе), ДРР (красным — выше предела), ДРР от продаж (скоро), CPO (расход ÷ заказы), CPC (расход ÷ клики), оценка «В норме / Выше предела / Нет заказов / Нет рекламы», остаток на складах площадки (скоро) и «хватит на» — остаток ÷ средние заказы в день за 14 дней (скоро). Если таблица не помещается по ширине, она прокручивается вбок внутри карточки.</p>
@@ -798,7 +852,7 @@
       <p><b>Запас на площадках</b> (скоро) — товары с наименьшим запасом в днях: остаток ÷ средние заказы в день за 14 дней. Появится вместе с API, когда остатки будут обновляться ежедневно и по каждой карточке; сейчас остаток вносится раз в неделю, и расчёт был бы неточным. Подсказки «Заканчивается» и счётчик товаров с малым запасом тоже вернутся вместе с API.</p>
       <p><b>Поставки</b> — из «Поставок по площадкам» за текущий месяц: план, отгружено, резерв и сколько осталось отгрузить (скрытые строки не учитываются).</p>
       <p><b>Подсказки</b> строятся правилами, без ИИ: <b>аномалии</b> из «Ежедневных данных» (те же правила: последний заполненный день против среднего за 7 дней; только тревожные сигналы — падения, рост ДРР, ухудшение позиции; рост показов виден только в «Ежедневных данных»; по одной, самой сильной, на карточку — остальные видны в «Ежедневных данных»; показываются, если последний заполненный день — не старше 3 дней; наведите, чтобы прочитать, что проверить, клик открывает товар), прогноз ниже плана, ДРР площадки или товара выше предела, падение заказов товара на 30% и больше за 7 дней к предыдущим 7 дням (если неделей раньше было от 5 шт и все последние 7 дней заполнены), остатки не обновлены за текущую неделю. <b>Требуют внимания</b> — незаполненные или черновые дни за 3 дня до вчера (вчерашний и сегодняшний дни не считаются — их заполняют в течение дня), товары с ДРР выше предела и просроченные задачи (пока демо).</p>
-      <p><b>Светлая / тёмная тема</b> — кнопка справа от поиска (солнце / луна). Тема своя у каждого сотрудника и запоминается в его браузере; по умолчанию — тёмная.</p>
+      <p><b>Светлая / тёмная тема</b> — кнопка справа от поиска (солнце / луна). Тема своя у каждого сотрудника и запоминается в его браузере; по умолчанию — светлая.</p>
       <p><b>Площадки вверху</b> (WB, Ozon, Я.Маркет) — статус загрузки данных по API: зелёная точка — подключено (в подсказке время последнего обновления), красная — ошибка загрузки, жёлтая — не подключено, данные вносятся вручную. Подключение появится на этапе «Интеграции».</p>
       <p><b>Поиск</b> — по названиям товаров (открывает товар в «Ежедневных данных») и вкладок. <b>Задачи</b> на «Главной» пока демо-примеры с пометкой «демо» — настоящие появятся вместе с вкладкой «Задачи».</p>
     </div>
@@ -883,6 +937,13 @@
 
  </div>
 </div>
+
+<!-- ПОМОЩНИК «СПРОСИТЬ» -->
+<div id="askScrim" class="ask-scrim"></div>
+<aside id="askPanel" class="ask-panel" aria-label="Спросить">
+  <div class="ask-head"><b>Спросить</b><button type="button" id="askClose" class="ask-x" title="Закрыть">×</button></div>
+  <div class="ask-body"><div id="askControls"></div><div id="askAnswers"></div></div>
+</aside>
 
 <script>
 const MP_LABEL={wb:'WB', ozon:'Ozon', ym:'Я.Маркет'};
@@ -4903,7 +4964,7 @@ async function renderHomeTab(){
     <button type="button" data-go="tasks-demo" title="Демо — задачи появятся на отдельном этапе">${qi('<path d="M12 5v14M5 12h14"/>')}Задача</button>
     <button type="button" data-go="daily" title="Ежедневные данные — внести данные за вчера">${qi('<path d="M3 12h4l3-8 4 16 3-8h4"/>')}Воронка</button>
     <button type="button" data-go="stock" title="Остатки и динамика">${qi('<path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/>')}Склад</button>
-    <button type="button" data-go="ai-demo" title="Демо — ИИ появится после подключения Claude API">${qi('<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>')}Спросить ИИ</button></div></div>`;
+    <button type="button" data-go="ask" title="Готовые вопросы по вашим данным">${qi('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/>')}Спросить</button></div></div>`;
 
   body.innerHTML=`${kpis}<div class="hm-grid"><div class="hm-stack">${planCard}<div class="hm-two">${mpCard}${ordersCard}</div><div class="hm-two">${stockCard}${supplyCard}</div></div>
     <div class="hm-side"><div class="hm-stack">${insCard}${attCard}${qaCard}</div></div></div>`;
@@ -4914,7 +4975,7 @@ document.getElementById('homeBody').addEventListener('click', (e)=>{
   const el=e.target.closest('[data-go]'); if(!el) return;
   const go=el.dataset.go;
   if(go==='tasks-demo'){ homeToast('Задачи появятся на отдельном этапе — сейчас здесь демо-данные'); return; }
-  if(go==='ai-demo'){ homeToast('«Спросить ИИ» появится после подключения Claude API (этап «Интеграции»)'); return; }
+  if(go==='ask'){ openAsk(); return; }
   if(el.dataset.pid && go==='daily'){ openProductDaily(el.dataset.pid); return; }
   if(el.dataset.pid){ selectedProductId=el.dataset.pid; }
   goTab(go);
@@ -5027,7 +5088,7 @@ async function renderAnalyticsTab(){
     return `<span class="an-trend ${cls}" title="${tip}">${r.trend>0?'▲ +':r.trend<0?'▼ ':''}${fmt(r.trend)} ₽</span>`;
   };
   const MARK={ok:['ok','В норме'], bad:['bad','Выше предела'], none:['none','Нет заказов'], off:['off','Нет рекламы']};
-  const thead=`${th('name','Товар')}${th('rub','Заказано, ₽',1)}${th('trend','Тренд, ₽',1)}${th('units','Заказано, шт',1)}${th('ad','Расход на рекламу, ₽',1)}${th('drr','ДРР',1)}${soonTh}${th('cpo','CPO, ₽',1)}${th('cpc','CPC, ₽',1)}${th('mark','Оценка')}<th class="num" title="Появится вместе с API: остатки будут обновляться ежедневно по каждой карточке. Сейчас остаток вносится раз в неделю, и расчёт был бы неточным.">Остаток<span class="an-soon-h">СКОРО</span></th><th class="num" title="Остаток ÷ средние заказы в день за последние 14 дней. Появится вместе с ежедневными остатками из API.">Хватит на<span class="an-soon-h">СКОРО</span></th>`;
+  const thead=`${th('name','Товар')}${th('rub','Заказано, ₽',1)}${th('trend','Тренд, ₽',1)}${th('units','Заказано, шт',1)}${th('ad','Расход на рекламу, ₽',1)}${th('drr','ДРР',1)}${soonTh}${th('cpo','CPO, ₽',1)}${th('cpc','CPC, ₽',1)}${th('mark','Оценка')}<th class="num" title="Появится вместе с API: остатки будут обновляться ежедневно по каждой карточке. Сейчас остаток вносится раз в неделю, и расчёт был бы неточным.">Остаток<span class="an-soon-h">СКОРО</span></th><th class="num" title="Остаток ÷ средние заказы в день за последние 14 дней. Появится вместе с ежедневными остатками из API.">Хватит на<span class="an-soon-h">СКОРО</span></th><th></th>`;
   const rowsHtml=rows.map(r=>`<tr>
     <td class="an-name" data-anopen="${r.id}" title="Открыть в «Ежедневных данных»">${hmEsc(r.name)}${r.group?` <span class="badge" style="background:var(--funnel-bg);color:var(--funnel);">группа: ${hmEsc(r.group)}</span>`:''}${r.hasData?'':' <span class="badge b-gray">нет данных</span>'}</td>
     <td class="num">${fmt(r.rub)} ₽</td><td class="num">${trendHtml(r)}</td><td class="num">${fmt(r.units)}</td>
@@ -5035,6 +5096,7 @@ async function renderAnalyticsTab(){
     <td class="num">${r.cpo!==null? fmt(r.cpo)+' ₽' : '—'}</td><td class="num">${r.cpc!==null? fmt1(r.cpc)+' ₽' : '—'}</td>
     <td><span class="ad-mark ${MARK[r.mark][0]}">${MARK[r.mark][1]}</span></td>
     ${soonTd}${soonTd}
+    <td class="an-askcell"><button type="button" class="an-ask" data-anask="${r.id}" title="Спросить про этот товар"><svg class="hm-qi" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg><span>Спросить</span></button></td>
   </tr>`).join('');
   const hours=[2,1,1,1,1,2,3,5,7,9,10,11,12,12,11,11,12,13,14,15,14,11,7,4];
   body.innerHTML=`<div class="hm-kpis">
@@ -5059,9 +5121,320 @@ async function renderAnalyticsTab(){
     if(anState.sort===k) anState.dir*=-1; else { anState.sort=k; anState.dir=(k==='name'||k==='days'||k==='mark')?1:-1; }
     renderAnalyticsTab();
   }));
-  body.querySelectorAll('[data-anopen]').forEach(t=>t.addEventListener('click', ()=>openProductDaily(t.dataset.anopen)));
+  body.querySelectorAll('[data-anopen]').forEach(t=>t.addEventListener('click', (e)=>{ if(e.target.closest('[data-anask]')) return; openProductDaily(t.dataset.anopen); }));
+  body.querySelectorAll('[data-anask]').forEach(b=>b.addEventListener('click', (e)=>{ e.stopPropagation(); if(!askState.q || ASK_Q.find(x=>x.id===askState.q).group!=='product') askState.q='orders'; openAsk({pid:b.dataset.anask}); runAsk(); }));
 }
 
+
+/* ---------------- ПОМОЩНИК «СПРОСИТЬ» ----------------
+   Готовые вопросы, ответы считаются формулами по «Ежедневным данным» и плану (без ИИ, ничего не записывает).
+   Отложено: «Просроченные задачи» — с разделом «Задачи»; «Что с остатками» — с ежедневными остатками из API;
+   «Где этот товар продаётся лучше» — после доработок по марже. */
+const ASK_Q=[
+  {id:'orders',  group:'product', label:'Почему изменились заказы у товара?', period:true},
+  {id:'price',   group:'product', label:'Как изменение цены повлияло на продажи?'},
+  {id:'spp',     group:'product', label:'Что с СПП?', period:true},
+  {id:'funnel',  group:'product', label:'Где карточка теряет покупателей?', period:true},
+  {id:'changes', group:'product', label:'Что дали последние изменения карточки?'},
+  {id:'check',   group:'common',  label:'Что проверить в первую очередь?', period:true, mp:true},
+  {id:'plan',    group:'common',  label:'Успеваем ли по плану?', mp:true},
+  {id:'ads',     group:'common',  label:'Где реклама неэффективна?', period:true, mp:true},
+  {id:'leaders', group:'common',  label:'Лидеры роста и падения', period:true, mp:true},
+  {id:'tasks',   group:'common',  label:'Просроченные задачи', soon:'появится вместе с разделом «Задачи»'},
+  {id:'stock',   group:'common',  label:'Что с остатками?', soon:'появится вместе с ежедневными остатками из API'},
+];
+const askState={q:null, pid:null, days:7, mp:'all', answers:[]};
+const ASK_RECENT_KEY='voronka_ask_recent';
+
+function askRecent(){ try{ return JSON.parse(localStorage.getItem(ASK_RECENT_KEY)||'[]'); }catch(e){ return []; } }
+function askRemember(pid){ try{ const r=askRecent().filter(x=>x!==pid); r.unshift(pid); localStorage.setItem(ASK_RECENT_KEY, JSON.stringify(r.slice(0,5))); }catch(e){} }
+function askPeriod(N, dm){
+  let y=yesterdayISO();
+  if(dm){ const last=Object.keys(dm).filter(d=>d<=y && !dm[d].draft).sort().pop(); if(last) y=last; }
+  return {from:dateMinusDays(y,N-1), to:y, pFrom:dateMinusDays(y,2*N-1), pTo:dateMinusDays(y,N), N};
+}
+const ASK_CARD_PERIOD_NOTE=n=>`Период — последние ${n} дн. по последний заполненный день каждой карточки, против ${n} дн. перед ними (незаполненные дни не считаются падением).`;
+function askPct(a,b){ return (b && b!==0) ? (a-b)/Math.abs(b)*100 : null; }
+function askSgn(v,dec=1){ return v===null||v===undefined||!isFinite(v) ? '—' : (v>0?'+':'')+(dec? fmt1(v) : fmt(v)); }
+function askCls(v, goodUp=true){ if(v===null||!isFinite(v)||Math.abs(v)<0.05) return ''; return (v>0)===goodUp ? 'pos' : 'neg'; }
+function askPLabel(p){ return `${p.name} · ${MP_LABEL[p.mp]}`; }
+function askLbl(P){ return `${fmtRuDate(P.from).slice(0,5)}–${fmtRuDate(P.to).slice(0,5)} против ${fmtRuDate(P.pFrom).slice(0,5)}–${fmtRuDate(P.pTo).slice(0,5)}`; }
+// сумма показателей карточки за период
+function askAgg(dm, from, to, isOzon){
+  const s={days:0, impr:0, base:0, clicks:0, carts:0, orders:0, rub:0, ad:0, buyouts:0, cancels:0};
+  for(const d in dm){ if(d<from || d>to) continue; const e=dm[d]; if(e.draft) continue;
+    s.days++; s.impr+=+e.impressions||0; s.base+=(isOzon && +e.uniqueVisitors)? +e.uniqueVisitors : (+e.impressions||0);
+    s.clicks+=+e.clicks||0; s.carts+=+e.carts||0; s.orders+=+e.orders||0; s.rub+=+e.ordersRub||0; s.ad+=+e.adspend||0;
+    s.buyouts+=+e.buyouts||0; s.cancels+=+e.cancellations||0; }
+  s.ctr = s.base>0 ? s.clicks/s.base*100 : null;
+  s.cr1 = s.clicks>0 ? s.carts/s.clicks*100 : null;
+  s.cr2 = s.carts>0 ? s.orders/s.carts*100 : null;
+  s.crf = s.clicks>0 ? s.orders/s.clicks*100 : null;
+  s.drr = s.rub>0 ? s.ad/s.rub*100 : null;
+  s.price = s.orders>0 ? s.rub/s.orders : null;
+  return s;
+}
+// textCols — столбцы с текстом (слева, с переносом); остальные — числа справа
+function askTable(head, rows, textCols=[0]){ const cls=i=>textCols.includes(i)? (i>0?' class="t"':'') : ' class="num"'; return `<div class="ask-tw"><table class="ask-tbl"><thead><tr>${head.map((h,i)=>`<th${cls(i)}>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td${cls(i)}>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
+async function askMaps(prods){ const dms=await Promise.all(prods.map(p=>getDailyMap(p.id))); const m={}; prods.forEach((p,i)=>m[p.id]=dms[i]||{}); return m; }
+function askMpProds(){ return activeProducts().filter(p=>askState.mp==='all' || p.mp===askState.mp); }
+function askMpLabel(){ return askState.mp==='all' ? 'все площадки' : MP_LABEL[askState.mp]; }
+
+/* ===== Расчёты ответов: каждый возвращает {title, lead, html, links:[[tab,label,pid?]]} ===== */
+const ASK_CALC={
+  // 1. Почему изменились заказы: заказы = показы × CTR × клик→корзина × корзина→заказ — вклад каждого множителя
+  async orders(p){
+    const dm=await getDailyMap(p.id), P=askPeriod(askState.days, dm), oz=p.mp==='ozon';
+    const a=askAgg(dm,P.from,P.to,oz), b=askAgg(dm,P.pFrom,P.pTo,oz);
+    const title=`Почему изменились заказы — ${askPLabel(p)}`;
+    if(a.days===0||b.days===0) return {title, lead:'Недостаточно заполненных дней для сравнения.', html:''};
+    const dO=askPct(a.orders,b.orders), dR=askPct(a.rub,b.rub);
+    const parts=[['Показы',a.base,b.base,'impr'],['CTR',a.ctr,b.ctr,'ctr'],['Клик→корзина',a.cr1,b.cr1,'cr1'],['Корзина→заказ',a.cr2,b.cr2,'cr2']];
+    // вклад в логарифмах: ln(О1/О0) = Σ ln(множитель1/множитель0)
+    const contrib=parts.map(([n,x,y,k])=>({n,k, v:(x>0&&y>0)? Math.log(x/y) : null}));
+    const valid=contrib.filter(c=>c.v!==null);
+    const tips={impr:'не упала ли позиция в выдаче, не отключилась ли реклама или акция, есть ли товар в наличии на складах площадки',
+      ctr:'главное фото и цену в выдаче, не появился ли более заметный конкурент рядом',
+      cr1:'цену, рейтинг и свежие отзывы, наличие размеров/вариантов, фото и описание',
+      cr2:'цену в корзине, сроки и стоимость доставки, наличие на складе МП, способы оплаты'};
+    let lead;
+    if(b.orders===0 && a.orders===0) lead='Заказов не было ни в одном из периодов.';
+    else if(!valid.length || a.orders===0 || b.orders===0) lead=`Заказы: ${fmt(b.orders)} → ${fmt(a.orders)} шт. Разложить на причины нельзя — в одном из периодов нет кликов, корзин или заказов.`;
+    else {
+      const total=Math.log(a.orders/b.orders);
+      const main=valid.slice().sort((x,y)=> total<0 ? x.v-y.v : y.v-x.v)[0];
+      const dir = a.orders<b.orders ? 'упали' : a.orders>b.orders ? 'выросли' : 'не изменились';
+      lead = a.orders===b.orders ? `Заказы не изменились: ${fmt(a.orders)} шт.` :
+        `Заказы ${dir} на ${fmt1(Math.abs(dO))}% (${fmt(b.orders)} → ${fmt(a.orders)} шт). Главная причина — <b>${main.n.toLowerCase()}</b>.` +
+        (a.orders<b.orders ? ` Проверьте ${tips[main.k]}.` : '');
+    }
+    const rows=[
+      ['Показы'+(oz && a.base!==a.impr?' (уник. посетители)':''), fmt(b.base), fmt(a.base), `<span class="${askCls(askPct(a.base,b.base))}">${askSgn(askPct(a.base,b.base))}%</span>`],
+      ['CTR', b.ctr!==null?fmt1(b.ctr)+'%':'—', a.ctr!==null?fmt1(a.ctr)+'%':'—', `<span class="${askCls(askPct(a.ctr,b.ctr))}">${askSgn(askPct(a.ctr,b.ctr))}%</span>`],
+      ['Клик→корзина', b.cr1!==null?fmt1(b.cr1)+'%':'—', a.cr1!==null?fmt1(a.cr1)+'%':'—', `<span class="${askCls(askPct(a.cr1,b.cr1))}">${askSgn(askPct(a.cr1,b.cr1))}%</span>`],
+      ['Корзина→заказ', b.cr2!==null?fmt1(b.cr2)+'%':'—', a.cr2!==null?fmt1(a.cr2)+'%':'—', `<span class="${askCls(askPct(a.cr2,b.cr2))}">${askSgn(askPct(a.cr2,b.cr2))}%</span>`],
+      ['<b>Заказы, шт</b>', fmt(b.orders), fmt(a.orders), `<span class="${askCls(dO)}">${askSgn(dO)}%</span>`],
+      ['Средняя цена заказа', b.price?fmt(b.price)+' ₽':'—', a.price?fmt(a.price)+' ₽':'—', `${askSgn(askPct(a.price,b.price))}%`],
+      ['<b>Заказано, ₽</b>', fmt(b.rub)+' ₽', fmt(a.rub)+' ₽', `<span class="${askCls(dR)}">${askSgn(dR)}%</span>`],
+    ];
+    const contribHtml = valid.length && a.orders>0 && b.orders>0 && a.orders!==b.orders ? `<div class="ask-note">Вклад в изменение заказов: ${contrib.map(c=>`${c.n} ${c.v===null?'—':askSgn((Math.exp(c.v)-1)*100)+'%'}`).join(' · ')}. Заказы = показы × CTR × клик→корзина × корзина→заказ, поэтому самый сильно изменившийся множитель и есть главная причина.</div>` : '';
+    return {title, lead, html:`<div class="ask-sub">${askLbl(P)}</div>${askTable(['', 'Было', 'Стало', 'Изменение'], rows)}${contribHtml}`, links:[['daily','Ежедневные данные',p.id],['funnel','Воронка и точки роста',p.id]]};
+  },
+  // 2. Как изменение цены повлияло: последняя смена цены в ЛК за 60 дней, 7 дней до против 7 дней после
+  async price(p, opt={}){
+    const dm=await getDailyMap(p.id), y=yesterdayISO(), from=dateMinusDays(y,60);
+    const dates=Object.keys(dm).filter(d=>!dm[d].draft && d>=from && d<=y).sort();
+    const changes=[];
+    // учитываем смены цены от 1% — мелкие колебания на продажи не влияют
+    for(let i=1;i<dates.length;i++){ const a=+dm[dates[i-1]].priceLK||0, b=+dm[dates[i]].priceLK||0; if(a>0 && b>0 && Math.abs(b-a)/a>=0.01) changes.push({d:dates[i], from:a, to:b}); }
+    const title=`Как изменение цены повлияло на продажи — ${askPLabel(p)}`;
+    if(!changes.length) return {title, lead:'За последние 60 дней цена в ЛК не менялась больше чем на 1%.', html:''};
+    const filledAfter=c=>dates.filter(d=>d>=c.d).length;
+    const ch = changes.find(c=>c.d===opt.date) || changes.slice().reverse().find(c=>filledAfter(c)>=3) || changes[changes.length-1];
+    const bFrom=dateMinusDays(ch.d,7), bTo=dateMinusDays(ch.d,1), aTo=[datePlusDays(ch.d,6), y].sort()[0];
+    const oz=p.mp==='ozon', b=askAgg(dm,bFrom,bTo,oz), a=askAgg(dm,ch.d,aTo,oz);
+    const pick = changes.length>1 ? `<div class="ask-sub">Смена цены: ${changes.slice(-6).reverse().map(c=>`<button class="ask-chip${c.d===ch.d?' on':''}" data-askprice="${c.d}">${fmtRuDate(c.d).slice(0,5)}: ${fmt(c.from)} → ${fmt(c.to)} ₽</button>`).join(' ')}</div>` : '';
+    if(a.days<3 || b.days<3) return {title, lead:`Цена изменилась ${fmtRuDate(ch.d)}: ${fmt(ch.from)} → ${fmt(ch.to)} ₽. Для оценки нужно хотя бы 3 заполненных дня до и после — пока их ${b.days} и ${a.days}.`, html:pick};
+    const perDay=(s,f)=>s[f]/s.days;
+    const dPrice=askPct(ch.to,ch.from), dOrd=askPct(perDay(a,'orders'),perDay(b,'orders')), dRub=askPct(perDay(a,'rub'),perDay(b,'rub'));
+    const up=ch.to>ch.from;
+    let lead=`Цена ${up?'повышена':'снижена'} ${fmtRuDate(ch.d)} на ${fmt1(Math.abs(dPrice))}% (${fmt(ch.from)} → ${fmt(ch.to)} ₽). Заказы в день: <b class="${askCls(dOrd)}">${askSgn(dOrd)}%</b>, выручка в день: <b class="${askCls(dRub)}">${askSgn(dRub)}%</b>.`;
+    if(dRub!==null) lead += dRub>=0 ? ' По выручке изменение цены себя оправдало.' : ' Выручка снизилась — стоит пересмотреть цену или проверить другие причины (реклама, наличие).';
+    const rows=[
+      ['Заказы в день', fmt1(perDay(b,'orders')), fmt1(perDay(a,'orders')), `<span class="${askCls(dOrd)}">${askSgn(dOrd)}%</span>`],
+      ['Заказано в день, ₽', fmt(perDay(b,'rub')), fmt(perDay(a,'rub')), `<span class="${askCls(dRub)}">${askSgn(dRub)}%</span>`],
+      ['Показы в день', fmt(perDay(b,'base')), fmt(perDay(a,'base')), `${askSgn(askPct(perDay(a,'base'),perDay(b,'base')))}%`],
+      ['Клик→заказ', b.crf!==null?fmt1(b.crf)+'%':'—', a.crf!==null?fmt1(a.crf)+'%':'—', `<span class="${askCls(askPct(a.crf,b.crf))}">${askSgn(askPct(a.crf,b.crf))}%</span>`],
+      ['ДРР', b.drr!==null?fmt1(b.drr)+'%':'—', a.drr!==null?fmt1(a.drr)+'%':'—', `<span class="${askCls(askPct(a.drr,b.drr),false)}">${askSgn(askPct(a.drr,b.drr))}%</span>`],
+    ];
+    return {title, lead, html:pick+`<div class="ask-sub">${b.days} дн. до (${fmtRuDate(bFrom).slice(0,5)}–${fmtRuDate(bTo).slice(0,5)}) против ${a.days} дн. после (${fmtRuDate(ch.d).slice(0,5)}–${fmtRuDate(aTo).slice(0,5)})</div>`+askTable(['', 'До', 'После', 'Изменение'], rows)+'<div class="ask-note">Сравниваются средние за день, поэтому разное число дней до и после не искажает результат. На продажи влияют и другие причины (реклама, акции, сезон) — смотрите вместе с журналом изменений.</div>', links:[['daily','Ежедневные данные',p.id]]};
+  },
+  // 3. Что с СПП: скидка площадки = 1 − цена для покупателя ÷ цена в ЛК
+  async spp(p){
+    const dm=await getDailyMap(p.id), P=askPeriod(askState.days, dm);
+    const days=Object.keys(dm).filter(d=>!dm[d].draft && d>=P.pFrom && d<=P.to).sort();
+    const pts=days.map(d=>({d, lk:+dm[d].priceLK||0, cu:+dm[d].priceCustomer||0, o:+dm[d].orders||0})).filter(x=>x.lk>0 && x.cu>0).map(x=>({...x, spp:(1-x.cu/x.lk)*100}));
+    const title=`Что с СПП — ${askPLabel(p)}`;
+    if(pts.length<2) return {title, lead:'Мало дней с заполненными ценой в ЛК и ценой для покупателя.', html:''};
+    const cur=pts.filter(x=>x.d>=P.from), prev=pts.filter(x=>x.d<P.from);
+    const avg=(arr,f)=>arr.length? arr.reduce((s,x)=>s+x[f],0)/arr.length : null;
+    const last=pts[pts.length-1];
+    const jumps=[]; for(let i=1;i<pts.length;i++){ const dv=pts[i].spp-pts[i-1].spp; if(Math.abs(dv)>=3) jumps.push({...pts[i], dv, prevSpp:pts[i-1].spp}); }
+    const aS=avg(cur,'spp'), bS=avg(prev,'spp'), aO=avg(cur,'o'), bO=avg(prev,'o');
+    let lead=`СПП сейчас <b>${fmt1(last.spp)}%</b> (цена в ЛК ${fmt(last.lk)} ₽ → для покупателя ${fmt(last.cu)} ₽, на ${fmtRuDate(last.d)}).`;
+    if(aS!==null && bS!==null) lead+=` В среднем за период ${fmt1(aS)}% против ${fmt1(bS)}% раньше (${askSgn(aS-bS)} п.п.); заказы в день ${askSgn(askPct(aO,bO))}%.`;
+    lead += jumps.length ? ` Заметных скачков СПП (от 3 п.п. за день): ${jumps.length}.` : ' Резких скачков СПП не было.';
+    const rows=jumps.slice(-6).reverse().map(j=>[fmtRuDate(j.d).slice(0,5), fmt1(j.prevSpp)+'% → '+fmt1(j.spp)+'%', `<span class="${askCls(j.dv)}">${askSgn(j.dv)} п.п.</span>`, fmt(j.cu)+' ₽']);
+    return {title, lead, html:`<div class="ask-sub">${askLbl(P)}</div>`+(rows.length? askTable(['Дата','СПП','Изменение','Цена для покупателя'], rows, [0]) : '')+'<div class="ask-note">Рост СПП снижает цену для покупателя и обычно поднимает конверсию; падение — наоборот. Если заказы изменились вместе с СПП, причина скорее в скидке площадки, а не в карточке.</div>', links:[['daily','Ежедневные данные',p.id]]};
+  },
+  // 4. Где карточка теряет покупателей: этапы воронки против норм товара («Пороги» в «Настройках»)
+  async funnel(p){
+    const dm=await getDailyMap(p.id), P=askPeriod(askState.days, dm), oz=p.mp==='ozon', th=getThresholds(p);
+    const a=askAgg(dm,P.from,P.to,oz);
+    const title=`Где карточка теряет покупателей — ${askPLabel(p)}`;
+    if(a.days===0) return {title, lead:'В периоде нет заполненных дней.', html:''};
+    // выкуп — только по заказам старше 7 дней (раньше они не успевают дойти до покупателя)
+    const old=askAgg(dm,P.from,[dateMinusDays(yesterdayISO(),7),P.to].sort()[0],oz);
+    const buy = old.orders>0 && old.buyouts>0 ? old.buyouts/old.orders*100 : null;
+    const canc = a.orders>0 ? a.cancels/a.orders*100 : null;
+    const st=[
+      {n:'CTR (показ → клик)', v:a.ctr, norm:th.ctr, low:true},
+      {n:'Клик → корзина', v:a.cr1, norm:th.cr1, low:true},
+      {n:'Корзина → заказ', v:a.cr2, norm:th.cr2, low:true},
+      {n:'Выкуп', v:buy, norm:th.buyout, low:true},
+      {n:'Отмены', v:canc, norm:th.cancel, low:false},
+    ];
+    st.forEach(s=>{ s.ratio = s.v===null ? null : s.low ? s.v/s.norm : s.norm/Math.max(s.v,0.01); });
+    const bad=st.filter(s=>s.ratio!==null && s.ratio<1).sort((x,y)=>x.ratio-y.ratio);
+    const lead = bad.length ? `Больше всего покупателей теряется на этапе <b>${bad[0].n.toLowerCase()}</b>: ${fmt1(bad[0].v)}% при норме ${bad[0].low?'от':'до'} ${fmt1(bad[0].norm)}%.`+(bad.length>1?` Ниже нормы ещё: ${bad.slice(1).map(s=>s.n.toLowerCase()).join(', ')}.`:'') : 'Все этапы воронки в норме.';
+    const rows=st.map(s=>[s.n, s.v===null?'—':fmt1(s.v)+'%', (s.low?'от ':'до ')+fmt1(s.norm)+'%', s.ratio===null?'<span class="muted">нет данных</span>':s.ratio<1?'<span class="neg">ниже нормы</span>':'<span class="pos">в норме</span>']);
+    return {title, lead, html:`<div class="ask-sub">${fmtRuDate(P.from).slice(0,5)}–${fmtRuDate(P.to).slice(0,5)}, заполнено дней: ${a.days}</div>`+askTable(['Этап','Сейчас','Норма','Итог'], rows)+'<div class="ask-note">Нормы — «Пороги» товара в «Настройках» (по умолчанию CTR 3%, клик→корзина 10%, корзина→заказ 20%, выкуп 80%, отмены до 10%). Выкуп считается по заказам старше 7 дней. Подробный разбор — в «Воронке и точках роста».</div>', links:[['funnel','Воронка и точки роста',p.id]]};
+  },
+  // 5. Что дали последние изменения карточки: «Тип изменения» и «Комментарий» в «Ежедневных данных»
+  async changes(p){
+    const dm=await getDailyMap(p.id), y=yesterdayISO(), from=dateMinusDays(y,60), oz=p.mp==='ozon';
+    const title=`Что дали последние изменения карточки — ${askPLabel(p)}`;
+    const ch=Object.keys(dm).filter(d=>d>=from && d<=y && ((dm[d].changeTypes||[]).length || (dm[d].changeNote||'').trim())).sort().reverse().slice(0,6);
+    if(!ch.length) return {title, lead:'За последние 60 дней изменений в «Тип изменения» и «Комментарий» не отмечено.', html:''};
+    const rows=ch.map(d=>{
+      const types=(dm[d].changeTypes||[]).filter(t=>CHANGE_TYPES[t]);
+      const metric = types.length ? CHANGE_TYPES[types[0]].metric : 'crf';
+      const mLabel = types.length ? CHANGE_TYPES[types[0]].metricLabel : 'CR клик→заказ';
+      const b=askAgg(dm,dateMinusDays(d,7),dateMinusDays(d,1),oz), a=askAgg(dm,d,[datePlusDays(d,6),y].sort()[0],oz);
+      const what=(types.map(t=>CHANGE_TYPES[t].label).join(', ') || 'Без типа')+((dm[d].changeNote||'').trim()?': '+hmEsc(dm[d].changeNote.trim()):'');
+      if(a.days<2 || b.days<2) return [fmtRuDate(d).slice(0,5), what, `<div class="ask-ml">${mLabel}</div><span class="muted">мало данных</span>`, '—'];
+      const goodUp = metric!=='drr';
+      const mv=askPct(a[metric],b[metric]), ov=askPct(a.orders/a.days, b.orders/b.days);
+      return [fmtRuDate(d).slice(0,5), what, `<div class="ask-ml">${mLabel}</div>${b[metric]!==null?fmt1(b[metric])+'%':'—'} → ${a[metric]!==null?fmt1(a[metric])+'%':'—'}${mv===null?'':` <span class="${askCls(mv,goodUp)}">(${askSgn(mv)}%)</span>`}`, ov===null?'—':`<span class="${askCls(ov)}">${askSgn(ov)}%</span>`];
+    });
+    return {title, lead:`Изменений за 60 дней: ${ch.length}. Для каждого — главная метрика этого типа изменения и заказы в день: 7 дней до против 7 дней после (или сколько прошло).`, html:askTable(['Дата','Что изменили','Метрика: до → после','Заказы в день'], rows, [0,1])+'<div class="ask-note">Если изменения шли подряд, их эффекты смешиваются. Подробная оценка с окнами ожидания — в «Журнале изменений» на «Воронке и точках роста».</div>', links:[['funnel','Воронка и точки роста',p.id]]};
+  },
+  // 6. Что проверить в первую очередь: недобор выручки + лишний расход на рекламу + тревожные аномалии
+  async check(){
+    const prods=askMpProds(), m=await askMaps(prods), lim=drrLimit();
+    const list=prods.map(p=>{
+      const P=askPeriod(askState.days, m[p.id]), oz=p.mp==='ozon', a=askAgg(m[p.id],P.from,P.to,oz), b=askAgg(m[p.id],P.pFrom,P.pTo,oz);
+      const lostRub=Math.max(0,b.rub-a.rub), overAd=(a.drr!==null && drrOver(a.drr)) ? a.ad-a.rub*lim/100 : (a.ad>0 && a.orders===0 ? a.ad : 0);
+      const an=computeAnomalies(m[p.id],p); const alarms=an&&an.baseDays>=3&&an.lastDate>=dateMinusDays(todayISO(),3) ? an.items.filter(i=>i.alarm) : [];
+      const why=[]; if(lostRub>0) why.push(`заказано на ${fmt(lostRub)} ₽ меньше (${askSgn(askPct(a.rub,b.rub))}%)`);
+      if(overAd>0) why.push(a.orders===0? `реклама ${fmt(a.ad)} ₽ без заказов` : `ДРР ${fmt1(a.drr)}% — лишние ${fmt(overAd)} ₽ сверх предела`);
+      if(alarms.length) why.push(alarms.sort((x,y)=>y.score-x.score)[0].text.split(' — ')[0].toLowerCase());
+      return {p, score:lostRub+overAd+(alarms.length?1:0), why};
+    }).filter(x=>x.why.length).sort((a,b)=>b.score-a.score);
+    const title=`Что проверить в первую очередь — ${askMpLabel()}`;
+    if(!list.length) return {title, lead:'Тревожных сигналов нет: продажи не падают, ДРР в пределах, аномалий нет.', html:''};
+    return {title, lead:`Карточек с сигналами: ${list.length}. Отсортированы по сумме потерь: недобор заказов к прошлому периоду + расход на рекламу сверх предела ${fmt1(lim)}%.`,
+      html:`<div class="ask-sub">${ASK_CARD_PERIOD_NOTE(askState.days)}</div><ol class="ask-list">${list.slice(0,10).map(x=>`<li><a data-askopen="${x.p.id}">${hmEsc(askPLabel(x.p))}</a> — ${x.why.join('; ')}</li>`).join('')}</ol>`+(list.length>10?`<div class="ask-note">и ещё ${list.length-10}</div>`:''), links:[['analytics','Аналитика и реклама']]};
+  },
+  // 7. Успеваем ли по плану: как на «План и факт» — факт с 1-го числа, прогноз Run-rate
+  async plan(){
+    const prods=askState.mp==='all' ? state.products.slice() : state.products.filter(p=>p.mp===askState.mp);
+    const month=monthNow(), dayN=new Date().getDate(), dim=daysInMonth(month), from=month+'-01', to=todayISO();
+    const [m, planDocs]=await Promise.all([askMaps(prods), Promise.all([...new Set(prods.map(planKeyFor))].map(async k=>[k, (await storeGet(k))||{}]))]);
+    const pd=Object.fromEntries(planDocs);
+    const rows=new Map();
+    for(const p of prods){ const k=planKeyFor(p)+'|'+p.mp; if(!rows.has(k)) rows.set(k,{name:p.planGroup||p.name, mp:p.mp, plan:+((pd[planKeyFor(p)]||{})[month]||{}).planRub||0, fact:0, fc:0, pid:p.id});
+      const r=rows.get(k), units=sumDays(m[p.id],from,to,'orders'); r.fact+=sumDays(m[p.id],from,to,'ordersRub'); r.fc+=(units/dayN)*dim*(p.currentPriceLK||0); }
+    const rs=[...rows.values()].filter(r=>r.plan>0);
+    const title=`Успеваем ли по плану — ${askMpLabel()}`;
+    if(!rs.length) return {title, lead:'План на этот месяц не задан.', html:''};
+    const plan=rs.reduce((s,r)=>s+r.plan,0), fact=rs.reduce((s,r)=>s+r.fact,0), fc=rs.reduce((s,r)=>s+r.fc,0);
+    const need=dim>dayN ? Math.max(0,plan-fact)/(dim-dayN) : null, fcPct=fc/plan*100;
+    rs.forEach(r=>{ r.gap=r.plan*dayN/dim - r.fact; r.fcPct=r.fc/r.plan*100; });
+    const lag=rs.filter(r=>r.gap>0).sort((a,b)=>b.gap-a.gap);
+    const lead=`${fcPct>=100?'Да, успеваем':'Пока не успеваем'}: прогноз на конец месяца <b class="${fcPct>=100?'pos':fcPct>=85?'amb':'neg'}">${fmt(fc)} ₽ (${fmt1(fcPct)}% плана)</b>. Факт ${fmt(fact)} из ${fmt(plan)} ₽ (${fmt1(fact/plan*100)}% при ${fmt1(dayN/dim*100)}% прошедших дней).`+(need!==null&&fcPct<100?` Нужно ${fmt(need)} ₽ в день до конца месяца.`:'');
+    const rowsH=lag.slice(0,8).map(r=>[`<a data-askopen="${r.pid}">${hmEsc(r.name)}</a> <span class="badge ${r.mp}">${MP_LABEL[r.mp]}</span>`, fmt(r.plan)+' ₽', fmt(r.fact)+' ₽', `<span class="neg">−${fmt(r.gap)} ₽</span>`, `<span class="${r.fcPct>=100?'pos':r.fcPct>=85?'amb':'neg'}">${fmt1(r.fcPct)}%</span>`]);
+    return {title, lead, html: lag.length ? '<div class="ask-sub">Кто отстаёт от ровного темпа сильнее всего</div>'+askTable(['Товар','План','Факт','Отставание','Прогноз'], rowsH)+'<div class="ask-note">Отставание — сколько не хватает до ровного темпа на сегодня (план × прошедшие дни ÷ дней в месяце − факт). Прогноз — Run-rate, как на «План и факт».</div>' : '<div class="ask-note">Все товары с планом идут не медленнее ровного темпа.</div>', links:[['plan','План и факт']]};
+  },
+  // 8. Где реклама неэффективна: ДРР выше предела или расход без заказов
+  async ads(){
+    const prods=askMpProds(), m=await askMaps(prods), lim=drrLimit();
+    const list=prods.map(p=>{ const P=askPeriod(askState.days, m[p.id]); const a=askAgg(m[p.id],P.from,P.to,p.mp==='ozon'); const over = a.ad>0 && a.orders===0 ? a.ad : (drrOver(a.drr) ? a.ad-a.rub*lim/100 : 0); return {p,a,over}; }).filter(x=>x.over>0).sort((x,y)=>y.over-x.over);
+    const title=`Где реклама неэффективна — ${askMpLabel()}`;
+    if(!list.length) return {title, lead:`Во всех карточках ДРР в пределах ${fmt1(lim)}%, расхода без заказов нет.`, html:`<div class="ask-sub">Последние ${askState.days} дн. по последний заполненный день каждой карточки</div>`};
+    const totOver=list.reduce((s,x)=>s+x.over,0);
+    const rows=list.slice(0,10).map(x=>[`<a data-askopen="${x.p.id}">${hmEsc(askPLabel(x.p))}</a>`, fmt(x.a.ad)+' ₽', fmt(x.a.rub)+' ₽', x.a.orders===0?'<span class="neg">нет заказов</span>':`<span class="neg">${fmt1(x.a.drr)}%</span>`, x.a.orders>0?fmt(x.a.ad/x.a.orders)+' ₽':'—', `<b>${fmt(x.over)} ₽</b>`]);
+    return {title, lead:`Карточек: ${list.length}. Сверх предела ДРР ${fmt1(lim)}% потрачено <b>${fmt(totOver)} ₽</b> за период.`, html:`<div class="ask-sub">Последние ${askState.days} дн. по последний заполненный день каждой карточки</div>`+askTable(['Карточка','Расход','Заказано','ДРР','CPO','Сверх предела'], rows)+'<div class="ask-note">«Сверх предела» — сколько можно было не тратить при ДРР ровно на пределе (расход − заказано × предел); для карточек без заказов — весь расход.</div>', links:[['analytics','Аналитика и реклама']]};
+  },
+  // 9. Лидеры роста и падения: изменение заказано ₽ к такому же периоду перед ним
+  async leaders(){
+    const prods=askMpProds(), m=await askMaps(prods);
+    const list=prods.map(p=>{ const P=askPeriod(askState.days, m[p.id]); const a=sumDays(m[p.id],P.from,P.to,'ordersRub'), b=sumDays(m[p.id],P.pFrom,P.pTo,'ordersRub'); return {p,a,b,d:a-b,pct:askPct(a,b)}; }).filter(x=>x.a>0||x.b>0);
+    const up=list.filter(x=>x.d>0).sort((x,y)=>y.d-x.d).slice(0,5), down=list.filter(x=>x.d<0).sort((x,y)=>x.d-y.d).slice(0,5);
+    const row=x=>[`<a data-askopen="${x.p.id}">${hmEsc(askPLabel(x.p))}</a>`, fmt(x.b)+' ₽', fmt(x.a)+' ₽', `<span class="${askCls(x.d)}">${askSgn(x.d,0)} ₽</span>`, x.pct===null?'новые продажи':`<span class="${askCls(x.pct)}">${askSgn(x.pct)}%</span>`];
+    const title=`Лидеры роста и падения — ${askMpLabel()}`;
+    return {title, lead:`Рост у ${list.filter(x=>x.d>0).length}, падение у ${list.filter(x=>x.d<0).length} карточек (по заказано ₽).`,
+      html:`<div class="ask-sub">${ASK_CARD_PERIOD_NOTE(askState.days)}</div>`+(up.length?'<div class="ask-h">Растут</div>'+askTable(['Карточка','Было','Стало','Изменение','%'], up.map(row)):'')+(down.length?'<div class="ask-h">Падают</div>'+askTable(['Карточка','Было','Стало','Изменение','%'], down.map(row)):''), links:[['analytics','Аналитика и реклама']]};
+  },
+};
+
+/* ===== Панель ===== */
+function openAsk(opts={}){
+  if(opts.pid){ askState.pid=opts.pid; askRemember(opts.pid); }
+  document.getElementById('askPanel').classList.add('open');
+  document.getElementById('askScrim').classList.add('on');
+  renderAskControls();
+}
+function closeAsk(){ document.getElementById('askPanel').classList.remove('open'); document.getElementById('askScrim').classList.remove('on'); }
+function renderAskControls(){
+  const q=ASK_Q.find(x=>x.id===askState.q);
+  const chips=g=>ASK_Q.filter(x=>x.group===g).map(x=>`<button class="ask-q${askState.q===x.id?' on':''}${x.soon?' soon':''}" data-askq="${x.id}"${x.soon?` title="${x.soon}"`:''}>${x.label}${x.soon?' <span class="an-soon-h">СКОРО</span>':''}</button>`).join('');
+  const p=state.products.find(x=>x.id===askState.pid);
+  const recent=askRecent().map(id=>state.products.find(x=>x.id===id)).filter(Boolean);
+  let opts='';
+  if(q && q.group==='product'){
+    opts+=`<div class="ask-opt"><label>Товар</label>
+      <div class="ask-pick"><input id="askSearch" type="search" placeholder="Начните вводить название…" autocomplete="off" value="${p?hmEsc(askPLabel(p)):''}"><div id="askRes" class="sres" style="display:none;"></div></div>
+      ${recent.length?`<div class="ask-recent">Недавние: ${recent.map(r=>`<button class="ask-chip${r.id===askState.pid?' on':''}" data-askpid="${r.id}">${hmEsc(askPLabel(r))}</button>`).join('')}</div>`:''}</div>`;
+  }
+  if(q && q.period) opts+=`<div class="ask-opt"><label>Период</label><div class="segmented" id="askDays">${[7,14,28].map(n=>`<button data-days="${n}" class="${askState.days===n?'active':''}">${n} дней</button>`).join('')}</div></div>`;
+  if(q && q.mp) opts+=`<div class="ask-opt"><label>Площадка</label><div class="segmented" id="askMp">${[['all','Все'],['wb','WB'],['ozon','Ozon'],['ym','Я.Маркет']].map(([v,l])=>`<button data-mp="${v}" class="${askState.mp===v?'active':''}">${l}</button>`).join('')}</div></div>`;
+  document.getElementById('askControls').innerHTML=`<div class="ask-grp">По товару</div><div class="ask-qs">${chips('product')}</div><div class="ask-grp">Общие</div><div class="ask-qs">${chips('common')}</div>${opts?`<div class="ask-opts">${opts}</div>`:''}`;
+  // поиск товара
+  const inp=document.getElementById('askSearch');
+  if(inp){
+    const res=document.getElementById('askRes');
+    inp.addEventListener('focus', ()=>inp.select());
+    inp.addEventListener('input', ()=>{
+      const s=inp.value.trim().toLowerCase(); if(!s){ res.style.display='none'; return; }
+      const found=activeProducts().filter(x=>x.name.toLowerCase().includes(s)).slice(0,12);
+      res.innerHTML=found.length? found.map(x=>`<a data-askpid="${x.id}"><span>${hmEsc(x.name)}</span><small>${MP_LABEL[x.mp]}</small></a>`).join('') : '<div class="empty" style="padding:10px;">Ничего не найдено</div>';
+      res.style.display='block';
+    });
+    inp.addEventListener('blur', ()=>setTimeout(()=>{ res.style.display='none'; },150));
+  }
+}
+async function runAsk(opt={}){
+  const q=ASK_Q.find(x=>x.id===askState.q); if(!q) return;
+  const out=document.getElementById('askAnswers');
+  if(q.soon){ out.innerHTML=`<div class="ask-card"><div class="ask-title">${q.label}</div><div class="ask-lead">Скоро: ${q.soon}.</div></div>`; return; }
+  const p=state.products.find(x=>x.id===askState.pid);
+  if(q.group==='product' && !p){ document.getElementById('askSearch')?.focus(); return; }
+  // показываем только один, текущий ответ — новый заменяет предыдущий
+  const token=(runAsk.token=(runAsk.token||0)+1);
+  out.innerHTML='';
+  const wait=document.createElement('div'); wait.className='ask-card'; wait.innerHTML='<div class="empty" style="padding:8px;">Считаю…</div>'; out.appendChild(wait);
+  let r;
+  try{ r = q.group==='product' ? await ASK_CALC[q.id](p, opt) : await ASK_CALC[q.id](); }
+  catch(e){ console.error('Спросить: ошибка расчёта', e); if(token===runAsk.token) wait.innerHTML='<div class="ask-lead neg">Не удалось посчитать — проверьте соединение и попробуйте ещё раз.</div>'; return; }
+  if(token!==runAsk.token) return; // пока считали, выбрали другой вопрос/товар/период
+  wait.innerHTML=`<div class="ask-title">${r.title}</div><div class="ask-lead">${r.lead}</div>${r.html||''}${(r.links||[]).length?`<div class="ask-links">${r.links.map(([t,l,pid])=>`<a class="hm-more" data-askgo="${t}"${pid?` data-pid="${pid}"`:''}>Открыть: ${l} →</a>`).join('')}</div>`:''}`;
+  wait.dataset.q=q.id;
+}
+document.getElementById('askPanel').addEventListener('click', (e)=>{
+  const t=e.target.closest('[data-askq],[data-askpid],[data-days],[data-mp],[data-askgo],[data-askopen],[data-askprice],#askClose');
+  if(!t) return;
+  if(t.id==='askClose'){ closeAsk(); return; }
+  if(t.dataset.askq){ askState.q=t.dataset.askq; renderAskControls(); const q=ASK_Q.find(x=>x.id===askState.q); if(q.soon || q.group!=='product' || askState.pid) runAsk(); else document.getElementById('askSearch')?.focus(); return; }
+  if(t.dataset.askpid){ askState.pid=t.dataset.askpid; askRemember(t.dataset.askpid); renderAskControls(); runAsk(); return; }
+  if(t.dataset.days && t.closest('#askDays')){ askState.days=+t.dataset.days; renderAskControls(); runAsk(); return; }
+  if(t.dataset.mp && t.closest('#askMp')){ askState.mp=t.dataset.mp; renderAskControls(); runAsk(); return; }
+  if(t.dataset.askprice){ runAsk({date:t.dataset.askprice}); return; }
+  if(t.dataset.askopen){ askState.pid=t.dataset.askopen; askRemember(t.dataset.askopen); askState.q='orders'; renderAskControls(); runAsk(); return; }
+  if(t.dataset.askgo){ closeAsk(); if(t.dataset.pid) selectedProductId=t.dataset.pid; goTab(t.dataset.askgo); }
+});
+document.getElementById('askScrim').addEventListener('click', closeAsk);
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && document.getElementById('askPanel').classList.contains('open')) closeAsk(); });
 
 paintThemeButton();
 document.getElementById('themeToggle').addEventListener('click', ()=>setTheme(currentTheme()==='light' ? 'dark' : 'light'));
