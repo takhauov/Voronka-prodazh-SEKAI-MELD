@@ -363,7 +363,7 @@
   .hm-attl{max-height:260px;overflow-y:auto;padding:0 0 8px;}
   .hm-attl a{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;}
   .hm-attl a:hover{background:var(--panel-sub);}
-  .hm-attb{flex:none;align-self:flex-start;margin-top:1px;display:flex;gap:3px;}
+  .hm-attb{flex:none;width:74px;align-self:flex-start;margin-top:1px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;} /* одинаковая ширина — названия начинаются с одной линии */
   .hm-attsoon{cursor:default;}
   .hm-attsoon .hm-attv b{color:var(--tx3);}
   .hm-attn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;font-size:13px;color:var(--tx);line-height:1.35;}
@@ -5003,7 +5003,7 @@ async function renderHomeTab(){
   const pItem=(x, go, r)=>({pid:x.p.id, go, badge:mpBadges([x.p]), name:x.p.name, r});
   const fallItems=fallList.map(x=>pItem(x,'daily',`за 7 дн. ${fmt(x.k.w1)} шт против ${fmt(x.k.w0)} шт · <b class="neg">${fmt1((x.k.w1-x.k.w0)/x.k.w0*100)}%</b>`));
   const adItems=adNoOrders.map(x=>pItem(x,'daily',`расход за 7 дн. <b class="neg">${fmt(x.k.ad1)} ₽</b> · заказов 0`));
-  const drrItems=highDrrProducts.map(x=>pItem(x,'daily',`ДРР <b class="neg">${fmt1(x.ad/x.rub*100)}%</b> · расход ${fmt(x.ad)} ₽ с 1-го числа`));
+  const drrItems=highDrrProducts.map(x=>pItem(x,'daily',`ДРР <b class="neg">${fmt1(x.ad/x.rub*100)}%</b> · расход ${fmt(x.ad)} ₽`));
   const planItems=planLag.map(g=>({pid:g.ps[0].id, go:'plan', badge:mpBadges(g.ps), name:g.name, r:`прогноз <b class="neg">${fmt1(g.pct)}%</b> плана · факт ${fmt(g.fact)} из ${fmt(g.plan)} ₽`}));
   const stockItems=lowStock.map(r=>({pid:'', go:'stock', badge:`<span class="badge ${r.ch}">${MP_LABEL[r.ch]}</span>`, name:r.name, r:`хватит на <b class="neg">${fmt1(r.days)} дн.</b> · остаток ${fmt(r.stock)} шт`}));
   const soonRow=lbl=>`<div class="hm-att hm-attsoon"><span>${lbl} <span class="ad-soon">скоро</span></span><span class="hm-attv"><b>—</b><i></i></span></div>`;
