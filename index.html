@@ -351,6 +351,23 @@
   .hm-att:last-child{border:0;}
   .hm-att:hover{color:var(--tx);}
   .hm-att b{font-size:13px;font-weight:700;}
+  .hm-attd{border-bottom:1px solid var(--line);}
+  .hm-attd:last-child{border:0;}
+  .hm-attd>summary{list-style:none;border:0;}
+  .hm-attd>summary::-webkit-details-marker{display:none;}
+  .hm-attv{display:flex;align-items:center;gap:8px;flex:none;white-space:nowrap;}
+  .hm-attv i{display:block;width:10px;height:10px;flex:none;}
+  .hm-attv i.hm-chev{width:7px;height:7px;margin:0 2px;border-right:1.6px solid var(--tx3);border-bottom:1.6px solid var(--tx3);transform:translateY(-2px) rotate(45deg);transition:transform .15s;}
+  .hm-attd[open] .hm-attv i.hm-chev{transform:translateY(2px) rotate(225deg);}
+  .hm-attd>summary:hover .hm-chev{border-color:var(--tx);}
+  .hm-attl{max-height:260px;overflow-y:auto;padding:0 0 8px;}
+  .hm-attl a{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;}
+  .hm-attl a:hover{background:var(--panel-sub);}
+  .hm-attb{flex:none;align-self:flex-start;margin-top:1px;display:flex;gap:3px;}
+  .hm-attsoon{cursor:default;}
+  .hm-attsoon .hm-attv b{color:var(--tx3);}
+  .hm-attn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;font-size:13px;color:var(--tx);line-height:1.35;}
+  .hm-attn small{font-size:11.5px;color:var(--tx3);}
   .hm-qa{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .hm-qa button{display:flex;gap:7px;align-items:center;justify-content:center;padding:10px;border-radius:10px;border:1px solid var(--line2);background:rgba(79,140,255,.06);color:var(--tx);font-family:var(--font-body);font-weight:500;font-size:13px;min-height:42px;cursor:pointer;}
   .hm-qa button:hover{border-color:var(--blue);background:rgba(79,140,255,.14);}
@@ -865,7 +882,7 @@
       <p><b>Заказы по дням</b> — итог последнего заполненного дня (есть хоть один не черновой день) и столбики за 14 дней; наведите на столбик, чтобы увидеть цифры.</p>
       <p><b>Запас на площадках</b> (скоро) — товары с наименьшим запасом в днях: остаток ÷ средние заказы в день за 14 дней. Появится вместе с API, когда остатки будут обновляться ежедневно и по каждой карточке; сейчас остаток вносится раз в неделю, и расчёт был бы неточным. Подсказки «Заканчивается» и счётчик товаров с малым запасом тоже вернутся вместе с API.</p>
       <p><b>Поставки на площадки</b> — скоро: появятся вместе с API площадок и покажут поставки на WB, Ozon и ЯМ со статусом (планируется → в пути → принята). План распределения товара по-прежнему ведётся в «Поставках по площадкам».</p>
-      <p><b>Подсказки</b> строятся правилами, без ИИ: <b>аномалии</b> из «Ежедневных данных» (те же правила: последний заполненный день против среднего за 7 дней; только тревожные сигналы — падения, рост ДРР, ухудшение позиции; рост показов виден только в «Ежедневных данных»; по одной, самой сильной, на карточку — остальные видны в «Ежедневных данных»; показываются, если последний заполненный день — не старше 3 дней; наведите, чтобы прочитать, что проверить, клик открывает товар), прогноз ниже плана, ДРР площадки или товара выше предела, падение заказов товара на 30% и больше за 7 дней к предыдущим 7 дням (если неделей раньше было от 5 шт и все последние 7 дней заполнены), остатки не обновлены за текущую неделю. <b>Требуют внимания</b> — незаполненные или черновые дни за 3 дня до вчера (вчерашний и сегодняшний дни не считаются — их заполняют в течение дня), товары с ДРР выше предела и просроченные задачи (пока демо).</p>
+      <p><b>Подсказки</b> строятся правилами, без ИИ: <b>аномалии</b> из «Ежедневных данных» (те же правила: последний заполненный день против среднего за 7 дней; только тревожные сигналы — падения, рост ДРР, ухудшение позиции; рост показов виден только в «Ежедневных данных»; по одной, самой сильной, на карточку — остальные видны в «Ежедневных данных»; показываются, если последний заполненный день — не старше 3 дней; наведите, чтобы прочитать, что проверить, клик открывает товар), прогноз ниже плана, ДРР площадки или товара выше предела, падение заказов товара на 30% и больше за 7 дней к предыдущим 7 дням (если неделей раньше было от 5 шт и все последние 7 дней заполнены), остатки не обновлены за текущую неделю. <b>Требуют внимания</b> — сколько товаров с каждой проблемой; щелчок по строке раскрывает список, щелчок по товару открывает его «Ежедневные данные» (строку плана — «План и факт»). <b>Заказы упали</b> — за 7 дней по последний заполненный день карточки заказов на 30% и больше меньше, чем 7 днями раньше (все 7 дней заполнены, неделей раньше было от 5 шт). <b>Реклама без заказов</b> — за те же 7 дней расход на рекламу от 500 ₽ и ни одного заказа. <b>ДРР выше предела</b> — с начала месяца. <b>Отстают от плана</b> — прогноз Run-rate по строке плана (товар или группа плана) меньше 85% плана месяца. <b>Заканчивается запас</b> — скоро, вместе с остатками из API. Просроченные задачи — пока демо. Карточки, которые давно не заполняются (последний заполненный день старше 5 дней), и скрытые товары не учитываются.</p>
       <p><b>Светлая / тёмная тема</b> — кнопка справа от поиска (солнце / луна). Тема своя у каждого сотрудника и запоминается в его браузере; по умолчанию — светлая.</p>
       <p><b>Площадки вверху</b> (WB, Ozon, Я.Маркет) — статус загрузки данных по API: зелёная точка — подключено (в подсказке время последнего обновления), красная — ошибка загрузки, жёлтая — не подключено, данные вносятся вручную. Подключение появится на этапе «Интеграции».</p>
       <p><b>Поиск</b> — по названиям товаров (открывает товар в «Ежедневных данных») и вкладок. <b>Задачи</b> на «Главной» пока демо-примеры с пометкой «демо» — настоящие появятся вместе с вкладкой «Задачи».</p>
@@ -4887,8 +4904,14 @@ async function renderHomeTab(){
   ['wb','ozon','ym'].forEach(mp=>{ const m=byMp[mp]; if(m.rub>0){ const v=m.ad/m.rub*100; if(drrOver(v)) ins.push({lvl:'high', tab:'funnel', t:`ДРР ${MP_LABEL[mp]} ${fmt1(v)}% — выше предела ${fmt1(limit)}%`, d:`Расход на рекламу ${fmt(m.ad)} ₽ при заказах на ${fmt(m.rub)} ₽ с 1-го числа`}); } });
   const highDrrProducts=perProduct.filter(x=>x.rub>0 && x.ad>0 && drrOver(x.ad/x.rub*100)).sort((a,b)=>b.ad/b.rub-a.ad/a.rub);
   highDrrProducts.slice(0,2).forEach(x=>ins.push({lvl:'mid', tab:'daily', pid:x.p.id, t:`ДРР ${fmt1(x.ad/x.rub*100)}%: ${x.p.name} (${MP_LABEL[x.p.mp]})`, d:`Выше предела ${fmt1(limit)}% — расход ${fmt(x.ad)} ₽ на заказы ${fmt(x.rub)} ₽`}));
-  perProduct.filter(x=>x.w1Full && x.w0>=5 && x.w1<=x.w0*0.7).sort((a,b)=>(a.w1/a.w0)-(b.w1/b.w0)).slice(0,2)
-    .forEach(x=>ins.push({lvl:'mid', tab:'funnel', pid:x.p.id, t:`Заказы упали: ${x.p.name} (${MP_LABEL[x.p.mp]})`, d:`За последние 7 дней ${fmt(x.w1)} шт против ${fmt(x.w0)} шт неделей раньше (${fmt1((x.w1-x.w0)/x.w0*100)}%)`}));
+  // 7 дней по последний заполненный день карточки против 7 дней перед ними; «свежая» — заполнена не раньше чем 5 дней назад (ЯМ приходит с задержкой)
+  const win7=dm=>{ const P=askPeriod(7,dm), ok=d=>dm[d] && !dm[d].draft;
+    return {P, full:[0,1,2,3,4,5,6].every(i=>ok(dateMinusDays(P.to,i))), fresh:ok(P.to) && P.to>=dateMinusDays(today,5),
+      w1:sumDays(dm,P.from,P.to,'orders'), w0:sumDays(dm,P.pFrom,P.pTo,'orders'), ad1:sumDays(dm,P.from,P.to,'adspend')}; };
+  perProduct.forEach(x=>{ x.k=win7(dmById[x.p.id]); });
+  const fallList=perProduct.filter(x=>x.k.full && x.k.fresh && x.k.w0>=5 && x.k.w1<=x.k.w0*0.7).sort((a,b)=>(a.k.w1/a.k.w0)-(b.k.w1/b.k.w0));
+  fallList.slice(0,2)
+    .forEach(x=>ins.push({lvl:'mid', tab:'funnel', pid:x.p.id, t:`Заказы упали: ${x.p.name} (${MP_LABEL[x.p.mp]})`, d:`За 7 дней ${fmt(x.k.w1)} шт против ${fmt(x.k.w0)} шт неделей раньше (${fmt1((x.k.w1-x.k.w0)/x.k.w0*100)}%)`}));
   staleCh.forEach(c=>{ const lbl=STOCK_CHANNELS.find(s=>s.ch===c).label; const w=stockByCh[c].week; ins.push({lvl:'low', tab:'stock', t:`⚠ Остатки ${lbl} не обновлены за эту неделю`, d: w? `Последняя сохранённая неделя — ${fmtRuDate(w)}` : 'Остатки ещё ни разу не сохранялись'}); });
   // аномалии из «Ежедневных данных» (те же правила): только свежие — последний заполненный день не старше 3 дней
   const anomFrom=dateMinusDays(today,3);
@@ -4906,9 +4929,17 @@ async function renderHomeTab(){
   ins.sort((a,b)=>lvlOrder[a.lvl]-lvlOrder[b.lvl]);
 
   // --- требуют внимания
-  const last3=[2,3,4].map(i=>dateMinusDays(today,i)); // позавчера и два дня до него: вчерашний день заполняют в течение дня
-  let gapDays=0;
-  for(const p of active){ for(const d of last3){ const e=dmById[p.id][d]; if(!e || e.draft) gapDays++; } }
+  // реклама без заказов: за 7 дней расход от 500 ₽, заказов 0
+  const adNoOrders=perProduct.filter(x=>x.k.fresh && x.k.w1===0 && x.k.ad1>=ANOMALY_MIN.adRub).sort((a,b)=>b.k.ad1-a.k.ad1);
+  // отстают от плана: прогноз Run-rate по строке плана (товар или группа плана) меньше 85% плана месяца
+  const planLag=[];
+  { const byKey={}; active.forEach(p=>{ (byKey[planKeyFor(p)]=byKey[planKeyFor(p)]||[]).push(p); });
+    for(const [k,ps] of Object.entries(byKey)){
+      const plan=+((planByKey[k]||{})[month]||{}).planRub||0; if(!(plan>0)) continue;
+      let fact=0, fc=0; ps.forEach(p=>{ const dm=dmById[p.id], u=sumDays(dm,curFrom,today,'orders'); fact+=sumDays(dm,curFrom,today,'ordersRub'); fc+=(u/dayN)*dim*(p.currentPriceLK||0); });
+      const pct=fc/plan*100; if(pct<85) planLag.push({ps, name:ps[0].planGroup||ps[0].name, plan, fact, pct});
+    }
+    planLag.sort((a,b)=>a.pct-b.pct); }
   const overdueDemo=DEMO_TASKS.filter(t=>t.overdue).length;
 
   // --- разметка
@@ -4965,11 +4996,23 @@ async function renderHomeTab(){
     <div class="hm-insl">${ins.length ? ins.map(i=>`<a class="hm-ins ${i.lvl}" data-go="${i.tab}"${i.pid?` data-pid="${i.pid}"`:''}${i.full?` title="${hmEsc(i.full)}"`:''}><b>${i.anom?'<span class="hm-anom">аномалия</span> ':''}${hmEsc(i.anom? i.t.replace('Аномалия: ','') : i.t)}</b><span>${hmEsc(i.d)}</span></a>`).join('')
       : '<div class="empty">Всё спокойно — тревожных сигналов нет</div>'}</div></div>`;
 
-  const att=(n, lbl, tab, extra='')=>`<a class="hm-att" data-go="${tab}"><span>${lbl}${extra}</span><b class="${n>0?'neg':'pos'}">${n}</b></a>`;
+  const att=(n, lbl, tab, extra='')=>`<a class="hm-att" data-go="${tab}"><span>${lbl}${extra}</span><span class="hm-attv"><b class="${n>0?'neg':'pos'}">${n}</b><i></i></span></a>`;
+  // раскрывающаяся строка: щелчок по строке — список, щелчок по товару — нужная вкладка с этим товаром
+  const mpBadges=ps=>[...new Set(ps.map(p=>p.mp))].map(mp=>`<span class="badge ${mp}">${MP_LABEL[mp]}</span>`).join('');
+  const attList=(items, lbl)=> !items.length ? att(0, lbl, 'home') : `<details class="hm-attd"><summary class="hm-att"><span>${lbl}</span><span class="hm-attv"><b class="neg">${items.length}</b><i class="hm-chev"></i></span></summary><div class="hm-attl">${items.map(it=>`<a data-go="${it.go}" data-pid="${it.pid}"><span class="hm-attb">${it.badge}</span><span class="hm-attn"><span>${hmEsc(it.name)}</span><small>${it.r}</small></span></a>`).join('')}</div></details>`;
+  const pItem=(x, go, r)=>({pid:x.p.id, go, badge:mpBadges([x.p]), name:x.p.name, r});
+  const fallItems=fallList.map(x=>pItem(x,'daily',`за 7 дн. ${fmt(x.k.w1)} шт против ${fmt(x.k.w0)} шт · <b class="neg">${fmt1((x.k.w1-x.k.w0)/x.k.w0*100)}%</b>`));
+  const adItems=adNoOrders.map(x=>pItem(x,'daily',`расход за 7 дн. <b class="neg">${fmt(x.k.ad1)} ₽</b> · заказов 0`));
+  const drrItems=highDrrProducts.map(x=>pItem(x,'daily',`ДРР <b class="neg">${fmt1(x.ad/x.rub*100)}%</b> · расход ${fmt(x.ad)} ₽ с 1-го числа`));
+  const planItems=planLag.map(g=>({pid:g.ps[0].id, go:'plan', badge:mpBadges(g.ps), name:g.name, r:`прогноз <b class="neg">${fmt1(g.pct)}%</b> плана · факт ${fmt(g.fact)} из ${fmt(g.plan)} ₽`}));
+  const stockItems=lowStock.map(r=>({pid:'', go:'stock', badge:`<span class="badge ${r.ch}">${MP_LABEL[r.ch]}</span>`, name:r.name, r:`хватит на <b class="neg">${fmt1(r.days)} дн.</b> · остаток ${fmt(r.stock)} шт`}));
+  const soonRow=lbl=>`<div class="hm-att hm-attsoon"><span>${lbl} <span class="ad-soon">скоро</span></span><span class="hm-attv"><b>—</b><i></i></span></div>`;
   const attCard=`<div class="panel hm-card"><div class="hm-h">Требуют внимания</div>
-    ${att(gapDays,'Незаполненные или черновые дни (3 дня до вчера)','daily')}
-    ${STOCK_API_READY ? att(lowStock.length,`Товары с запасом меньше ${lowDays} дн.`,'stock') : ''}
-    ${att(highDrrProducts.length,`Товары с ДРР выше ${fmt1(limit)}%`,'daily')}
+    ${attList(fallItems,'Заказы упали ≥30% за 7 дней')}
+    ${attList(adItems,'Реклама без заказов за 7 дней')}
+    ${attList(drrItems,`ДРР выше ${fmt1(limit)}% с начала месяца`)}
+    ${attList(planItems,'Отстают от плана (прогноз <85%)')}
+    ${STOCK_API_READY ? attList(stockItems,`Запас меньше ${lowDays} дн.`) : soonRow(`Запас меньше ${lowDays} дн.`)}
     ${att(overdueDemo,'Просроченные задачи','tasks-demo',' <span class="badge b-amber">демо</span>')}</div>`;
 
   const qi=p=>`<svg class="hm-qi" viewBox="0 0 24 24">${p}</svg>`;
@@ -4989,6 +5032,7 @@ document.getElementById('homeBody').addEventListener('click', (e)=>{
   const go=el.dataset.go;
   if(go==='tasks-demo'){ homeToast('Задачи появятся на отдельном этапе — сейчас здесь демо-данные'); return; }
   if(go==='ask'){ openAsk(); return; }
+  if(go==='home') return;
   if(el.dataset.pid && go==='daily'){ openProductDaily(el.dataset.pid); return; }
   if(el.dataset.pid){ selectedProductId=el.dataset.pid; }
   goTab(go);
@@ -5167,6 +5211,8 @@ function askPeriod(N, dm){
   return {from:dateMinusDays(y,N-1), to:y, pFrom:dateMinusDays(y,2*N-1), pTo:dateMinusDays(y,N), N};
 }
 const ASK_CARD_PERIOD_NOTE=n=>`Период — последние ${n} дн. по последний заполненный день каждой карточки, против ${n} дн. перед ними (незаполненные дни не считаются падением).`;
+// пара «до → после»: если при округлении до десятых значения совпадают, показываем сотые — иначе «1,1 → 1,1 (−7,6%)» непонятно
+function askPair(x,y){ const f=(v,n)=>v===null||v===undefined||!isFinite(v)?'—':v.toLocaleString('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:n}); return fmt1(x)===fmt1(y)&&x!==y ? [f(x,2),f(y,2)] : [f(x,1),f(y,1)]; }
 function askPct(a,b){ return (b && b!==0) ? (a-b)/Math.abs(b)*100 : null; }
 function askSgn(v,dec=1){ return v===null||v===undefined||!isFinite(v) ? '—' : (v>0?'+':'')+(dec? fmt1(v) : fmt(v)); }
 function askCls(v, goodUp=true){ if(v===null||!isFinite(v)||Math.abs(v)<0.05) return ''; return (v>0)===goodUp ? 'pos' : 'neg'; }
@@ -5299,8 +5345,8 @@ const ASK_CALC={
     ];
     st.forEach(s=>{ s.ratio = s.v===null ? null : s.low ? s.v/s.norm : s.norm/Math.max(s.v,0.01); });
     const bad=st.filter(s=>s.ratio!==null && s.ratio<1).sort((x,y)=>x.ratio-y.ratio);
-    const lead = bad.length ? `Больше всего покупателей теряется на этапе <b>${bad[0].n.toLowerCase()}</b>: ${fmt1(bad[0].v)}% при норме ${bad[0].low?'от':'до'} ${fmt1(bad[0].norm)}%.`+(bad.length>1?` Ниже нормы ещё: ${bad.slice(1).map(s=>s.n.toLowerCase()).join(', ')}.`:'') : 'Все этапы воронки в норме.';
-    const rows=st.map(s=>[s.n, s.v===null?'—':fmt1(s.v)+'%', (s.low?'от ':'до ')+fmt1(s.norm)+'%', s.ratio===null?'<span class="muted">нет данных</span>':s.ratio<1?'<span class="neg">ниже нормы</span>':'<span class="pos">в норме</span>']);
+    const lead = bad.length ? `Больше всего покупателей теряется на этапе <b>${bad[0].n.toLowerCase()}</b>: ${fmt1(bad[0].v)}% при норме ${bad[0].low?'от':'до'} ${fmt1(bad[0].norm)}%.`+(bad.length>1?` Не в норме ещё: ${bad.slice(1).map(s=>s.n.toLowerCase()).join(', ')}.`:'') : 'Все этапы воронки в норме.';
+    const rows=st.map(s=>[s.n, s.v===null?'—':fmt1(s.v)+'%', (s.low?'от ':'до ')+fmt1(s.norm)+'%', s.ratio===null?'<span class="muted">нет данных</span>':s.ratio<1?`<span class="neg">${s.low?'ниже нормы':'выше нормы'}</span>`:'<span class="pos">в норме</span>']);
     return {title, lead, html:`<div class="ask-sub">${fmtRuDate(P.from).slice(0,5)}–${fmtRuDate(P.to).slice(0,5)}, заполнено дней: ${a.days}</div>`+askTable(['Этап','Сейчас','Норма','Итог'], rows)+'<div class="ask-note">Нормы — «Пороги» товара в «Настройках» (по умолчанию CTR 3%, клик→корзина 10%, корзина→заказ 20%, выкуп 80%, отмены до 10%). Выкуп считается по заказам старше 7 дней. Подробный разбор — в «Воронке и точках роста».</div>', links:[['funnel','Воронка и точки роста',p.id]]};
   },
   // 5. Что дали последние изменения карточки: «Тип изменения» и «Комментарий» в «Ежедневных данных»
@@ -5317,10 +5363,12 @@ const ASK_CALC={
       const what=(types.map(t=>CHANGE_TYPES[t].label).join(', ') || 'Без типа')+((dm[d].changeNote||'').trim()?': '+hmEsc(dm[d].changeNote.trim()):'');
       if(a.days<2 || b.days<2) return [fmtRuDate(d).slice(0,5), what, `<div class="ask-ml">${mLabel}</div><span class="muted">мало данных</span>`, '—'];
       const goodUp = metric!=='drr';
-      const mv=askPct(a[metric],b[metric]), ov=askPct(a.orders/a.days, b.orders/b.days);
-      return [fmtRuDate(d).slice(0,5), what, `<div class="ask-ml">${mLabel}</div>${b[metric]!==null?fmt1(b[metric])+'%':'—'} → ${a[metric]!==null?fmt1(a[metric])+'%':'—'}${mv===null?'':` <span class="${askCls(mv,goodUp)}">(${askSgn(mv)}%)</span>`}`, ov===null?'—':`<span class="${askCls(ov)}">${askSgn(ov)}%</span>`];
+      const ob=b.orders/b.days, oa=a.orders/a.days;
+      const mv=askPct(a[metric],b[metric]), ov=askPct(oa, ob);
+      const [mb,ma]=askPair(b[metric],a[metric]), [qb,qa]=askPair(ob,oa);
+      return [fmtRuDate(d).slice(0,5), what, `<div class="ask-ml">${mLabel}</div>${b[metric]!==null?mb+'%':'—'} → ${a[metric]!==null?ma+'%':'—'}${mv===null?'':` <span class="${askCls(mv,goodUp)}">(${askSgn(mv)}%)</span>`}`, `${qb} → ${qa} шт${ov===null?'':` <span class="${askCls(ov)}">(${askSgn(ov)}%)</span>`}`];
     });
-    return {title, lead:`Изменений за 60 дней: ${ch.length}. Для каждого — главная метрика этого типа изменения и заказы в день: 7 дней до против 7 дней после (или сколько прошло).`, html:askTable(['Дата','Что изменили','Метрика: до → после','Заказы в день'], rows, [0,1])+'<div class="ask-note">Если изменения шли подряд, их эффекты смешиваются. Подробная оценка с окнами ожидания — в «Журнале изменений» на «Воронке и точках роста».</div>', links:[['funnel','Воронка и точки роста',p.id]]};
+    return {title, lead:`Изменений за 60 дней: ${ch.length}. Для каждого — главная метрика этого типа изменения и заказы в день (в среднем, шт): 7 дней до против 7 дней после (или сколько прошло), в скобках — изменение в %.`, html:askTable(['Дата','Что изменили','Метрика: до → после','Заказы в день: до → после'], rows, [0,1])+'<div class="ask-note">Если изменения шли подряд, их эффекты смешиваются. Подробная оценка с окнами ожидания — в «Журнале изменений» на «Воронке и точках роста».</div>', links:[['funnel','Воронка и точки роста',p.id]]};
   },
   // 6. Что проверить в первую очередь: недобор выручки + лишний расход на рекламу + тревожные аномалии
   async check(){
