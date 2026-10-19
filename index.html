@@ -66,6 +66,11 @@
   .side-toggle::before{content:"";width:18px;height:18px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M15%206l-6%206%206%206%27%2F%3E%3C%2Fsvg%3E") center/18px 18px no-repeat;mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M15%206l-6%206%206%206%27%2F%3E%3C%2Fsvg%3E") center/18px 18px no-repeat;transition:transform .2s;}
   .side-toggle:hover{color:var(--tx);background:rgba(79,140,255,.08);}
   .side-toggle + #userBar{margin-top:0;}
+  /* кнопка темы в меню: луна — в светлой теме (включить тёмную), солнце — в тёмной */
+  .side-theme{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%224%22%2F%3E%3Cpath%20d%3D%22M12%202v2M12%2020v2M4.9%204.9l1.4%201.4M17.7%2017.7l1.4%201.4M2%2012h2M20%2012h2M4.9%2019.1l1.4-1.4M17.7%206.3l1.4-1.4%22%2F%3E%3C%2Fsvg%3E");}
+  :root[data-theme="light"] .side-theme{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%22M21%2012.8A9%209%200%201%201%2011.2%203a7%207%200%200%200%209.8%209.8z%22%2F%3E%3C%2Fsvg%3E");}
+  .side-theme::before{-webkit-mask:var(--ic) center/18px 18px no-repeat;mask:var(--ic) center/18px 18px no-repeat;transform:none !important;}
+  .side-theme + .side-toggle{margin-top:0;}
   /* свёрнутое меню: только значки, название — подсказкой при наведении */
   body.side-collapsed{--side-w:68px;}
   body.side-collapsed .side{padding:18px 10px;}
@@ -150,6 +155,8 @@
 
   /* ===== Таблицы ===== */
   .table-scroll{overflow-x:auto;}
+  .fscroll{position:fixed;bottom:0;height:14px;overflow-x:auto;overflow-y:hidden;z-index:35;background:var(--card);border-top:1px solid var(--line);display:none;}
+  .fscroll>div{height:1px;}
   /* широкие таблицы прокручиваются внутри карточки, а не всей страницей */
   .panel div:has(> table):not(.table-scroll){overflow-x:auto;}
   table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
@@ -174,6 +181,11 @@
   table.daytable tr.row-editable{background:var(--row-edit);}
   table.daytable tr.row-editable td.sticky, table.daytable tr.row-editable td.sticky2{background:var(--row-edit);}
   table.daytable tr.row-highlight{background:var(--row-hl);}
+  /* план по дням: цвет выполнения (и ДРР выше предела) */
+  table.daytable .pl{display:inline-block;padding:2px 8px;border-radius:7px;font-weight:600;line-height:1.35;}
+  table.daytable .pl.pl-ok{background:var(--pos-bg);color:var(--pos);}
+  table.daytable .pl.pl-mid{background:var(--warn-bg);color:var(--warn);}
+  table.daytable .pl.pl-bad{background:var(--neg-bg);color:var(--neg);}
   table.daytable tr.row-highlight td.sticky, table.daytable tr.row-highlight td.sticky2{background:var(--row-hl);}
   /* строки-формулы: без заливки, текст приглушён */
   table.daytable tbody tr:not(.row-editable):not(.row-highlight):not(.section-row) td{color:var(--row-calc-tx);}
@@ -551,9 +563,6 @@
   :root[data-theme="light"] .hm-ins, :root[data-theme="light"] .growth-card{background:#fafbfe;}
   :root[data-theme="light"] .hm-toast{background:#fff;}
   /* кнопка темы на «Главной» */
-  .hm-theme{width:42px;height:42px;flex:none;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--tx2);display:grid;place-items:center;cursor:pointer;padding:0;}
-  .hm-theme:hover{color:var(--tx);border-color:var(--blue);}
-  .hm-theme svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 </style>
 </head>
 <body>
@@ -591,6 +600,7 @@
     <button data-tab="settings">Настройки</button>
     <button data-tab="help">Справка</button>
   </nav>
+  <button type="button" id="themeToggle" class="side-toggle side-theme"></button>
   <button type="button" id="sideToggle" class="side-toggle" title="Свернуть меню">Свернуть меню</button>
   <div id="userBar" style="display:none;justify-content:flex-end;align-items:center;gap:10px;">
     <span id="userEmailLabel"></span>
@@ -605,7 +615,6 @@
       <div><h1>Главная</h1><div class="sub" id="homePeriodLabel"></div></div>
       <div class="hm-srcs" id="homeSources"></div>
       <div class="hm-search"><input id="homeSearch" type="search" placeholder="Поиск: товар, вкладка, задача" autocomplete="off"><div id="homeSearchRes" class="sres" style="display:none;"></div></div>
-      <button type="button" class="hm-theme" id="themeToggle"></button>
     </div>
     <div id="homeBody"><div class="panel"><div class="empty">Загрузка…</div></div></div>
   </div>
@@ -655,6 +664,7 @@
         <span id="dailyDirtyLabel" class="note" style="margin:0;"></span>
       </div>
       <div class="table-scroll" id="dailyTableWrap"><div class="empty">Выберите товар</div></div>
+      <div class="note" id="dailyPlanNote"></div>
     </div>
     <div class="panel">
       <h2>Аномалии по сравнению со средним за 7 дней</h2>
@@ -883,7 +893,7 @@
       <p><b>Запас на площадках</b> (скоро) — товары с наименьшим запасом в днях: остаток ÷ средние заказы в день за 14 дней. Появится вместе с API, когда остатки будут обновляться ежедневно и по каждой карточке; сейчас остаток вносится раз в неделю, и расчёт был бы неточным. Подсказки «Заканчивается» и счётчик товаров с малым запасом тоже вернутся вместе с API.</p>
       <p><b>Поставки на площадки</b> — скоро: появятся вместе с API площадок и покажут поставки на WB, Ozon и ЯМ со статусом (планируется → в пути → принята). План распределения товара по-прежнему ведётся в «Поставках по площадкам».</p>
       <p><b>Подсказки</b> строятся правилами, без ИИ: <b>аномалии</b> из «Ежедневных данных» (те же правила: последний заполненный день против среднего за 7 дней; только тревожные сигналы — падения, рост ДРР, ухудшение позиции; рост показов виден только в «Ежедневных данных»; по одной, самой сильной, на карточку — остальные видны в «Ежедневных данных»; показываются, если последний заполненный день — не старше 3 дней; наведите, чтобы прочитать, что проверить, клик открывает товар), прогноз месяца ниже плана, ДРР площадки выше предела, остатки не обновлены за текущую неделю. Сигналы по отдельным товарам (ДРР выше предела, падение заказов и др.) — полными списками в «Требуют внимания». <b>Требуют внимания</b> — сколько товаров с каждой проблемой; щелчок по строке раскрывает список, щелчок по товару открывает его «Ежедневные данные» (строку плана — «План и факт»). <b>Заказы упали</b> — за 7 дней по последний заполненный день карточки заказов на 30% и больше меньше, чем 7 днями раньше (все 7 дней заполнены, неделей раньше было от 5 шт). <b>Реклама без заказов</b> — за те же 7 дней расход на рекламу от 500 ₽ и ни одного заказа. <b>ДРР выше предела</b> — с начала месяца. <b>Отстают от плана</b> — прогноз Run-rate по строке плана (товар или группа плана) меньше 85% плана месяца. <b>Заканчивается запас</b> — скоро, вместе с остатками из API. Просроченные задачи — пока демо. Карточки, которые давно не заполняются (последний заполненный день старше 5 дней), и скрытые товары не учитываются.</p>
-      <p><b>Светлая / тёмная тема</b> — кнопка справа от поиска (солнце / луна). Тема своя у каждого сотрудника и запоминается в его браузере; по умолчанию — светлая.</p>
+      <p><b>Светлая / тёмная тема</b> — кнопка «Тёмная тема» / «Светлая тема» в боковом меню над «Свернуть меню» (в свёрнутом меню — значок луны / солнца), работает на любой вкладке. Тема своя у каждого сотрудника и запоминается в его браузере; по умолчанию — светлая.</p>
       <p><b>Площадки вверху</b> (WB, Ozon, Я.Маркет) — статус загрузки данных по API: зелёная точка — подключено (в подсказке время последнего обновления), красная — ошибка загрузки, жёлтая — не подключено, данные вносятся вручную. Подключение появится на этапе «Интеграции».</p>
       <p><b>Поиск</b> — по названиям товаров (открывает товар в «Ежедневных данных») и вкладок. <b>Задачи</b> на «Главной» пока демо-примеры с пометкой «демо» — настоящие появятся вместе с вкладкой «Задачи».</p>
     </div>
@@ -908,7 +918,10 @@
     <div class="panel">
       <h2>Ежедневные данные</h2>
       <p>Основной раздел для ежедневного ввода. Данные по воронке вносятся за вчерашний день. Отдельной формы ввода нет — всё вносится прямо в таблице «История по товару» ниже.</p>
+      <p><b>Прокрутка вбок</b> — таблица широкая, поэтому, пока её нижний край не виден, полоса прокрутки вбок закреплена внизу окна: её можно двигать с любого места таблицы. То же работает и в других широких таблицах дашборда.</p>
       <p><b>Сохранение</b> — изменённые ячейки подсвечиваются жёлтым и остаются только на экране, пока вы не нажмёте «Сохранить» (или Ctrl+S): все правки записываются разом. Расчётные показатели при этом пересчитываются сразу. Если вы смените товар, месяц или вкладку, не сохранив правки, дашборд спросит: «Сохранить», «Не сохранять» или «Остаться». Если сотрудники одновременно правят один и тот же товар, при сохранении каждый записывает только свои ячейки, чужие уже сохранённые правки не затираются (если две правки в одной и той же ячейке — останется та, что сохранена позже). Чужие правки вы увидите после своего «Сохранить» или при повторном открытии товара.</p>
+      <p><b>План по дням</b> — строки «Нужно в день, ₽» и «Выполнение плана» под «Заказы, ₽» (только для просмотра). «Нужно в день» пересчитывается каждый день: (план месяца из «План и факт» − уже заказано за предыдущие дни месяца) ÷ дни до конца месяца, включая этот день. Недобрали — на следующие дни нужно больше, перевыполнили — меньше; если план месяца уже выполнен — 0 ₽ и ✓. При наведении виден и ровный план (план месяца ÷ число дней). Если товар в группе плана — берётся план группы, а факт — сумма «Заказы, ₽» всех карточек группы (появляется строка «Заказы группы, ₽»). Выполнение дня = заказано ₽ за день ÷ «нужно» этого дня; считается для заполненных дней (черновики не учитываются). Цвет: зелёный — 100% и больше, жёлтый — 85–99%, красный — меньше 85%. Ячейка ДРР дня красная, если ДРР выше предела из «Настроек». В «Итого»: в строке «Нужно в день» — сколько нужно заказывать в день с сегодняшнего дня до конца месяца (за прошлые месяцы — план месяца); в «Выполнении плана» — то же, что на «План и факт» (заказы за месяц ÷ план месяца), цвет — по темпу: успеваем ли за ровный план прошедших дней. Если плана на месяц нет — «—» без цвета.</p>
+      <p><b>Числа</b> — показываются с разрядами (4 216), суммы в рублях — с «₽». При щелчке по ячейке число становится «голым» для правки; вводить можно и с пробелами (15 300).</p>
       <p><b>Прошлые дни</b> — в таблице открыты для ввода все дни месяца до сегодняшнего, в том числе те, которых ещё нет в базе (например, до даты добавления товара). День создаётся при сохранении первой внесённой ячейки как черновик (🕓) — цена в такие дни автоматически не подставляется, её нужно вписать вручную. Будущие дни закрыты.</p>
       <p><b>Как появляется сегодняшний день</b> — при выборе товара дашборд сам проверяет, есть ли уже запись за сегодня, и если нет — создаёт её, подтягивая цену, ставки и акцию с последнего известного дня (если пропустили несколько дней подряд — достроит сразу всю цепочку). Ничего печатать для этого не нужно; повторные заходы в тот же день ничего не задваивают.</p>
       <p><b>Цена в ЛК / для покупателя / с Ozon картой</b> — уже стоит в строке за сегодня, подтянутая с прошлого дня. Если цена изменилась — просто впишите новую прямо в ячейку за сегодня, это обычная правка конкретного дня.</p>
@@ -1045,11 +1058,8 @@ applyChartTheme();
 function currentTheme(){ return document.documentElement.dataset.theme==='light' ? 'light' : 'dark'; }
 function paintThemeButton(){
   const b=document.getElementById('themeToggle'); if(!b) return;
-  const light=currentTheme()==='light';
-  b.title = light ? 'Тёмная тема' : 'Светлая тема';
-  b.innerHTML = light
-    ? '<svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
-    : '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  const t = currentTheme()==='light' ? 'Тёмная тема' : 'Светлая тема'; // значок — в стилях .side-theme
+  b.textContent=t; b.title=t;
 }
 function setTheme(t){
   if(t==='light') document.documentElement.dataset.theme='light'; else delete document.documentElement.dataset.theme;
@@ -3609,14 +3619,27 @@ async function renderDailyTab(){
   if(!productId){ dailyWork=null; updateDailyDirtyUI(); wrap.innerHTML='<div class="empty">Выберите товар</div>'; return; }
   const dm=await getDailyMap(productId);
   if(document.getElementById('daily_product').value!==productId) return; // пока грузилось, выбрали другой товар
-  dailyWork={productId, local:JSON.parse(JSON.stringify(dm)), ops:new Map()};
+  // план по дням: план товара/группы на месяц и заказы остальных карточек группы (только чтение)
+  let planCtx;
+  try{
+    const prod=state.products.find(p=>p.id===productId);
+    const mates=prod?.planGroup ? productsInGroup(prod.planGroup).filter(p=>p.id!==productId) : [];
+    const [planDoc, ...mateMaps]=await Promise.all([storeGet(planKeyFor(prod)), ...mates.map(p=>getDailyMap(p.id))]);
+    planCtx={plan:planDoc||{}, group:prod?.planGroup||null, mates:mates.map((p,i)=>({p, dm:mateMaps[i]||{}}))};
+  }catch(e){ console.error('Ежедневные данные: план не загрузился', e); planCtx={error:true}; }
+  if(document.getElementById('daily_product').value!==productId) return;
+  dailyWork={productId, local:JSON.parse(JSON.stringify(dm)), ops:new Map(), planCtx};
   dailyCtx={mp:document.getElementById('daily_mp').value, productId, month:document.getElementById('daily_history_month').value || monthNow()};
   updateDailyDirtyUI();
   renderDailyTableLocal();
 }
 
+// поля «Ежедневных данных» в рублях — показываются с «₽»
+const DAY_MONEY=new Set(['priceLK','priceCustomer','priceOzonCard','ordersRub','adspend','adspend_ark','adspend_search','adspend_bpr','adspend_bpk','adspend_polki']);
+function dayNumShow(v, field){ if(v===null||v===undefined||v===''||!isFinite(v)) return ''; return (+v).toLocaleString('ru-RU',{maximumFractionDigits:2})+(DAY_MONEY.has(field)?' ₽':''); }
 function renderDailyTableLocal(){
   const wrap=document.getElementById('dailyTableWrap');
+  document.getElementById('dailyPlanNote').textContent='';
   if(!dailyWork){ wrap.innerHTML='<div class="empty">Выберите товар</div>'; return; }
   const productId=dailyWork.productId;
   const product=state.products.find(p=>p.id===productId);
@@ -3636,11 +3659,57 @@ function renderDailyTableLocal(){
   const bidCount=bidCountForMp(product?.mp);
   const bidLabels=Array.from({length:bidCount},(_,i)=>product?.adBids?.[i]?.label || `Ставка ${i+1}`);
 
+  // --- план по дням: план дня = план месяца ÷ дней в месяце; в группе плана — план группы и заказы всех её карточек
+  const pc=dailyWork.planCtx||{error:true};
+  const planMonth = pc.error ? null : (+((pc.plan||{})[month]||{}).planRub||0);
+  const planDay = planMonth>0 ? planMonth/dim : null;
+  const factOf=d=>{ // заказано ₽ за день (по группе — сумма карточек); null — заполненного дня нет ни у одной карточки (черновики не считаются)
+    let any=false, s=0;
+    [dm, ...(pc.mates||[]).map(m=>m.dm)].forEach(map=>{ const e=map[d]; if(e && !e.draft){ any=true; s+=+e.ordersRub||0; } });
+    return any ? s : null; };
+  const planDays=dates.filter(d=>d<=today && factOf(d)!==null); // дни с данными — по ним считается «Итого»
+  const plCls=pct=>pct>=100?'pl-ok':pct>=85?'pl-mid':'pl-bad';
+  const planNote = pc.error ? 'не удалось загрузить план — обновите страницу' : planMonth>0 ? '' : 'план на месяц не задан';
+  // «Нужно в день» с пересчётом: (план месяца − заказано за предыдущие дни месяца) ÷ дни до конца месяца, включая этот день
+  const maps=[dm, ...(pc.mates||[]).map(m=>m.dm)];
+  const rubOn=d=>maps.reduce((s,map)=>s+(map[d]? +map[d].ordersRub||0 : 0),0); // как в «План и факт»: все записи дня
+  const needOn={}; { let before=0; dates.forEach((d,k)=>{ needOn[d]=Math.max(0,(planMonth||0)-before)/(dim-k); before+=rubOn(d); }); }
+  const planRows=[
+    {label: pc.group? `Нужно в день (группа «${hmEsc(pc.group)}»), ₽` : 'Нужно в день, ₽', planRow:'plan'},
+    pc.group ? {label:`Заказы группы, ₽`, planRow:'fact'} : null,
+    {label:'Выполнение плана', planRow:'pct'},
+  ].filter(Boolean);
+  const flatTip=`Ровный план: ${fmt(planDay||0)} ₽ в день (план месяца ${fmt(planMonth||0)} ₽ ÷ ${dim} дн.)`;
+  function planCell(kind, d){
+    if(d>today) return '<td></td>'; // будущие дни пустые, как и остальная таблица
+    if(pc.error || !(planDay>0)) return `<td title="${planNote}">—</td>`;
+    const need=needOn[d];
+    if(kind==='plan') return need>0 ? `<td title="Нужно с учётом заказанного до этого дня. ${flatTip}">${fmt(need)} ₽</td>` : `<td title="План месяца уже выполнен. ${flatTip}">0 ₽</td>`;
+    const f=factOf(d); if(f===null) return '<td></td>';
+    if(kind==='fact') return `<td>${fmt(f)} ₽</td>`;
+    if(!(need>0)) return `<td title="План месяца уже выполнен"><span class="pl pl-ok">✓</span></td>`;
+    const pct=f/need*100; return `<td title="Заказано ${fmt(f)} ₽ из нужных ${fmt(need)} ₽. ${flatTip}"><span class="pl ${plCls(pct)}">${fmt(pct)}%</span></td>`;
+  }
+  // «Итого»: в строке «Нужно в день» — сколько нужно сейчас (для прошлых месяцев — план месяца);
+  // в «Выполнении» — как в «План и факт»: заказы месяца ÷ план месяца, цвет — по темпу прошедших дней
+  function planAgg(kind){
+    if(pc.error || !(planDay>0)) return `<td class="sticky2 txt" title="${planNote}">—</td>`;
+    const fSum=dates.reduce((s,d)=>s+rubOn(d),0);
+    if(kind==='plan'){
+      if(month===today.slice(0,7)) return `<td class="sticky2 txt" title="Сколько нужно заказывать в день с сегодняшнего дня до конца месяца, чтобы выполнить план ${fmt(planMonth)} ₽. ${flatTip}">${fmt(needOn[today]||0)} ₽</td>`;
+      return `<td class="sticky2 txt" title="План на месяц">${fmt(planMonth)} ₽</td>`;
+    }
+    if(kind==='fact') return `<td class="sticky2 txt">${fmt(fSum)} ₽</td>`;
+    const pct=fSum/planMonth*100, pace=planDays.length ? fSum/(planDay*planDays.length)*100 : null;
+    return `<td class="sticky2 txt" title="Заказано ${fmt(fSum)} ₽ из ${fmt(planMonth)} ₽ плана месяца${pace!==null?` · темп за ${planDays.length} дн. — ${fmt1(pace)}% ровного плана этих дней`:''}"><span class="pl ${pace===null?'':plCls(pace)}">${fmt1(pct)}%</span></td>`;
+  }
+
+
   const rows=[
     {section:'Цена'},
-    {label:'Цена в ЛК, ₽', get:e=>e?.priceLK, fmt:v=>v!=null?fmt(v):'', editField:'priceLK', agg:'avg'},
-    {label:'Цена для покупателя, ₽', get:e=>e?.priceCustomer, fmt:v=>v!=null?fmt(v):'', editField:'priceCustomer', agg:'avg'},
-    isOzon?{label:'Цена с Ozon картой, ₽', get:e=>e?.priceOzonCard, fmt:v=>v?fmt(v):'', editField:'priceOzonCard', agg:'avg'}:null,
+    {label:'Цена в ЛК, ₽', get:e=>e?.priceLK, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'priceLK', agg:'avg'},
+    {label:'Цена для покупателя, ₽', get:e=>e?.priceCustomer, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'priceCustomer', agg:'avg'},
+    isOzon?{label:'Цена с Ozon картой, ₽', get:e=>e?.priceOzonCard, fmt:v=>v?fmt(v)+' ₽':'', editField:'priceOzonCard', agg:'avg'}:null,
     {label:'СПП, %', get:e=>e?.spp, fmt:v=>v!=null?fmt1(v)+'%':'', delta:{suffix:'%'}, aggType:'spp'},
     {section:'Трафик'},
     {label:'Показы', get:e=>e?.impressions, fmt:v=>v!=null?fmt(v):'', editField:'impressions', agg:'sum'},
@@ -3658,6 +3727,7 @@ function renderDailyTableLocal(){
     {label:'Отмены, шт', get:e=>e?.cancellations, fmt:v=>v!=null?fmt(v):'', editField:'cancellations', agg:'sum'},
     {section:'Реклама и финансы'},
     {label:'Заказы, ₽', get:e=>e?.ordersRub, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'ordersRub', highlight:true, agg:'sum'},
+    ...planRows,
     {label:'Реклама, ₽', get:e=>e?.adspend, fmt:v=>v!=null?fmt(v)+' ₽':'', editField: isOzon?'adspend':null, agg:'sum'},
     product.mp==='wb'?{label:'АРК, факт ₽', get:e=>e?.adspend_ark, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_ark', agg:'sum'}:null,
     product.mp==='wb'?{label:'Поиск, факт ₽', get:e=>e?.adspend_search, fmt:v=>v!=null?fmt(v)+' ₽':'', editField:'adspend_search', agg:'sum'}:null,
@@ -3732,6 +3802,7 @@ function renderDailyTableLocal(){
       const bg=SECTION_COLORS[r.section]||'var(--bg)';
       return `<tr class="section-row" style="background:${bg};"><td class="sticky" style="background:${bg};">${r.section}</td><td class="sticky2" style="background:${bg};"></td>${dates.map(()=>`<td style="background:${bg};"></td>`).join('')}</tr>`;
     }
+    if(r.planRow) return `<tr class="row-plan"><td class="sticky txt">${r.label}</td>${planAgg(r.planRow)}${dates.map(d=>planCell(r.planRow,d)).join('')}</tr>`;
     const cells=dates.map(d=>{
       const e=enrichedByDate[d]||null;
       const val=r.get(e);
@@ -3757,7 +3828,7 @@ function renderDailyTableLocal(){
       }
       if(r.editField){
         if(!e && d>today) return `<td></td>`;
-        return `<td><input type="number" min="0" class="num-edit-input${dirtyCls(d,'field',r.editField)}" data-notedate="${d}" data-editfield="${r.editField}" value="${val??''}" style="width:76px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:left;padding:2px;"></td>`;
+        return `<td><input type="text" inputmode="decimal" class="num-edit-input${dirtyCls(d,'field',r.editField)}" data-notedate="${d}" data-editfield="${r.editField}" data-raw="${val??''}" value="${dayNumShow(val, r.editField)}" style="width:${DAY_MONEY.has(r.editField)?96:76}px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:left;padding:2px;"></td>`;
       }
       if(r.isEditableBid){
         if(!e && d>today) return `<td></td>`;
@@ -3773,6 +3844,7 @@ function renderDailyTableLocal(){
           out += ' '+cellBadge(val-prevVal, r.delta);
         }
       }
+      if(r.aggType==='drr' && val!=null && drrOver(val)) return `<td title="ДРР выше предела ${fmt1(drrLimit())}%"><span class="pl pl-bad">${out}</span></td>`;
       return `<td>${out}</td>`;
     }).join('');
     const isEditableRow = !!(r.editField || r.isEditableBid || r.isEditableChangeType || r.isEditableComment || r.isEditablePromo);
@@ -3790,6 +3862,7 @@ function renderDailyTableLocal(){
   if(!hasAnyDataThisMonth && !monthHasPastDays){
     wrap.innerHTML=`<div class="empty">Месяц ${month} ещё не наступил — выберите другой месяц</div>`;
   } else {
+    document.getElementById('dailyPlanNote').textContent=`Выполнение плана: зелёный — план дня выполнен, жёлтый — 85–99%, красный — меньше 85% или ДРР выше ${fmt1(drrLimit())}%.`;
     wrap.innerHTML=`<table class="daytable"><thead><tr><th class="sticky">Показатель</th><th class="sticky2">Итого / Среднее</th>${theadCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
   }
 
@@ -3830,13 +3903,17 @@ function renderDailyTableLocal(){
     });
   });
   wrap.querySelectorAll('.num-edit-input').forEach(inp=>{
-    inp.addEventListener('wheel', (e)=>{ e.preventDefault(); }, {passive:false});
-    inp.addEventListener('focus', ()=>{ if(inp.value==='0') inp.value=''; });
+    // в фокусе — «сырое» число для правки, без фокуса — с разрядами и ₽
+    inp.addEventListener('focus', ()=>{ const raw=inp.dataset.raw||''; inp.value = raw==='0' ? '' : raw; });
+    inp.addEventListener('blur', ()=>{ const raw=inp.dataset.raw; inp.value=dayNumShow(raw===''?null:+raw, inp.dataset.editfield); });
     inp.addEventListener('change', ()=>{
       const field=inp.dataset.editfield;
       const emptyAsNull = ['searchPosition','buyouts','cancellations'].includes(field);
-      let newVal = inp.value==='' ? (emptyAsNull? null : 0) : +inp.value;
+      const txt=inp.value.replace(/[\s ₽]/g,'').replace(',','.');
+      if(txt!=='' && !isFinite(+txt)){ inp.value=inp.dataset.raw||''; return; } // не число — оставляем как было
+      let newVal = txt==='' ? (emptyAsNull? null : 0) : +txt;
       if(newVal!==null && newVal<0) newVal=0; // отрицательные значения не принимаем
+      inp.dataset.raw = newVal??'';
       inp.value = newVal??'';
       recordDailyOp({kind:'field', date:inp.dataset.notedate, field, value:newVal});
       rerenderDailyLocalKeepFocus();
@@ -5494,6 +5571,38 @@ document.getElementById('askPanel').addEventListener('click', (e)=>{
 });
 document.getElementById('askScrim').addEventListener('click', closeAsk);
 document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && document.getElementById('askPanel').classList.contains('open')) closeAsk(); });
+
+// Плавающая полоса прокрутки вбок: если широкая таблица видна, а её собственная полоса — ниже края экрана,
+// внизу окна показывается такая же полоса, синхронная с таблицей. Работает для всех .table-scroll.
+(function(){
+  const bar=document.createElement('div'); bar.className='fscroll'; bar.innerHTML='<div></div>'; document.body.appendChild(bar);
+  const inner=bar.firstChild; let cur=null, raf=0;
+  function pick(){
+    const H=window.innerHeight;
+    for(const el of document.querySelectorAll('.table-scroll')){
+      if(el.scrollWidth<=el.clientWidth+1 || !el.offsetParent) continue;
+      const r=el.getBoundingClientRect();
+      if(r.top<H-60 && r.bottom>H) return el;
+    }
+    return null;
+  }
+  function update(){
+    raf=0; const el=pick();
+    if(el!==cur){ if(cur) cur.removeEventListener('scroll',fromEl); cur=el; if(cur) cur.addEventListener('scroll',fromEl,{passive:true}); }
+    if(!cur){ bar.style.display='none'; return; }
+    const r=cur.getBoundingClientRect();
+    bar.style.display='block'; bar.style.left=r.left+'px'; bar.style.width=r.width+'px';
+    inner.style.width=cur.scrollWidth+'px';
+    fromEl();
+  }
+  // синхронизация в обе стороны; сравнение значений не даёт событиям зациклиться
+  function fromEl(){ if(cur && Math.abs(bar.scrollLeft-cur.scrollLeft)>1) bar.scrollLeft=cur.scrollLeft; }
+  bar.addEventListener('scroll',()=>{ if(cur && Math.abs(cur.scrollLeft-bar.scrollLeft)>1) cur.scrollLeft=bar.scrollLeft; },{passive:true});
+  const later=()=>{ if(!raf) raf=requestAnimationFrame(update); };
+  window.addEventListener('scroll',later,{passive:true}); window.addEventListener('resize',later);
+  new MutationObserver(later).observe(document.querySelector('.main')||document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']});
+  later();
+})();
 
 paintThemeButton();
 document.getElementById('themeToggle').addEventListener('click', ()=>setTheme(currentTheme()==='light' ? 'dark' : 'light'));
