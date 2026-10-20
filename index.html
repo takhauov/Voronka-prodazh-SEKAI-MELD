@@ -524,7 +524,9 @@
   .tk-mv button:hover{color:var(--blue);}
   .md-ov{position:fixed;inset:0;background:rgba(3,4,10,.55);backdrop-filter:blur(3px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
   .md-box{width:560px;max-width:100%;max-height:92vh;overflow:auto;margin:0;}
-  .md-box.wide{width:760px;}
+  .md-box.wide{width:820px;}
+  .tke-addp{align-self:flex-start;margin-top:6px;border:0;background:transparent;color:var(--blue);font-family:var(--font-body);font-size:13px;cursor:pointer;padding:2px 0;}
+  #tkeDesc{overflow:hidden;resize:none;min-height:70px;line-height:1.5;}
   .md-f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;flex:1;min-width:150px;}
   .md-f label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);font-weight:700;}
   .md-f input,.md-f select,.md-f textarea{width:100%;}
@@ -6035,7 +6037,8 @@ function openTaskEditor(t, preset){
   const emails=[...new Set([...staffCache.map(s=>(s.email||'').toLowerCase()).filter(Boolean), ...people.map(p=>p.email)])];
   const prods=activeProducts().slice().sort((a,b)=>(a.name+a.mp).localeCompare(b.name+b.mp,'ru'));
   const personRow=e=>{ const p=people.find(x=>x.email===e);
-    return `<div class="tke-p"><label class="tk-chk"><input type="checkbox" data-pe="${hmEsc(e)}"${p?' checked':''}> ${hmEsc(staffName(e))}</label>
+    const hideIt = !isNew && people.length && !p;
+    return `<div class="tke-p${hideIt?' tke-more':''}"${hideIt?' hidden':''}><label class="tk-chk"><input type="checkbox" data-pe="${hmEsc(e)}"${p?' checked':''}> ${hmEsc(staffName(e))}</label>
       <select data-ps="${hmEsc(e)}"${p?'':' disabled'}>${TASK_COLS.map(([k,l])=>`<option value="${k}"${(p?p.status:'todo')===k?' selected':''}>${l}</option>`).join('')}</select></div>`; };
   const m=openModal(`<h2>${isNew?'Новая задача':'Задача'}</h2>
     <div class="md-f"><label>Что сделать</label><input id="tkeTitle" value="${hmEsc(v.title)}" placeholder="Например, проверить ставки после акции"></div>
@@ -6053,7 +6056,7 @@ function openTaskEditor(t, preset){
       <div class="tke-prods" id="tkeProds"></div>
     </div>
     <div class="md-f"><label>Исполнители и их статус</label>
-      ${emails.length ? `<div class="tke-people">${emails.map(personRow).join('')}</div>` : '<p class="note" style="margin:0;">Список сотрудников заполняется в «Настройках» → «Сотрудники».</p>'}
+      ${emails.length ? `<div class="tke-people">${emails.map(personRow).join('')}</div>${!isNew && people.length && emails.length>people.length ? '<button type="button" class="tke-addp" id="tkeAddP">+ Добавить исполнителя</button>' : ''}` : '<p class="note" style="margin:0;">Список сотрудников заполняется в «Настройках» → «Сотрудники».</p>'}
       ${!emails.length && !isNew ? `<select id="tkeStatus">${TASK_COLS.map(([k,l])=>`<option value="${k}"${v.status===k?' selected':''}>${l}</option>`).join('')}</select>` : ''}
     </div>
     ${isNew?'':`<p class="note">${v.src==='decision'?'Создана из Центра решений. ':''}${v.createdBy?'Создал: '+hmEsc(staffName(v.createdBy))+(v.createdAt?', '+fmtRuDate(v.createdAt.slice(0,10)):''):''}</p>`}
@@ -6062,7 +6065,7 @@ function openTaskEditor(t, preset){
       <button class="btn" id="tkeSave">Сохранить</button>
       <button class="btn secondary" data-mclose>Отмена</button>
       ${isNew?'':'<button class="btn danger" id="tkeDel" style="margin-left:auto;">Удалить</button>'}
-    </div>`);
+    </div>`, true);
   const $=id=>m.el.querySelector('#'+id);
   // подпункты: галочки, × — удалить, Enter в поле — добавить
   let ck=(v.checklist||[]).map(x=>({...x}));
@@ -6093,6 +6096,10 @@ function openTaskEditor(t, preset){
   });
   $('tkeProds').addEventListener('click', e=>{ const b=e.target.closest('[data-unpid]'); if(!b) return; selPids=selPids.filter(x=>x!==b.dataset.unpid); paintProds(); });
   m.el.querySelectorAll('[data-pe]').forEach(cb=>cb.addEventListener('change', ()=>{ m.el.querySelector(`[data-ps="${CSS.escape(cb.dataset.pe)}"]`).disabled=!cb.checked; }));
+  if($('tkeAddP')) $('tkeAddP').addEventListener('click', e=>{ m.el.querySelectorAll('.tke-more').forEach(x=>x.hidden=false); e.target.remove(); });
+  // описание — во всю высоту текста, без своей прокрутки
+  const grow=()=>{ const ta=$('tkeDesc'); ta.style.height='auto'; ta.style.height=(ta.scrollHeight+2)+'px'; };
+  $('tkeDesc').addEventListener('input', grow); setTimeout(grow, 0);
   setTimeout(()=>$('tkeTitle').focus(), 30);
   $('tkeSave').addEventListener('click', async ()=>{
     const title=$('tkeTitle').value.trim();
