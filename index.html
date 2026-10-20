@@ -525,6 +525,8 @@
   .md-ov{position:fixed;inset:0;background:rgba(3,4,10,.55);backdrop-filter:blur(3px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
   .md-box{width:560px;max-width:100%;max-height:92vh;overflow:auto;margin:0;}
   .md-box.wide{width:820px;}
+  .tke-p[hidden]{display:none;} /* скрытые (не назначенные) сотрудники — display:grid не должен перебивать hidden */
+  .tke-links{margin:-4px 0 12px;gap:8px;flex-wrap:wrap;}
   .tke-addp{align-self:flex-start;margin-top:6px;border:0;background:transparent;color:var(--blue);font-family:var(--font-body);font-size:13px;cursor:pointer;padding:2px 0;}
   #tkeDesc{overflow:hidden;resize:none;min-height:70px;line-height:1.5;}
   .md-f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;flex:1;min-width:150px;}
@@ -999,7 +1001,7 @@
     </div>
     <div class="panel">
       <h2>Задачи</h2>
-      <p>Общая доска задач команды: «К выполнению», «В работе», «Готово». Карточку можно перетащить мышкой в другую колонку или нажать «←» / «→» на ней. Щелчок по карточке открывает задачу: название, описание, приоритет, срок, <b>товары</b> (можно несколько: найдите по названию и добавьте карточку или сразу «все карточки» товара; убрать — × на плашке) и <b>исполнители</b> (из «Настроек» → «Сотрудники») — их может быть несколько, у каждого свой статус; там же «Удалить». Срок показывается как «сегодня», «завтра», «до дд.мм» или «просрочено N дн.» (красным).</p>
+      <p>Общая доска задач команды: «К выполнению», «В работе», «Готово». Карточку можно перетащить мышкой в другую колонку или нажать «←» / «→» на ней. Щелчок по карточке открывает задачу: название, описание, приоритет, срок, <b>товары</b> (можно несколько: найдите по названию и добавьте карточку или сразу «все карточки» товара; убрать — × на плашке) и <b>исполнители</b> (из «Настроек» → «Сотрудники») — их может быть несколько, у каждого свой статус; там же «Удалить». Под описанием — кнопки «Разобрать в «Спросить»» (подходящий готовый вопрос по товару задачи) и «Открыть товар» (его «Ежедневные данные»; только если в задаче один товар); у задач без товара из Центра решений — «Открыть раздел». Срок показывается как «сегодня», «завтра», «до дд.мм» или «просрочено N дн.» (красным).</p>
       <p><b>Несколько исполнителей.</b> Задача создаётся одна, а на доске у каждого исполнителя — своя карточка (в строке «Исполнитель» — его имя). Каждый двигает свою карточку, и она стоит в колонке его статуса. Статусы всех исполнителей видны в окне задачи. Название, срок, описание и товары общие: поменяли в задаче — изменилось на всех карточках. Задача считается выполненной, когда все исполнители перенесли свои карточки в «Готово». Фильтр по исполнителю показывает только его карточки.</p>
       <p>В меню у «Задач» — число карточек «К выполнению» (у сотрудника из списка — только его), у «Центра решений» — число новых решений. В задаче можно вести <b>подпункты</b> с галочками (добавить — ввести текст и Enter), на карточке видно «Подпункты: 1 из 3». Вверху — счётчики задач «открыто / на сегодня / просрочено» (по задаче целиком, а не по карточкам) и фильтры по исполнителю, приоритету и «Из Центра решений» (задачи, созданные кнопкой «Принять»). На карточке по строкам: исполнитель, приоритет, срок (если сегодня, завтра или просрочено — с пометкой), товар (по названию, площадки в скобках). Цвет полоски слева — приоритет: красный — высокий, жёлтый — средний, синий — низкий. Каждая задача хранится отдельно, поэтому сотрудники могут одновременно менять разные задачи. <b>Выполненные задачи удаляются через 30 дней</b> после выполнения.</p>
     </div>
@@ -6030,6 +6032,17 @@ async function moveTask(id, status, pe){
   document.getElementById('tkNewBtn').addEventListener('click', ()=>openTaskEditor(null));
 })();
 
+const TASK_ASK_BY_RULE={drop:'orders', adnone:'ads', drr:'ads', drrup:'ads', chg:'changes'};
+const TASK_GO_BY_RULE={planform:'plan', reorder:'zakup', excess:'stock', shipmp:'distrib', ship:'distrib', redist:'distrib'};
+function taskLinksHtml(v){
+  const rule=(v.decisionKey||'').split(':')[0], ps=taskProds(v);
+  const ask = v.ask || TASK_ASK_BY_RULE[rule] || (ps.length ? 'orders' : (rule==='drrmp'?'ads':''));
+  const btns=[];
+  if(ask) btns.push(`<button type="button" class="btn secondary" data-tkask="${ask}">Разобрать в «Спросить»</button>`);
+  if(ps.length===1) btns.push(`<button type="button" class="btn secondary" data-tkopen="${ps[0].id}">Открыть товар</button>`); // несколько товаров — без кнопки
+  if(!ps.length && TASK_GO_BY_RULE[rule]) btns.push(`<button type="button" class="btn secondary" data-tkgo="${TASK_GO_BY_RULE[rule]}">Открыть раздел</button>`);
+  return btns.length ? `<div class="row tke-links">${btns.join('')}</div>` : '';
+}
 function openTaskEditor(t, preset){
   const isNew=!t;
   const v=t || {title:'', desc:'', prio:'mid', due:'', pid:'', assignees: myEmail() && staffCache.some(s=>(s.email||'').toLowerCase()===myEmail()) ? [{email:myEmail(), status:'todo', doneAt:null}] : [], ...(preset||{})};
@@ -6042,7 +6055,8 @@ function openTaskEditor(t, preset){
       <select data-ps="${hmEsc(e)}"${p?'':' disabled'}>${TASK_COLS.map(([k,l])=>`<option value="${k}"${(p?p.status:'todo')===k?' selected':''}>${l}</option>`).join('')}</select></div>`; };
   const m=openModal(`<h2>${isNew?'Новая задача':'Задача'}</h2>
     <div class="md-f"><label>Что сделать</label><input id="tkeTitle" value="${hmEsc(v.title)}" placeholder="Например, проверить ставки после акции"></div>
-    <div class="md-f"><label>Описание</label><textarea id="tkeDesc" rows="5">${hmEsc(v.desc||'')}</textarea></div>
+    <div class="md-f"><label>Описание</label><textarea id="tkeDesc" rows="2">${hmEsc(v.desc||'')}</textarea></div>
+    ${isNew?'':taskLinksHtml(v)}
     <div class="md-row">
       <div class="md-f"><label>Приоритет</label><select id="tkePrio">${Object.entries(TASK_PRIO).map(([k,x])=>`<option value="${k}"${v.prio===k?' selected':''}>${x[0]}</option>`).join('')}</select></div>
       <div class="md-f"><label>Срок</label><input id="tkeDue" type="date" value="${v.due||''}"></div>
@@ -6096,6 +6110,14 @@ function openTaskEditor(t, preset){
   });
   $('tkeProds').addEventListener('click', e=>{ const b=e.target.closest('[data-unpid]'); if(!b) return; selPids=selPids.filter(x=>x!==b.dataset.unpid); paintProds(); });
   m.el.querySelectorAll('[data-pe]').forEach(cb=>cb.addEventListener('change', ()=>{ m.el.querySelector(`[data-ps="${CSS.escape(cb.dataset.pe)}"]`).disabled=!cb.checked; }));
+  // кнопки «Разобрать в «Спросить»» / «Открыть товар» / «Открыть раздел»
+  m.el.querySelectorAll('[data-tkask]').forEach(b=>b.addEventListener('click', ()=>{
+    const ps=taskProds(v); m.close(); askState.q=b.dataset.tkask;
+    if(ps[0]){ askState.pid=ps[0].id; askRemember(ps[0].id); }
+    const mp=(v.decisionKey||'').split(':')[1]; if(['wb','ozon','ym'].includes(mp)) askState.mp=mp;
+    openAsk(ps[0]?{pid:ps[0].id}:{}); runAsk(); }));
+  m.el.querySelectorAll('[data-tkopen]').forEach(b=>b.addEventListener('click', ()=>{ m.close(); openProductDaily(b.dataset.tkopen); }));
+  m.el.querySelectorAll('[data-tkgo]').forEach(b=>b.addEventListener('click', ()=>{ m.close(); goTab(b.dataset.tkgo); }));
   if($('tkeAddP')) $('tkeAddP').addEventListener('click', e=>{ m.el.querySelectorAll('.tke-more').forEach(x=>x.hidden=false); e.target.remove(); });
   // описание — во всю высоту текста, без своей прокрутки
   const grow=()=>{ const ta=$('tkeDesc'); ta.style.height='auto'; ta.style.height=(ta.scrollHeight+2)+'px'; };
@@ -6496,7 +6518,7 @@ async function dcAccept(d, btn, comment){
   const owners = d.owner==='lead' && leadEmail() ? [leadEmail()] : byMp.length ? byMp : (staffCache.some(s=>(s.email||'').toLowerCase()===me) ? [me] : []);
   const desc=(d.situation||'')+((d.steps||[]).length ? '\n\n'+d.steps.map(s=>'— '+s).join('\n') : '')+(comment ? '\n\nКомментарий ('+(staffName(me)||'без имени')+'): '+comment : '');
   const tasks=[{id:newId('t'), title:d.title, desc, checklist:[], status:'todo', prio:d.urg==='high'?'high':'mid', due,
-    assignees: owners.map(e=>({email:e, status:'todo', doneAt:null})), pids:d.pids||(d.pid?[d.pid]:[]), src:'decision', decisionKey:d.key, createdBy:me, createdAt:now, doneAt:null}];
+    assignees: owners.map(e=>({email:e, status:'todo', doneAt:null})), pids:d.pids||(d.pid?[d.pid]:[]), src:'decision', decisionKey:d.key, ask:d.ask||'', createdBy:me, createdAt:now, doneAt:null}];
   const res=await Promise.all(tasks.map(t=>patchTask(t.id, t)));
   const ok=res.filter(Boolean);
   if(ok.length!==tasks.length){ homeToast('Не все задачи сохранились — проверьте соединение'); }
