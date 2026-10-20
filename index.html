@@ -537,6 +537,11 @@
   .md-acts{align-items:center;}
   .dc-sum b{font-size:20px;margin-left:4px;}
   .dc-sum .note{margin:6px 0 0;}
+  .dc-rej{margin-top:14px;}
+  .dc-rej>summary{cursor:pointer;color:var(--tx2);font-size:13.5px;font-weight:600;padding:8px 2px;list-style:none;}
+  .dc-rej>summary::-webkit-details-marker{display:none;}
+  .dc-rej>summary::before{content:"▸ ";color:var(--tx3);} .dc-rej[open]>summary::before{content:"▾ ";}
+  .dc-rej .dc-card{opacity:.85;}
   .dc-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
   .dc-tabs button{padding:7px 14px;border-radius:20px;border:1px solid var(--line2);background:var(--card);color:var(--tx2);font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;}
   .dc-tabs button span{color:var(--tx3);margin-left:4px;}
@@ -997,7 +1002,7 @@
       <h2>Центр решений</h2>
       <p>Список того, что стоит сделать сегодня. Решения строятся <b>правилами</b> по данным Воронки (без ИИ) при каждом открытии вкладки и по кнопке «Пересчитать сейчас». В каждом: направление, срочность («Срочно» / «Важно»), действие, ситуация с цифрами, почему, шаги, оценка эффекта в ₽ в месяц, срок и как проверить результат.</p>
       <p><b>Правила</b> (пороги — в «Настройках»). <b>Найти и устранить причину падения заказов</b> — у карточки за 7 дней (по последний заполненный день) заказов на «Падение заказов» % и больше меньше, чем неделей раньше (все 7 дней заполнены, неделей раньше от 5 шт); подзадачи подбираются по этапу, который просел сильнее всего: показы, CTR, конверсия в корзину или в заказ. <b>Отключить неэффективную рекламу</b> — за 7 дней реклама от 500 ₽ и ни одного заказа. <b>Оптимизировать рекламу</b> — ДРР карточки за 7 дней выше предела. <b>Проверить рост ДРР</b> — ДРР ещё в пределе, но выросла к прошлой неделе на «Рост ДРР» % и больше. <b>Сформировать план продаж</b> — с 1-го числа, пока у какой-то строки плана нет плана на текущий месяц; срок — 10 число; исполнитель — руководитель из «Сотрудников». <b>Заказать партию у производства</b> — статус в «Обзоре закупа» «Просрочено» или «Скоро закупать»; сколько — как «Закуп, шт». <b>Ускорить продажи: избыток (площадка)</b> — на WB, Ozon или ЯМ остаток от 5 шт, и его больше чем на «Избыток» дней (по умолчанию 60) при продажах этой площадки, а на другой площадке этот товар продаётся быстрее; или остаток есть, а продаж за 14 дней нет. Скорость — средняя за 14 дней по последний заполненный день. Исполнитель — сотрудники этой площадки. <b>Пополнить запас на площадке</b> — одно решение (и одна задача) на площадку со списком товаров; новое — раз в неделю. Товар попадает в список, если на WB/Ozon/ЯМ запаса меньше «Запас мало» дней (продажи — средние за 14 дней по последний заполненный день), а на фулфилменте товар есть; сколько — до запаса на 2 недели, но не больше, чем есть на ФФ. <b>Пересчитать распределение товара</b> — по товарам, у которых дни запаса на площадках (остаток + ещё не отгруженное по плану «Поставок по площадкам») различаются больше чем на «Перекос запаса» дней; предлагается новая раскладка уже запланированного к отгрузке (план − отгружено) так, чтобы запаса везде хватало примерно на одинаковое число дней при скорости продаж каждой площадки за 14 дней; общее количество не меняется. Нераспределённый остаток на ФФ показывается подсказкой. Одна задача на неделю, исполнитель — руководитель. <b>Неудачное изменение карточки</b> — изменение за последние 30 дней, которое «Журнал изменений» на «Воронке и точках роста» оценил как неудачное (❌: главный показатель этого типа правки ухудшился на 3% и больше, данных достаточно, после него не было такого же изменения); название — что сделать по типу правки (главное фото — «Сменить главное фото или провести A/B-тест», заголовок, порядок фото, описание, цена, реклама); проверка результата — через 3 дня и позже (для ДРР — по окну журнала), в «Почему» — вывод журнала. По рекламе — только если ДРР после изменения выше предела. Остатки — из последних сохранённых недель «Остатков и динамики»; если неделя не текущая, это написано в решении.</p>
-      <p><b>Кнопки.</b> «Принять» — открывается окно, где можно написать комментарий (необязательно); создаётся <b>одна задача</b>, комментарий — последним абзацем её описания и на карточке решения в «В работе»: название — действие решения, в описании — ситуация с цифрами и вторым абзацем что сделать (без подпунктов; у задачи «Сформировать план продаж» — только ситуация). Исполнитель: «Сформировать план продаж» и «Пересчитать распределение» — руководитель; решения по конкретной площадке — сотрудники, у которых эта площадка отмечена в «Сотрудниках» (если их несколько — назначаются все, у каждого своя карточка); если таких нет — тот, кто принял. Решение уходит в «В работе», там виден статус задачи; когда задача выполнена (все исполнители перенесли её в «Готово») — в «Выполнены». «Отклонить» — с причиной; такое же решение по тому же товару не предлагается «Пауза после отказа» дней, а с галочкой «Больше не предлагать» — никогда. Во вкладке «Отклонены» есть кнопка «Вернуть» — отказ отменяется, и если правило срабатывает, решение снова появляется в «Новых». «Разобрать в «Спросить»» — открывает подходящий готовый вопрос по этому товару или площадке. Вкладки: Новые / В работе / Выполнены / Отклонены. Состояние решений общее для всей команды.</p>
+      <p><b>Кнопки.</b> «Принять» — открывается окно, где можно поменять срок задачи и написать комментарий (необязательно); создаётся <b>одна задача</b>, комментарий — последним абзацем её описания и на карточке решения в «В работе»: название — действие решения, в описании — ситуация с цифрами и вторым абзацем что сделать (без подпунктов; у задачи «Сформировать план продаж» — только ситуация). Исполнитель: «Сформировать план продаж» и «Пересчитать распределение» — руководитель; решения по конкретной площадке — сотрудники, у которых эта площадка отмечена в «Сотрудниках» (если их несколько — назначаются все, у каждого своя карточка); если таких нет — тот, кто принял. Решение пропадает из списка — дальше работа идёт в задаче; когда задача выполнена и прошла «Пауза после отказа», такое же решение может появиться снова, если проблема вернулась. «Отклонить» — с причиной; такое же решение по тому же товару не предлагается «Пауза после отказа» дней, а с галочкой «Больше не предлагать» — никогда. В блоке «Отклонённые» внизу есть кнопка «Вернуть» — отказ отменяется, и если правило срабатывает, решение снова появляется в списке. «Разобрать в «Спросить»» — открывает подходящий готовый вопрос по этому товару или площадке. На вкладке — только новые решения: принятые становятся задачами и дальше живут во вкладке «Задачи». Отклонённые — свёрнутым блоком «Отклонённые» внизу (там же «Вернуть»). Состояние решений общее для всей команды.</p>
     </div>
     <div class="panel">
       <h2>Задачи</h2>
@@ -6172,6 +6177,7 @@ function leadEmail(){ const s=staffCache.find(x=>x.lead); return s ? (s.email||'
 function myScope(){ const s=staffCache.find(x=>(x.email||'').toLowerCase()===myEmail()); return s && s.scope==='own' ? 'own' : 'all'; }
 let dcCache=null;      // {list, states, at}
 let dcTab='new';
+let dcRejOpen=false; // блок «Отклонённые» раскрыт
 let dcBusy=false;
 
 async function computeDecisions(){
@@ -6461,18 +6467,17 @@ function paintDecisions(){
   const body=document.getElementById('decisionsBody'); if(!dcCache) return;
   updateDecisionsBadge();
   const items=dcItems();
-  const tabs=[['new','Новые'],['work','В работе'],['done','Выполнены'],['rejected','Отклонены']];
-  const cnt=k=>items.filter(x=>x.status===k).length;
-  const total=items.filter(x=>x.status==='new'||x.status==='work').reduce((s,x)=>s+(x.d.effect||0),0);
-  const list=items.filter(x=>x.status===dcTab);
+  const total=items.filter(x=>x.status==='new').reduce((s,x)=>s+(x.d.effect||0),0);
+  const list=items.filter(x=>x.status==='new'), rej=items.filter(x=>x.status==='rejected');
   const errs=dcCache.list.filter(d=>d.error);
   const uo={high:0, mid:1};
   list.sort((m,n)=>(uo[m.d.urg]??2)-(uo[n.d.urg]??2) || (n.d.effect||0)-(m.d.effect||0));
-  body.innerHTML=`<div class="panel dc-sum"><span>Потенциальный эффект новых решений и решений в работе:</span> <b class="pos">+${fmt(total)} ₽/мес</b>
+  body.innerHTML=`<div class="panel dc-sum"><span>Потенциальный эффект новых решений:</span> <b class="pos">+${fmt(total)} ₽/мес</b>
       <div class="note">Решения строятся правилами по данным Воронки — без ИИ. Пересчитано ${dcCache.at.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}. Остатки — по последним сохранённым неделям «Остатков и динамики». Эффект — оценка в ₽ в месяц.</div></div>
     ${errs.map(e=>`<div class="panel"><div class="neg">${hmEsc(e.error)}</div></div>`).join('')}
-    <div class="dc-tabs">${tabs.map(([k,l])=>`<button type="button" class="${dcTab===k?'on':''}" data-dctab="${k}">${l} <span>${cnt(k)}</span></button>`).join('')}</div>
-    <div class="dc-list">${list.map(dcCardHtml).join('') || '<div class="panel"><div class="empty">Здесь пока пусто</div></div>'}</div>`;
+    <div class="dc-list">${list.map(dcCardHtml).join('') || '<div class="panel"><div class="empty">Новых решений нет. Принятые решения — во вкладке «Задачи».</div></div>'}</div>
+    ${rej.length?`<details class="dc-rej"${dcRejOpen?' open':''}><summary>Отклонённые — ${rej.length}</summary><div class="dc-list">${rej.map(dcCardHtml).join('')}</div></details>`:''}`;
+  const det=body.querySelector('.dc-rej'); if(det) det.addEventListener('toggle', ()=>{ dcRejOpen=det.open; });
 }
 function dcCardHtml(x){
   const d=x.d, s=x.s||{}, today=todayISO();
@@ -6509,9 +6514,9 @@ async function dcSaveState(key, patch){
   if(r && dcCache) dcCache.states['decision:'+key]=r;
   return r;
 }
-async function dcAccept(d, btn, comment){
+async function dcAccept(d, btn, comment, dueOverride){
   btn.disabled=true;
-  const today=todayISO(), due=d.dueDate || datePlusDays(today, d.dueDays||2), me=myEmail(), now=new Date().toISOString();
+  const today=todayISO(), due=dueOverride || d.dueDate || datePlusDays(today, d.dueDays||2), me=myEmail(), now=new Date().toISOString();
   // исполнитель: задачи по плану и распределению — руководитель; по площадке — сотрудники этой площадки; иначе — тот, кто принял
   const mpOf = d.mp || (d.pid ? (state.products.find(p=>p.id===d.pid)||{}).mp : null);
   const byMp = mpOf ? staffCache.filter(s=>(s.mps||[]).includes(mpOf) && s.email).map(s=>s.email.toLowerCase()) : [];
@@ -6526,7 +6531,7 @@ async function dcAccept(d, btn, comment){
   const r=await dcSaveState(d.key, {status:'work', at:now, by:me, taskIds:ok.map(t=>t.id), snap:d, until:null, reason:null, comment:comment||null});
   if(!r){ homeToast('Не удалось сохранить решение — проверьте соединение'); btn.disabled=false; return; }
   updateTasksBadge();
-  homeToast('Решение принято — задача создана во вкладке «Задачи»');
+  homeToast('Решение принято — задача во вкладке «Задачи»');
   paintDecisions();
 }
 (function initDecisionsEvents(){
@@ -6549,11 +6554,12 @@ async function dcAccept(d, btn, comment){
     }
     if(act==='accept'){
       const m=openModal(`<h2>Принять решение</h2><p class="hint">${hmEsc(d.title)}</p>
+        <div class="md-f" style="max-width:220px;"><label>Срок задачи</label><input id="dcDue" type="date" value="${d.dueDate || datePlusDays(todayISO(), d.dueDays||2)}"></div>
         <div class="md-f"><label>Комментарий (необязательно)</label><textarea id="dcComment" rows="3" placeholder="Например, отгрузку согласовать со складом до среды"></textarea></div>
         <p class="note">Будет создана задача; комментарий попадёт в её описание.</p>
         <div class="row md-acts"><button class="btn" id="dcAccOk">Принять</button><button class="btn secondary" data-mclose>Отмена</button></div>`);
       setTimeout(()=>m.el.querySelector('#dcComment').focus(), 30);
-      m.el.querySelector('#dcAccOk').addEventListener('click', async ()=>{ const c=m.el.querySelector('#dcComment').value.trim(); m.close(); await dcAccept(d, b, c); });
+      m.el.querySelector('#dcAccOk').addEventListener('click', async ()=>{ const c=m.el.querySelector('#dcComment').value.trim(), du=m.el.querySelector('#dcDue').value; m.close(); await dcAccept(d, b, c, du||null); });
       return;
     }
     if(act==='reject'){
