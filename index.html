@@ -79,6 +79,10 @@
   body.side-collapsed .side-toggle{font-size:0;gap:0;justify-content:center;padding:9px 0;}
   body.side-collapsed .side-toggle::before{transform:rotate(180deg);}
   body.side-collapsed nav#tabs button{font-size:0;gap:0;justify-content:center;padding:9px 0;}
+  /* счётчики в меню (Центр решений — новые, Задачи — к выполнению): число в data-count */
+  nav#tabs button{position:relative;}
+  nav#tabs button[data-count]::after{content:attr(data-count);margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--grad);color:#fff;font-size:11px;font-weight:700;line-height:20px;text-align:center;box-sizing:border-box;}
+  body.side-collapsed nav#tabs button[data-count]::after{position:absolute;top:3px;right:6px;min-width:16px;height:16px;line-height:16px;font-size:10px;padding:0 4px;margin:0;}
   body.side-collapsed #userBar{padding:12px 0 2px;}
   body.side-collapsed #userEmailLabel{display:none;}
   body.side-collapsed #userBar #logoutBtn{font-size:0 !important;padding:0 !important;height:36px;}
@@ -108,6 +112,8 @@
   nav#tabs button[data-tab="compare"]{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%2021h18M6%2021V11M11%2021V5M16%2021v-7M21%2021V9%27%2F%3E%3C%2Fsvg%3E");}
   nav#tabs button[data-tab="stock"]{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%207l9-4%209%204v10l-9%204-9-4zM3%207l9%204%209-4M12%2011v10%27%2F%3E%3C%2Fsvg%3E");}
   nav#tabs button[data-tab="distrib"]{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M1%206h13v10H1zM14%2010h4l3%203v3h-7%27%2F%3E%3Ccircle%20cx%3D%276%27%20cy%3D%2718%27%20r%3D%272%27%2F%3E%3Ccircle%20cx%3D%2717%27%20cy%3D%2718%27%20r%3D%272%27%2F%3E%3C%2Fsvg%3E");}
+  nav#tabs button[data-tab="decisions"]{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%22M13%202L4%2014h7l-1%208%209-12h-7z%22%2F%3E%3C%2Fsvg%3E");}
+  nav#tabs button[data-tab="tasks"]{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Crect%20x%3D%224%22%20y%3D%223%22%20width%3D%2216%22%20height%3D%2218%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M8%208l1.5%201.5L12%207M8%2014l1.5%201.5L12%2013M14%208.5h3M14%2014.5h3%22%2F%3E%3C%2Fsvg%3E");}
   nav#tabs button[data-tab="zakup"]{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%279%27%20cy%3D%2720%27%20r%3D%271.5%27%2F%3E%3Ccircle%20cx%3D%2718%27%20cy%3D%2720%27%20r%3D%271.5%27%2F%3E%3Cpath%20d%3D%27M2%203h3l2.6%2012.2a1%201%200%200%200%201%20.8h9.7a1%201%200%200%200%201-.8L21%207H6%27%2F%3E%3C%2Fsvg%3E");}
   nav#tabs button[data-tab="products"]{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M20.6%2013.4l-7.2%207.2a2%202%200%200%201-2.8%200L3%2013V3h10l7.6%207.6a2%202%200%200%201%200%202.8z%27%2F%3E%3Ccircle%20cx%3D%277.5%27%20cy%3D%277.5%27%20r%3D%271.5%27%2F%3E%3C%2Fsvg%3E");}
   nav#tabs button[data-tab="help"]{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%271.8%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%279%27%2F%3E%3Cpath%20d%3D%27M9.5%209a2.5%202.5%200%201%201%203.5%202.3c-.6.3-1%20.9-1%201.6V14M12%2017h.01%27%2F%3E%3C%2Fsvg%3E");}
@@ -384,6 +390,7 @@
   .hm-qa button{display:flex;gap:7px;align-items:center;justify-content:center;padding:10px;border-radius:10px;border:1px solid var(--line2);background:rgba(79,140,255,.06);color:var(--tx);font-family:var(--font-body);font-weight:500;font-size:13px;min-height:42px;cursor:pointer;}
   .hm-qa button:hover{border-color:var(--blue);background:rgba(79,140,255,.14);}
   .hm-qi{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .b-red{color:var(--neg);background:var(--neg-bg);} .b-blue{color:var(--info);background:var(--info-bg);} .b-violet{color:var(--section-tx);background:rgba(139,92,246,.12);}
   .b-gray{color:var(--tx2);background:rgba(154,162,199,.12);} .b-amber{color:var(--amber);background:rgba(255,184,77,.12);}
   .hm-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--blue);color:var(--tx);padding:10px 18px;border-radius:12px;z-index:2000;box-shadow:var(--glow);font-size:13px;}
   /* правая колонка не длиннее левой: подсказки занимают оставшееся место и прокручиваются внутри */
@@ -460,6 +467,94 @@
   table.antable tr.an-total td{font-weight:700;border-top:1px solid var(--line2);background:var(--section-bg);}
   .ad-mark{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
   .ad-mark.ok{color:var(--pos);background:var(--pos-bg);} .ad-mark.bad{color:var(--neg);background:var(--neg-bg);} .ad-mark.none{color:var(--warn);background:var(--warn-bg);} .ad-mark.off{color:var(--tx3);background:var(--bg-2);}
+
+  /* ===== Задачи и Центр решений ===== */
+  .pg-top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 16px;}
+  .pg-top h1{font-size:22px;margin:0;}
+  .pg-top .sub{margin:2px 0 0;font-size:12.5px;color:var(--tx3);}
+  .pg-top .btn{margin-left:auto;}
+  .tk-cnt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:12px;}
+  /* доска задач: колонка — подложка, карточки — светлее неё (в обеих темах) */
+  :root{--tk-col-bg:rgba(8,10,20,.35);--tk-card-bg:#181c38;--tk-card-line:#262c52;}
+  :root[data-theme="light"]{--tk-col-bg:#f3f5fa;--tk-card-bg:#ffffff;--tk-card-line:#e3e7f0;}
+  .tk-c{margin:0;padding:14px 18px;display:flex;align-items:baseline;gap:10px;}
+  .tk-c b{font-size:24px;font-weight:700;color:var(--tx-strong);}
+  .tk-c span{color:var(--tx2);font-size:13px;}
+  .tk-f{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .tk-own{font-weight:600;color:var(--tx);font-size:13.5px;}
+  .tk-chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2);cursor:pointer;}
+  .tk-keep{margin:0 0 0 auto;}
+  .tk-kan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;}
+  .tk-col{background:var(--tk-col-bg);border:1px solid var(--line);border-radius:var(--radius);padding:12px;min-height:220px;transition:border-color .15s;}
+  .tk-col.over{border-color:var(--blue);box-shadow:var(--glow);}
+  .tk-col h4{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx2);display:flex;align-items:center;gap:8px;}
+  .tk-n{font-size:11px;color:var(--tx3);background:var(--tk-card-bg);border:1px solid var(--line);border-radius:10px;padding:0 7px;}
+  .tk-empty{font-size:12px;color:var(--tx3);text-align:center;padding:24px 8px;border:1px dashed var(--line2);border-radius:10px;}
+  .tk-card{background:var(--tk-card-bg);border:1px solid var(--tk-card-line);border-left:3px solid var(--amber);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:grab;box-shadow:var(--card-shadow);}
+  .tk-card.p-high{border-left-color:var(--neg);} .tk-card.p-low{border-left-color:var(--info);}
+  .tk-card.drag{opacity:.5;}
+  .tk-card:hover{border-color:var(--blue);}
+  .tk-t{font-weight:600;color:var(--tx);font-size:13.5px;line-height:1.35;}
+  .tk-d{font-size:12px;color:var(--tx3);margin-top:3px;line-height:1.4;}
+  .tk-m{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:7px;font-size:12px;color:var(--tx2);}
+  .tk-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:8px 0 0;font-size:12.5px;line-height:1.4;}
+  .tk-dl dt{color:var(--tx3);margin:0;}
+  .tk-dl dd{margin:0;color:var(--tx);min-width:0;overflow-wrap:anywhere;}
+  .tk-pr-high{color:var(--neg) !important;font-weight:600;} .tk-pr-mid{color:var(--warn) !important;font-weight:600;} .tk-pr-low{color:var(--info) !important;font-weight:600;}
+  .tke-ck{display:flex;flex-direction:column;gap:4px;margin-bottom:6px;}
+  .tke-ckr{display:flex;align-items:center;gap:8px;} .tke-ckr .tk-chk{flex:1;}
+  .tke-ckr button{border:0;background:transparent;color:var(--tx3);cursor:pointer;font-size:15px;padding:0 4px;} .tke-ckr button:hover{color:var(--neg);}
+  .tk-src{margin-top:6px;font-size:11.5px;color:var(--section-tx);}
+  .tk-owner{display:inline-block;font-size:11.5px;font-weight:700;color:var(--blue);background:var(--info-bg);border-radius:10px;padding:1px 9px;margin-bottom:6px;}
+  .tk-prog{font-size:11.5px;color:var(--tx3);} .tk-prog.ok{color:var(--pos);}
+  .tk-who{display:inline-flex;align-items:center;gap:3px;padding:1px 8px;border-radius:12px;background:var(--panel-sub);border:1px solid var(--line);font-size:11.5px;color:var(--tx2);}
+  .tk-who.doing{color:var(--warn);border-color:var(--warn);} .tk-who.done{color:var(--pos);border-color:var(--pos);}
+  .tke-people{display:flex;flex-direction:column;gap:6px;}
+  .tke-p{display:grid;grid-template-columns:minmax(0,1fr) 200px;align-items:center;gap:12px;}
+  .md-f .tk-chk{display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13.5px;font-weight:500;color:var(--tx);margin:0;}
+  .md-f .tk-chk input{width:auto;margin:0;flex:none;}
+  .tke-p select{width:100%;}
+  .tk-prod{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);}
+  .tke-prods{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;}
+  .tke-prods .tk-prod{padding:3px 4px 3px 4px;border:1px solid var(--line);border-radius:10px;background:var(--panel-sub);color:var(--tx);}
+  .tke-prods .tk-prod button{border:0;background:transparent;color:var(--tx3);cursor:pointer;font-size:15px;line-height:1;padding:0 4px;}
+  .tke-prods .tk-prod button:hover{color:var(--neg);}
+  .tk-mv{display:flex;justify-content:space-between;gap:6px;margin-top:8px;}
+  .tk-mv button{border:0;background:transparent;color:var(--tx3);font-family:var(--font-body);font-size:11.5px;cursor:pointer;padding:2px 0;}
+  .tk-mv button:hover{color:var(--blue);}
+  .md-ov{position:fixed;inset:0;background:rgba(3,4,10,.55);backdrop-filter:blur(3px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .md-box{width:560px;max-width:100%;max-height:92vh;overflow:auto;margin:0;}
+  .md-box.wide{width:760px;}
+  .md-f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;flex:1;min-width:150px;}
+  .md-f label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);font-weight:700;}
+  .md-f input,.md-f select,.md-f textarea{width:100%;}
+  .md-row{display:flex;gap:12px;flex-wrap:wrap;}
+  .md-err{font-size:12.5px;min-height:16px;margin-bottom:6px;}
+  .md-acts{align-items:center;}
+  .dc-sum b{font-size:20px;margin-left:4px;}
+  .dc-sum .note{margin:6px 0 0;}
+  .dc-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .dc-tabs button{padding:7px 14px;border-radius:20px;border:1px solid var(--line2);background:var(--card);color:var(--tx2);font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;}
+  .dc-tabs button span{color:var(--tx3);margin-left:4px;}
+  .dc-tabs button.on{background:var(--grad);color:#fff;border-color:transparent;}
+  .dc-tabs button.on span{color:rgba(255,255,255,.8);}
+  .dc-card{border-left:3px solid var(--amber);}
+  .dc-card.high{border-left-color:var(--neg);}
+  .dc-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .dc-card h3{font-size:16px;margin:10px 0 6px;color:var(--tx-strong);}
+  .dc-card p{margin:0 0 6px;font-size:13.5px;line-height:1.5;color:var(--tx);}
+  .dc-card p.muted{color:var(--tx2);}
+  .dc-card ol{margin:6px 0 8px 18px;padding:0;font-size:13px;line-height:1.6;color:var(--tx);}
+  .dc-kv{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--tx2);margin:4px 0 2px;}
+  .dc-prog{display:flex;align-items:center;gap:10px;margin-top:8px;} .dc-prog .hm-bar{flex:1;margin:0;}
+  .dc-acts{margin-top:12px;align-items:center;}
+  .set-sub{font-size:13px;margin:6px 0 8px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;}
+  .st-tbl{border-collapse:collapse;}
+  .st-tbl th{text-align:left;font-size:11px;padding:4px 8px 6px 0;}
+  .st-tbl td{padding:3px 8px 3px 0;}
+  .st-tbl .st-mps{white-space:nowrap;} .st-tbl .st-mps .tk-chk{display:inline-flex;margin-right:10px;} .st-tbl .st-mps input{width:auto;}
+  .st-tbl input{width:240px;} .st-tbl select{width:150px;} .st-tbl td.st-lead{text-align:center;} .st-tbl td.st-lead input{width:auto;}
+  @media (max-width:900px){ .tk-kan,.tk-cnt{grid-template-columns:minmax(0,1fr);} }
 
   /* ===== Помощник «Спросить» ===== */
   .ask-scrim{position:fixed;inset:0;background:rgba(3,4,10,.45);z-index:90;display:none;}
@@ -597,6 +692,8 @@
     <button data-tab="stock">Остатки и динамика</button>
     <button data-tab="distrib">Распределение товара</button>
     <button data-tab="zakup">Планирование закупа</button>
+    <button data-tab="decisions">Центр решений</button>
+    <button data-tab="tasks">Задачи</button>
     <button data-tab="settings">Настройки</button>
     <button data-tab="help">Справка</button>
   </nav>
@@ -617,6 +714,16 @@
       <div class="hm-search"><input id="homeSearch" type="search" placeholder="Поиск: товар, вкладка, задача" autocomplete="off"><div id="homeSearchRes" class="sres" style="display:none;"></div></div>
     </div>
     <div id="homeBody"><div class="panel"><div class="empty">Загрузка…</div></div></div>
+  </div>
+
+  <div id="tab-decisions" class="tabpane" style="display:none;">
+    <div class="pg-top"><div><h1>Центр решений</h1></div><button class="btn secondary" id="dcRecalcBtn">↻ Пересчитать сейчас</button></div>
+    <div id="decisionsBody"><div class="panel"><div class="empty">Загрузка…</div></div></div>
+  </div>
+
+  <div id="tab-tasks" class="tabpane" style="display:none;">
+    <div class="pg-top"><div><h1>Задачи</h1><div class="sub">Общие для всей команды</div></div><button class="btn" id="tkNewBtn">+ Новая задача</button></div>
+    <div id="tasksBody"><div class="panel"><div class="empty">Загрузка…</div></div></div>
   </div>
 
   <div id="tab-plan" class="tabpane" style="display:none;">
@@ -841,7 +948,19 @@
         <button class="btn" id="saveSettingsBtn">Сохранить</button>
         <span id="settingsSavedNote" class="note" style="margin:0 0 10px;"></span>
       </div>
-      <p class="note">ДРР выше предела подсвечивается красным на «Главной» и в столбце «Итого» строки «ДРР, %» в «Ежедневных данных», а товары и площадки с такой ДРР попадают в подсказки на «Главной». «Запас мало» — сколько дней запаса считать тревожным сигналом (по умолчанию 14; на «Главной» и в «Аналитике», красным — меньше половины). «Скорость продаж для закупа» — по последней закрытой неделе или среднее за 2 недели (защищает точку заказа от скачка из-за одной нетипичной недели).</p>
+      <h3 class="set-sub">Центр решений</h3>
+      <div class="row">
+        <div class="field"><label>Рост ДРР за неделю, %</label><input id="set_dc_drrgrowth" type="number" min="1" max="500" step="1" style="width:140px;"></div>
+        <div class="field"><label>Падение заказов, %</label><input id="set_dc_drop" type="number" min="1" max="99" step="1" style="width:140px;"></div>
+        <div class="field"><label>Избыток, дней запаса</label><input id="set_dc_excess" type="number" min="30" max="365" step="1" style="width:140px;"></div>
+        <div class="field"><label>Перекос запаса, дней</label><input id="set_dc_redist" type="number" min="3" max="90" step="1" style="width:140px;"></div>
+        <div class="field"><label>Пауза после отказа, дней</label><input id="set_dc_pause" type="number" min="1" max="180" step="1" style="width:160px;"></div>
+      </div>
+      <p class="note">ДРР выше предела подсвечивается красным на «Главной» и в столбце «Итого» строки «ДРР, %» в «Ежедневных данных», а товары и площадки с такой ДРР попадают в подсказки на «Главной». «Запас мало» — сколько дней запаса считать тревожным сигналом (по умолчанию 14; на «Главной» и в «Аналитике», красным — меньше половины). «Скорость продаж для закупа» — по последней закрытой неделе или среднее за 2 недели (защищает точку заказа от скачка из-за одной нетипичной недели). <b>Центр решений:</b> «Рост ДРР» — на сколько процентов ДРР товара за 7 дней выросла к прошлой неделе; «Падение заказов» — на сколько процентов меньше заказов за 7 дней; «Избыток» — решение «Ускорить продажи» появляется, если всего запаса (площадки + фулфилмент) больше чем на это число дней; «Перекос запаса» — решение «Пересчитать распределение» появляется, если дни запаса на площадках различаются больше чем на это число; «Пауза после отказа» — сколько дней не предлагать отклонённое решение по тому же товару. Предел ДРР и «Запас мало» тоже используются в решениях.</p>
+    </div>
+    <div class="panel" id="staffPanel">
+      <h2>Сотрудники</h2>
+      <div id="staffWrap"><div class="empty">Загрузка…</div></div>
     </div>
     <div class="panel">
       <h2>Добавить товар</h2>
@@ -870,10 +989,22 @@
   <!-- СПРАВКА -->
   <div id="tab-help" class="tabpane" style="display:none;">
     <div class="panel">
+      <h2>Центр решений</h2>
+      <p>Список того, что стоит сделать сегодня. Решения строятся <b>правилами</b> по данным Воронки (без ИИ) при каждом открытии вкладки и по кнопке «Пересчитать сейчас». В каждом: направление, срочность («Срочно» / «Важно»), действие, ситуация с цифрами, почему, шаги, оценка эффекта в ₽ в месяц, срок и как проверить результат.</p>
+      <p><b>Правила</b> (пороги — в «Настройках»). <b>Найти и устранить причину падения заказов</b> — у карточки за 7 дней (по последний заполненный день) заказов на «Падение заказов» % и больше меньше, чем неделей раньше (все 7 дней заполнены, неделей раньше от 5 шт); подзадачи подбираются по этапу, который просел сильнее всего: показы, CTR, конверсия в корзину или в заказ. <b>Отключить неэффективную рекламу</b> — за 7 дней реклама от 500 ₽ и ни одного заказа. <b>Оптимизировать рекламу</b> — ДРР карточки за 7 дней выше предела. <b>Проверить рост ДРР</b> — ДРР ещё в пределе, но выросла к прошлой неделе на «Рост ДРР» % и больше. <b>Сформировать план продаж</b> — с 1-го числа, пока у какой-то строки плана нет плана на текущий месяц; срок — 10 число; исполнитель — руководитель из «Сотрудников». <b>Заказать партию у производства</b> — статус в «Обзоре закупа» «Просрочено» или «Скоро закупать»; сколько — как «Закуп, шт». <b>Ускорить продажи: избыток</b> — всего запаса (площадки + фулфилмент) больше чем на «Избыток» дней. <b>Пополнить запас на площадке</b> — на WB/Ozon/ЯМ запаса меньше «Запас мало» дней (продажи — средние за 14 дней), а на фулфилменте товар есть; сколько — до запаса на 2 недели, но не больше, чем есть на ФФ. <b>Пересчитать распределение товара</b> — по товарам, у которых дни запаса на площадках (остаток + ещё не отгруженное по плану «Поставок по площадкам») различаются больше чем на «Перекос запаса» дней; предлагается новая раскладка уже запланированного к отгрузке (план − отгружено) так, чтобы запаса везде хватало примерно на одинаковое число дней при скорости продаж каждой площадки за 14 дней; общее количество не меняется. Нераспределённый остаток на ФФ показывается подсказкой. Одна задача на неделю, исполнитель — руководитель. <b>Неудачное изменение карточки</b> — изменение за последние 30 дней, которое «Журнал изменений» на «Воронке и точках роста» оценил как неудачное (❌: главный показатель этого типа правки ухудшился на 3% и больше, данных достаточно, после него не было такого же изменения); название — что сделать по типу правки (главное фото — «Сменить главное фото или провести A/B-тест», заголовок, порядок фото, описание, цена, реклама); проверка результата — через 3 дня и позже (для ДРР — по окну журнала), в «Почему» — вывод журнала. По рекламе — только если ДРР после изменения выше предела. Остатки — из последних сохранённых недель «Остатков и динамики»; если неделя не текущая, это написано в решении.</p>
+      <p><b>Кнопки.</b> «Принять» — создаётся <b>одна задача</b>: название — действие решения, в описании — ситуация с цифрами и вторым абзацем что сделать (без подпунктов; у задачи «Сформировать план продаж» — только ситуация). Исполнитель: «Сформировать план продаж» и «Пересчитать распределение» — руководитель; решения по конкретной площадке — сотрудники, у которых эта площадка отмечена в «Сотрудниках» (если их несколько — назначаются все, у каждого своя карточка); если таких нет — тот, кто принял. Решение уходит в «В работе», там виден статус задачи; когда задача выполнена (все исполнители перенесли её в «Готово») — в «Выполнены». «Отклонить» — с причиной; такое же решение по тому же товару не предлагается «Пауза после отказа» дней. «Разобрать в «Спросить»» — открывает подходящий готовый вопрос по этому товару или площадке. Вкладки: Новые / В работе / Выполнены / Отклонены. Состояние решений общее для всей команды.</p>
+    </div>
+    <div class="panel">
+      <h2>Задачи</h2>
+      <p>Общая доска задач команды: «К выполнению», «В работе», «Готово». Карточку можно перетащить мышкой в другую колонку или нажать «←» / «→» на ней. Щелчок по карточке открывает задачу: название, описание, приоритет, срок, <b>товары</b> (можно несколько: найдите по названию и добавьте карточку или сразу «все карточки» товара; убрать — × на плашке) и <b>исполнители</b> (из «Настроек» → «Сотрудники») — их может быть несколько, у каждого свой статус; там же «Удалить». Срок показывается как «сегодня», «завтра», «до дд.мм» или «просрочено N дн.» (красным).</p>
+      <p><b>Несколько исполнителей.</b> Задача создаётся одна, а на доске у каждого исполнителя — своя карточка (в строке «Исполнитель» — его имя). Каждый двигает свою карточку, и она стоит в колонке его статуса. Статусы всех исполнителей видны в окне задачи. Название, срок, описание и товары общие: поменяли в задаче — изменилось на всех карточках. Задача считается выполненной, когда все исполнители перенесли свои карточки в «Готово». Фильтр по исполнителю показывает только его карточки.</p>
+      <p>В меню у «Задач» — число карточек «К выполнению» (у сотрудника из списка — только его), у «Центра решений» — число новых решений. В задаче можно вести <b>подпункты</b> с галочками (добавить — ввести текст и Enter), на карточке видно «Подпункты: 1 из 3». Вверху — счётчики задач «открыто / на сегодня / просрочено» (по задаче целиком, а не по карточкам) и фильтры по исполнителю, приоритету и «Из Центра решений» (задачи, созданные кнопкой «Принять»). На карточке по строкам: исполнитель, приоритет, срок (если сегодня, завтра или просрочено — с пометкой), товар (по названию, площадки в скобках). Цвет полоски слева — приоритет: красный — высокий, жёлтый — средний, синий — низкий. Каждая задача хранится отдельно, поэтому сотрудники могут одновременно менять разные задачи. <b>Выполненные задачи удаляются через 30 дней</b> после выполнения.</p>
+    </div>
+    <div class="panel">
       <h2>Спросить</h2>
       <p>Помощник с готовыми вопросами. Ответы считаются формулами по «Ежедневным данным» и плану — без ИИ, сразу и бесплатно; в базу ничего не записывается. Открывается кнопкой «Спросить» в быстрых действиях на «Главной» или кнопкой «Спросить» в последнем столбце строки товара в «Аналитике и рекламе» (тогда товар уже выбран). Показывается один, текущий ответ: при смене вопроса, товара, периода или площадки он обновляется; история ответов не хранится.</p>
       <p><b>По товару</b> (товар выбирается поиском по названию или из «Недавних»): «Почему изменились заказы» — заказы = показы × CTR × клик→корзина × корзина→заказ, помощник показывает, какой множитель изменился сильнее всего; «Как изменение цены повлияло на продажи» — последняя смена цены в ЛК от 1% за 60 дней, средние за день 7 дней до и после; «Что с СПП» — скидка площадки (1 − цена для покупателя ÷ цена в ЛК), её скачки от 3 п.п. и заказы; «Где карточка теряет покупателей» — этапы воронки против «Порогов» товара; «Что дали последние изменения карточки» — записи «Тип изменения» и «Комментарий» за 60 дней и что стало с главной метрикой и заказами.</p>
-      <p><b>Общие</b> (с выбором площадки): «Что проверить в первую очередь» — карточки по сумме потерь (недобор заказов к прошлому периоду + реклама сверх предела ДРР) и тревожным аномалиям; «Успеваем ли по плану» — прогноз Run-rate и кто сильнее всего отстаёт от ровного темпа; «Где реклама неэффективна» — ДРР выше предела или расход без заказов и сколько потрачено сверх предела; «Лидеры роста и падения» — по изменению заказано ₽. Сравнение — выбранные 7/14/28 дней против такого же периода перед ними; у каждой карточки период заканчивается на её последнем заполненном дне, чтобы незаполненные дни не выглядели падением. В вопросе про цену по умолчанию берётся последняя смена, после которой прошло хотя бы 3 заполненных дня (более свежие — кнопками). «Просроченные задачи» и «Что с остатками» — скоро (вместе с разделом «Задачи» и остатками из API).</p>
+      <p><b>Общие</b> (с выбором площадки): «Что проверить в первую очередь» — карточки по сумме потерь (недобор заказов к прошлому периоду + реклама сверх предела ДРР) и тревожным аномалиям; «Успеваем ли по плану» — прогноз Run-rate и кто сильнее всего отстаёт от ровного темпа; «Где реклама неэффективна» — ДРР выше предела или расход без заказов и сколько потрачено сверх предела; «Лидеры роста и падения» — по изменению заказано ₽. Сравнение — выбранные 7/14/28 дней против такого же периода перед ними; у каждой карточки период заканчивается на её последнем заполненном дне, чтобы незаполненные дни не выглядели падением. В вопросе про цену по умолчанию берётся последняя смена, после которой прошло хотя бы 3 заполненных дня (более свежие — кнопками). «Просроченные задачи» — список задач с прошедшим сроком, кто исполнитель и на сколько дней просрочено. «Что с остатками» — скоро (вместе с остатками из API).</p>
     </div>
     <div class="panel">
       <h2>Аналитика и реклама</h2>
@@ -892,13 +1023,14 @@
       <p><b>Заказы по дням</b> — итог последнего заполненного дня (есть хоть один не черновой день) и столбики за 14 дней; наведите на столбик, чтобы увидеть цифры.</p>
       <p><b>Запас на площадках</b> (скоро) — товары с наименьшим запасом в днях: остаток ÷ средние заказы в день за 14 дней. Появится вместе с API, когда остатки будут обновляться ежедневно и по каждой карточке; сейчас остаток вносится раз в неделю, и расчёт был бы неточным. Подсказки «Заканчивается» и счётчик товаров с малым запасом тоже вернутся вместе с API.</p>
       <p><b>Поставки на площадки</b> — скоро: появятся вместе с API площадок и покажут поставки на WB, Ozon и ЯМ со статусом (планируется → в пути → принята). План распределения товара по-прежнему ведётся в «Поставках по площадкам».</p>
-      <p><b>Подсказки</b> строятся правилами, без ИИ: <b>аномалии</b> из «Ежедневных данных» (те же правила: последний заполненный день против среднего за 7 дней; только тревожные сигналы — падения, рост ДРР, ухудшение позиции; рост показов виден только в «Ежедневных данных»; по одной, самой сильной, на карточку — остальные видны в «Ежедневных данных»; показываются, если последний заполненный день — не старше 3 дней; наведите, чтобы прочитать, что проверить, клик открывает товар), прогноз месяца ниже плана, ДРР площадки выше предела, остатки не обновлены за текущую неделю. Сигналы по отдельным товарам (ДРР выше предела, падение заказов и др.) — полными списками в «Требуют внимания». <b>Требуют внимания</b> — сколько товаров с каждой проблемой; щелчок по строке раскрывает список, щелчок по товару открывает его «Ежедневные данные» (строку плана — «План и факт»). <b>Заказы упали</b> — за 7 дней по последний заполненный день карточки заказов на 30% и больше меньше, чем 7 днями раньше (все 7 дней заполнены, неделей раньше было от 5 шт). <b>Реклама без заказов</b> — за те же 7 дней расход на рекламу от 500 ₽ и ни одного заказа. <b>ДРР выше предела</b> — с начала месяца. <b>Отстают от плана</b> — прогноз Run-rate по строке плана (товар или группа плана) меньше 85% плана месяца. <b>Заканчивается запас</b> — скоро, вместе с остатками из API. Просроченные задачи — пока демо. Карточки, которые давно не заполняются (последний заполненный день старше 5 дней), и скрытые товары не учитываются.</p>
+      <p><b>Подсказки</b> строятся правилами, без ИИ: <b>аномалии</b> из «Ежедневных данных» (те же правила: последний заполненный день против среднего за 7 дней; только тревожные сигналы — падения, рост ДРР, ухудшение позиции; рост показов виден только в «Ежедневных данных»; по одной, самой сильной, на карточку — остальные видны в «Ежедневных данных»; показываются, если последний заполненный день — не старше 3 дней; наведите, чтобы прочитать, что проверить, клик открывает товар), прогноз месяца ниже плана, ДРР площадки выше предела, остатки не обновлены за текущую неделю. Сигналы по отдельным товарам (ДРР выше предела, падение заказов и др.) — полными списками в «Требуют внимания». <b>Требуют внимания</b> — сколько товаров с каждой проблемой; щелчок по строке раскрывает список, щелчок по товару открывает его «Ежедневные данные» (строку плана — «План и факт»). <b>Заказы упали</b> — за 7 дней по последний заполненный день карточки заказов на 30% и больше меньше, чем 7 днями раньше (все 7 дней заполнены, неделей раньше было от 5 шт). <b>Реклама без заказов</b> — за те же 7 дней расход на рекламу от 500 ₽ и ни одного заказа. <b>ДРР выше предела</b> — с начала месяца. <b>Отстают от плана</b> — прогноз Run-rate по строке плана (товар или группа плана) меньше 85% плана месяца. <b>Заканчивается запас</b> — скоро, вместе с остатками из API. Просроченные задачи — задачи с прошедшим сроком (раскрывается списком, щелчок — вкладка «Задачи»). Карточки, которые давно не заполняются (последний заполненный день старше 5 дней), и скрытые товары не учитываются.</p>
       <p><b>Светлая / тёмная тема</b> — кнопка «Тёмная тема» / «Светлая тема» в боковом меню над «Свернуть меню» (в свёрнутом меню — значок луны / солнца), работает на любой вкладке. Тема своя у каждого сотрудника и запоминается в его браузере; по умолчанию — светлая.</p>
       <p><b>Площадки вверху</b> (WB, Ozon, Я.Маркет) — статус загрузки данных по API: зелёная точка — подключено (в подсказке время последнего обновления), красная — ошибка загрузки, жёлтая — не подключено, данные вносятся вручную. Подключение появится на этапе «Интеграции».</p>
-      <p><b>Поиск</b> — по названиям товаров (открывает товар в «Ежедневных данных») и вкладок. <b>Задачи</b> на «Главной» пока демо-примеры с пометкой «демо» — настоящие появятся вместе с вкладкой «Задачи».</p>
+      <p><b>Поиск</b> — по названиям товаров (открывает товар в «Ежедневных данных») и вкладок. <b>Задачи</b> — в поиске находятся открытые задачи по названию; кнопка «Задача» в быстрых действиях открывает новую задачу.</p>
     </div>
     <div class="panel">
       <h2>Настройки</h2>
+      <p><b>Сотрудники</b> — список исполнителей задач: имя и почта, под которой сотрудник входит в Воронку. «Счётчик в меню»: «мои | все» — у «Задач» два числа (свои к выполнению | все к выполнению) или «только мои» — одно число, свои задачи. Доску со всеми задачами и фильтром по исполнителю видят все. «Площадки» — WB / Ozon / ЯМ, за которые отвечает сотрудник: задачи из Центра решений по этой площадке назначаются на него. «Руководитель» — один человек, на него назначаются задачи «Сформировать план продаж» и «Пересчитать распределение товара». Добавьте строку, впишите имя и почту и нажмите «Сохранить» в этом блоке. Пороги Центра решений — в «Общих настройках», раздел «Центр решений».</p>
       <p>Одна вкладка для всех настроек: вверху — общие, ниже — добавление товара и список товаров с настройками закупа.</p>
       <p><b>Запас мало, дней</b> — порог «товар заканчивается» для «Главной» и «Аналитики» (по умолчанию 14). <b>Предельная ДРР</b> — общая для всех сотрудников (по умолчанию 15%). Используется на «Главной» и для красной подсветки ДРР в «Итого» в «Ежедневных данных». <b>Скорость продаж для закупа</b> — по последней закрытой неделе или среднее за 2 недели. Обе сохраняются кнопкой «Сохранить» в карточке «Общие настройки».</p>
     </div>
@@ -1184,6 +1316,29 @@ async function storeListKeys(prefix){
       .get();
     return snap.docs.map(d=>d.id);
   }catch(e){ console.error('storage list failed',prefix,e); return []; }
+}
+
+// Все документы с ключом, начинающимся на prefix: {ключ: значение}. При сбое чтения бросает ошибку —
+// вызывающий код не должен принимать сбой за «документов нет» (задачи, решения).
+async function storeListDocs(prefix){
+  if(!USE_FIREBASE){
+    const r=await window.storage.list(prefix,false); const out={};
+    for(const k of (r?r.keys:[])){ const v=await storeGet(k); if(v!==null && v!==undefined) out[k]=v; }
+    return out;
+  }
+  let lastErr=null;
+  for(let attempt=0; attempt<3; attempt++){
+    try{
+      const db=await initFirebase();
+      const snap=await db.collection(FIRESTORE_COLLECTION)
+        .where(firebase.firestore.FieldPath.documentId(), '>=', prefix)
+        .where(firebase.firestore.FieldPath.documentId(), '<', prefix+'\uf8ff').get();
+      const out={};
+      snap.docs.forEach(d=>{ const x=d.data(); if(x && x.v!==undefined) out[d.id]=JSON.parse(x.v); });
+      return out;
+    }catch(e){ lastErr=e; console.error('storage list docs failed (попытка '+(attempt+1)+')', prefix, e); if(attempt<2) await new Promise(res=>setTimeout(res,500*(attempt+1))); }
+  }
+  const err=new Error('Не удалось прочитать данные ('+prefix+'*)'); err.isReadFailure=true; throw err;
 }
 
 /* ======================= БЕЗОПАСНОЕ (не перезаписывающее чужое/своё же) СОХРАНЕНИЕ =======================
@@ -1491,7 +1646,8 @@ async function getLatestStockValue(channel, rowKey){
     const data=await storeGet(stockChannelKey(channel, w));
     if(!data) continue;
     const v=data[rowKey];
-    return {value:(v===undefined || v===null || v==='') ? 0 : +v, week:w};
+    const filled=!(v===undefined || v===null || v==='');
+    return {value: filled ? +v : 0, week:w, filled}; // filled — ячейка внесена (пустая считается 0, но для решений «везти» это не знание)
   }
   return {value:null, week:null};
 }
@@ -2133,7 +2289,7 @@ async function sumLatestStock(channel, keys){
   const anyValue=results.some(r=>r.value!=null);
   if(!anyValue) return {value:null};
   const latestWeek=results.filter(r=>r.week).map(r=>r.week).sort().reverse()[0]||null;
-  return {value: results.reduce((s,r)=>s+(r.value||0),0), week: latestWeek};
+  return {value: results.reduce((s,r)=>s+(r.value||0),0), week: latestWeek, filled: results.some(r=>r.filled)};
 }
 async function getZakupSettings(rowKey){
   const v=await storeGet('zakupsettings:'+rowKey);
@@ -2213,7 +2369,9 @@ async function computeZakupRow(row, smoothingMode, settings){
   let status='unknown';
   if(daysToOrder!=null){ status = daysToOrder>5? 'ok' : (daysToOrder>=0? 'warn' : 'danger'); }
   const orderQty = reorderPoint!=null ? Math.ceil(reorderPoint/10)*10 : null;
-  return { ...row, settings, totalStock, staleChannels, velocityGaps, velocity, cycle, safetyStock, reorderPoint, inTransitQty, daysToOrder, status, orderQty };
+  const stockByCh={wb:stockWb.value, ozon:stockOzon.value, ym:stockYm.value, ff:stockFf.value}, membersByCh={wb:wbM, ozon:ozonM, ym:ymM};
+  const stockFilled={wb:!!stockWb.filled, ozon:!!stockOzon.filled, ym:!!stockYm.filled, ff:!!stockFf.filled};
+  return { ...row, settings, totalStock, staleChannels, velocityGaps, velocity, cycle, safetyStock, reorderPoint, inTransitQty, daysToOrder, status, orderQty, stockByCh, membersByCh, stockFilled };
 }
 
 const ZAKUP_STATUS_LABEL={ok:'Норма', warn:'Скоро закупать', danger:'Просрочено', unknown:'Нет данных'};
@@ -4741,7 +4899,7 @@ let productsReadyPromise=null;
    (Главная вернётся сама; «Аналитику» доделать: остаток по карточке вместо группы). */
 const STOCK_API_READY=false;
 const SETTINGS_KEY='settings:general';
-const SETTINGS_DEFAULT={drrLimit:15, stockLowDays:14};
+const SETTINGS_DEFAULT={drrLimit:15, stockLowDays:14, drrGrowthPct:30, ordersDropPct:30, planLagPct:85, postponeDays:3, rejectPauseDays:14, excessDays:90, redistGapDays:14};
 state.settings={...SETTINGS_DEFAULT};
 async function loadSettings(){
   try{ const s=await storeGet(SETTINGS_KEY); state.settings={...SETTINGS_DEFAULT, ...(s||{})}; }
@@ -4755,6 +4913,12 @@ function drrOver(v){ return v!==null && v!==undefined && Math.round(v*10)/10 > d
 async function renderSettingsTab(){
   document.getElementById('set_drr_limit').value=drrLimit();
   document.getElementById('set_stock_low').value=stockLowDays();
+  document.getElementById('set_dc_drrgrowth').value=dcSet('drrGrowthPct');
+  document.getElementById('set_dc_drop').value=dcSet('ordersDropPct');
+  document.getElementById('set_dc_excess').value=dcSet('excessDays');
+  document.getElementById('set_dc_redist').value=dcSet('redistGapDays');
+  document.getElementById('set_dc_pause').value=dcSet('rejectPauseDays');
+  loadStaff().then(renderStaffPanel);
   document.getElementById('settingsSavedNote').textContent='';
   renderProductsTable();
   try{ document.getElementById('set_zakup_smoothing').value=await getZakupMode(); }
@@ -4769,9 +4933,14 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async ()=>{
   const low=Math.round(+document.getElementById('set_stock_low').value);
   if(!(low>=1 && low<=365)){ note.style.color='var(--neg)'; note.textContent='«Запас мало» — число дней от 1 до 365'; return; }
   const smooth=document.getElementById('set_zakup_smoothing').value;
+  const dcv={drrGrowthPct:'set_dc_drrgrowth', ordersDropPct:'set_dc_drop', excessDays:'set_dc_excess', redistGapDays:'set_dc_redist', rejectPauseDays:'set_dc_pause'};
+  const dcVals={};
+  for(const [k,id] of Object.entries(dcv)){ const x=Math.round(+document.getElementById(id).value); const el=document.getElementById(id);
+    if(!(x>=+el.min && x<=+el.max)){ note.style.color='var(--neg)'; note.textContent=`«${el.previousElementSibling.textContent}» — число от ${el.min} до ${el.max}`; return; }
+    dcVals[k]=x; }
   btn.disabled=true;
   const [res, resMode]=await Promise.all([
-    mutateStoreValue(SETTINGS_KEY, ()=>({...SETTINGS_DEFAULT}), (doc)=>{ doc.drrLimit=v; doc.stockLowDays=low; }),
+    mutateStoreValue(SETTINGS_KEY, ()=>({...SETTINGS_DEFAULT}), (doc)=>{ doc.drrLimit=v; doc.stockLowDays=low; Object.assign(doc, dcVals); }),
     mutateStoreValue('zakupmode', ()=>({}), (fresh)=>{ fresh.smoothing=smooth; }),
   ]);
   btn.disabled=false;
@@ -4789,14 +4958,8 @@ const MONTHS_NOM=['январь','февраль','март','апрель','м�
 const HOME_TABS=[
   {tab:'home',label:'Главная'},{tab:'plan',label:'План и факт'},{tab:'daily',label:'Ежедневные данные'},
   {tab:'funnel',label:'Воронка и точки роста'},{tab:'compare',label:'Сравнение периодов'},{tab:'analytics',label:'Аналитика и реклама'},{tab:'stock',label:'Остатки и динамика'},
-  {tab:'distrib',label:'Распределение товара'},{tab:'zakup',label:'Планирование закупа'},
+  {tab:'distrib',label:'Распределение товара'},{tab:'zakup',label:'Планирование закупа'},{tab:'decisions',label:'Центр решений'},{tab:'tasks',label:'Задачи'},
   {tab:'settings',label:'Настройки'},{tab:'help',label:'Справка'}
-];
-// ДЕМО: задач в Воронке пока нет (появятся на этапе «Задачи»), здесь — выдуманные примеры
-const DEMO_TASKS=[
-  {title:'Обновить главное фото карточки', due:'просрочено 2 дн.', overdue:true},
-  {title:'Проверить ставки WB после акции', due:'просрочено 1 дн.', overdue:true},
-  {title:'Согласовать поставку на Ozon', due:'сегодня', overdue:false},
 ];
 let homeRenderToken=0;
 /* Статус загрузки по API. Документ syncstatus = {wb:{status:'ok'|'error', updatedAt:'ISO', message}, ozon:{…}, ym:{…}}.
@@ -5015,7 +5178,10 @@ async function renderHomeTab(){
       const pct=fc/plan*100; if(pct<85) planLag.push({ps, name:ps[0].planGroup||ps[0].name, plan, fact, pct});
     }
     planLag.sort((a,b)=>a.pct-b.pct); }
-  const overdueDemo=DEMO_TASKS.filter(t=>t.overdue).length;
+  // просроченные задачи (при сбое чтения — «—», а не 0)
+  let homeTasks=null;
+  try{ homeTasks=Object.values(await loadTasks()); await loadStaff(); }catch(e){ console.error('Главная: задачи не загрузились', e); }
+  if(my!==homeRenderToken) return;
 
   // --- разметка
   const kpi=(lbl, val, chip, spark, color)=>`<div class="panel hm-kpi"><div class="hm-lbl">${lbl}</div><div class="hm-val">${val}</div>${chip}${sparkSvg(spark,color)}</div>`;
@@ -5088,11 +5254,11 @@ async function renderHomeTab(){
     ${attList(drrItems,`ДРР выше ${fmt1(limit)}% с начала месяца`)}
     ${attList(planItems,'Отстают от плана (прогноз <85%)')}
     ${STOCK_API_READY ? attList(stockItems,`Запас меньше ${lowDays} дн.`) : soonRow(`Запас меньше ${lowDays} дн.`)}
-    ${att(overdueDemo,'Просроченные задачи','tasks-demo',' <span class="badge b-amber">демо</span>')}</div>`;
+    ${homeTasks ? attList(overdueTasks(homeTasks).sort((a,b)=>a.due.localeCompare(b.due)).map(t=>{ const pr=TASK_PRIO[t.prio]||TASK_PRIO.mid; return {pid:'', go:'tasks', badge:`<span class="badge ${pr[1]}">${pr[0]}</span>`, name:t.title, r:`<span class="neg">${taskDueInfo(t).lbl}</span>${taskPendingNames(t).length?' · '+hmEsc(taskPendingNames(t).join(', ')):''}`}; }), 'Просроченные задачи') : '<div class="hm-att hm-attsoon" title="Не удалось загрузить задачи"><span>Просроченные задачи</span><span class="hm-attv"><b>—</b><i></i></span></div>'}</div>`;
 
   const qi=p=>`<svg class="hm-qi" viewBox="0 0 24 24">${p}</svg>`;
   const qaCard=`<div class="panel hm-card"><div class="hm-h">Быстрые действия</div><div class="hm-qa">
-    <button type="button" data-go="tasks-demo" title="Демо — задачи появятся на отдельном этапе">${qi('<path d="M12 5v14M5 12h14"/>')}Задача</button>
+    <button type="button" data-go="newtask" title="Новая задача">${qi('<path d="M12 5v14M5 12h14"/>')}Задача</button>
     <button type="button" data-go="daily" title="Ежедневные данные — внести данные за вчера">${qi('<path d="M3 12h4l3-8 4 16 3-8h4"/>')}Воронка</button>
     <button type="button" data-go="stock" title="Остатки и динамика">${qi('<path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/>')}Склад</button>
     <button type="button" data-go="ask" title="Готовые вопросы по вашим данным">${qi('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/>')}Спросить</button></div></div>`;
@@ -5105,7 +5271,7 @@ async function renderHomeTab(){
 document.getElementById('homeBody').addEventListener('click', (e)=>{
   const el=e.target.closest('[data-go]'); if(!el) return;
   const go=el.dataset.go;
-  if(go==='tasks-demo'){ homeToast('Задачи появятся на отдельном этапе — сейчас здесь демо-данные'); return; }
+  if(go==='newtask'){ goTab('tasks'); setTimeout(()=>openTaskEditor(null), 250); return; }
   if(go==='ask'){ openAsk(); return; }
   if(go==='home') return;
   if(el.dataset.pid && go==='daily'){ openProductDaily(el.dataset.pid); return; }
@@ -5113,7 +5279,7 @@ document.getElementById('homeBody').addEventListener('click', (e)=>{
   goTab(go);
 });
 
-// поиск по товарам, вкладкам и (демо) задачам
+// поиск по товарам, вкладкам и задачам
 (function(){
   const input=document.getElementById('homeSearch'), res=document.getElementById('homeSearchRes');
   const hide=()=>{ res.style.display='none'; };
@@ -5122,7 +5288,7 @@ document.getElementById('homeBody').addEventListener('click', (e)=>{
     if(!q){ hide(); return; }
     const tabs=HOME_TABS.filter(t=>t.label.toLowerCase().includes(q)).map(t=>({kind:'Вкладка', label:t.label, go:t.tab}));
     const prods=activeProducts().filter(p=>p.name.toLowerCase().includes(q)).slice(0,8).map(p=>({kind:MP_LABEL[p.mp], label:p.name, pid:p.id}));
-    const tasks=DEMO_TASKS.filter(t=>t.title.toLowerCase().includes(q)).map(t=>({kind:'Задача (демо)', label:t.title, go:'tasks-demo'}));
+    const tasks=Object.values(tasksCache||{}).filter(t=>t.status!=='done' && t.title.toLowerCase().includes(q)).slice(0,6).map(t=>({kind:'Задача', label:t.title, tid:t.id}));
     const items=[...tabs, ...prods, ...tasks];
     res.innerHTML = items.length ? items.map((it,i)=>`<a data-i="${i}"><span>${hmEsc(it.label)}</span><small>${hmEsc(it.kind)}</small></a>`).join('') : '<div class="empty" style="padding:10px;">Ничего не найдено</div>';
     res.style.display='block';
@@ -5130,7 +5296,7 @@ document.getElementById('homeBody').addEventListener('click', (e)=>{
       ev.preventDefault();
       const it=items[+a.dataset.i]; hide(); input.value='';
       if(it.pid) openProductDaily(it.pid);
-      else if(it.go==='tasks-demo') homeToast('Задачи появятся на отдельном этапе — сейчас здесь демо-данные');
+      else if(it.tid){ goTab('tasks'); setTimeout(()=>{ if(tasksCache && tasksCache[it.tid]) openTaskEditor(tasksCache[it.tid]); }, 300); }
       else goTab(it.go);
     }));
   });
@@ -5272,7 +5438,7 @@ const ASK_Q=[
   {id:'plan',    group:'common',  label:'Успеваем ли по плану?', mp:true},
   {id:'ads',     group:'common',  label:'Где реклама неэффективна?', period:true, mp:true},
   {id:'leaders', group:'common',  label:'Лидеры роста и падения', period:true, mp:true},
-  {id:'tasks',   group:'common',  label:'Просроченные задачи', soon:'появится вместе с разделом «Задачи»'},
+  {id:'tasks',   group:'common',  label:'Просроченные задачи'},
   {id:'stock',   group:'common',  label:'Что с остатками?', soon:'появится вместе с ежедневными остатками из API'},
 ];
 const askState={q:null, pid:null, days:7, mp:'all', answers:[]};
@@ -5604,6 +5770,799 @@ document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && document.getE
   later();
 })();
 
+/* ======================= ЗАДАЧИ И ЦЕНТР РЕШЕНИЙ (этап 5) =======================
+   Задача — отдельный документ task:{id} (правки разных задач не перетирают друг друга):
+   {id, title, desc, prio:'high'|'mid'|'low', due:'YYYY-MM-DD'|'', pids:[productId], src:'decision'|'', decisionKey,
+    createdBy, createdAt, assignees:[{email, status, doneAt}], status, doneAt}
+   У каждого исполнителя свой статус; status/doneAt задачи — общий итог (Готово — когда сделали все).
+   Старые задачи с одним полем who читаются как один исполнитель.
+   Выполненные задачи старше TASK_KEEP_DAYS дней удаляются при открытии (решение Ольги).
+   Сотрудники — документ staff = [{id, name, email}] («Настройки» → «Сотрудники»).
+   Решения строятся правилами при каждом открытии/«Пересчитать»; в базе хранится только их состояние:
+   decision:{key} = {status:'work'|'rejected', until, reason, taskIds, snap, at, by}. */
+const TASK_COLS=[['todo','К выполнению'],['doing','В работе'],['done','Готово']];
+const TASK_PRIO={high:['Высокий','b-red'],mid:['Средний','b-amber'],low:['Низкий','b-blue']};
+const TASK_KEEP_DAYS=30;
+let tasksCache=null;   // {id: задача} — последняя загрузка
+let staffCache=[];
+const taskUi={who:'', prio:'', fromDc:false};
+
+// счётчик у пункта меню (0 — не показываем)
+function setNavCount(tab, n, title){
+  const b=document.querySelector(`#tabs [data-tab="${tab}"]`); if(!b) return;
+  if(n>0){ b.dataset.count=n>99?'99+':String(n); b.title=b.textContent.trim()+' — '+title+': '+n; }
+  else { delete b.dataset.count; b.title=b.textContent.trim(); }
+}
+// «Задачи»: у сотрудника из списка — его карточки «К выполнению», иначе — все карточки «К выполнению»
+function updateTasksBadge(){
+  if(!tasksCache) return;
+  const me=myEmail(), inStaff=staffCache.some(s=>(s.email||'').toLowerCase()===me), list=Object.values(tasksCache);
+  const mine=list.filter(t=>personStatus(t, me)==='todo').length;
+  const all=list.reduce((n,t)=>{ const ps=taskPeople(t); return n+(ps.length ? ps.filter(p=>p.status==='todo').length : (t.status==='todo'?1:0)); },0);
+  const b=document.querySelector('#tabs [data-tab="tasks"]'); if(!b) return;
+  if(inStaff && myScope()==='own') return setNavCount('tasks', mine, 'ваши к выполнению');
+  if(!inStaff) return setNavCount('tasks', all, 'к выполнению');
+  if(!(mine||all)){ delete b.dataset.count; b.title='Задачи'; return; }
+  b.dataset.count=`${mine} | ${all}`; b.title=`Задачи к выполнению — ваши: ${mine}, всего: ${all}`;
+}
+function updateDecisionsBadge(){ if(dcCache) setNavCount('decisions', dcItems().filter(x=>x.status==='new').length, 'новые'); }
+// при входе — посчитать в фоне (ошибки не мешают работе)
+async function refreshNavCounts(){
+  try{ await loadStaff(); await loadTasks(); }catch(e){ console.error('Счётчик задач: не удалось загрузить', e); }
+  try{ if(!dcCache && !dcBusy) await renderDecisionsTab(); }catch(e){ console.error('Счётчик решений: не удалось посчитать', e); }
+}
+function myEmail(){ return (document.getElementById('userEmailLabel').textContent||'').trim().toLowerCase(); }
+function newId(prefix){ return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+async function loadStaff(){
+  try{ const s=await storeGet('staff'); staffCache=Array.isArray(s)? s : []; }
+  catch(e){ console.error('Сотрудники: не удалось прочитать список', e); }
+  return staffCache;
+}
+function staffName(email){
+  if(!email) return '';
+  const s=staffCache.find(x=>(x.email||'').toLowerCase()===String(email).toLowerCase());
+  return s ? s.name : email;
+}
+// товары задачи (несколько; старое поле pid читается как один товар)
+function taskPids(t){ return Array.isArray(t.pids) ? t.pids : (t.pid ? [t.pid] : []); }
+function taskProds(t){ return taskPids(t).map(id=>state.products.find(p=>p.id===id)).filter(Boolean); }
+// исполнители задачи со своими статусами
+function taskPeople(t){
+  if(Array.isArray(t.assignees)) return t.assignees;
+  return t.who ? [{email:t.who, status:t.status||'todo', doneAt:t.doneAt||null}] : [];
+}
+// общий итог: «Готово» — все сделали; «В работе» — кто-то начал или уже сделал свою часть
+function taskOverall(people, fallback){
+  if(!people.length) return fallback||'todo';
+  if(people.every(p=>p.status==='done')) return 'done';
+  if(people.some(p=>p.status==='doing' || p.status==='done')) return 'doing';
+  return 'todo';
+}
+function personStatus(t, email){ const p=taskPeople(t).find(x=>x.email===email); return p ? p.status : null; }
+// статус задачи для показа: при фильтре по сотруднику — его личный, иначе общий
+function taskViewStatus(t){
+  if(taskUi.who && taskUi.who!=='-'){ const s=personStatus(t, taskUi.who); if(s) return s; }
+  return t.status||'todo';
+}
+// бросает ошибку при сбое чтения — пустую доску вместо задач не показываем
+async function loadTasks(){
+  const docs=await storeListDocs('task:');
+  const out={}, old=dateMinusDays(todayISO(), TASK_KEEP_DAYS);
+  for(const [k,t] of Object.entries(docs)){
+    if(!t || !t.id) continue;
+    if(t.status==='done' && t.doneAt && t.doneAt.slice(0,10)<old){ storeDelete(k); continue; } // выполнена больше 30 дней назад — удаляем
+    out[t.id]=t;
+  }
+  tasksCache=out;
+  updateTasksBadge();
+  return out;
+}
+function taskDueInfo(t, st){
+  st=st||t.status;
+  if(!t.due) return {lbl:'без срока', cls:'muted', days:null};
+  const n=Math.round((new Date(t.due+'T00:00:00')-new Date(todayISO()+'T00:00:00'))/864e5);
+  if(st==='done') return {lbl:'срок '+fmtRuDate(t.due).slice(0,5), cls:'muted', days:n};
+  if(n<0) return {lbl:`просрочено ${-n} дн.`, cls:'neg', days:n};
+  if(n===0) return {lbl:'сегодня', cls:'amb', days:0};
+  if(n===1) return {lbl:'завтра', cls:'', days:1};
+  return {lbl:'до '+fmtRuDate(t.due).slice(0,5), cls:'', days:n};
+}
+function overdueTasks(list){ const t=todayISO(); return list.filter(x=>x.status!=='done' && x.due && x.due<t); }
+// кто ещё не выполнил свою часть
+function taskPendingNames(t){ return taskPeople(t).filter(p=>p.status!=='done').map(p=>staffName(p.email)); }
+async function patchTask(id, patch){
+  const r=await mutateStoreValue('task:'+id, ()=>({id}), f=>{ Object.assign(f, patch); });
+  if(r && tasksCache) tasksCache[id]=r;
+  return r;
+}
+// сменить статус у части исполнителей (emails) или у всех (emails=null); общий итог пересчитывается по свежей версии
+function applyPeopleStatus(f, emails, status){
+  const now=new Date().toISOString();
+  let people=taskPeople(f).map(p=>({...p}));
+  if(people.length){
+    people.forEach(p=>{ if(!emails || emails.includes(p.email)){ p.status=status; p.doneAt= status==='done' ? (p.doneAt||now) : null; } });
+    f.assignees=people; delete f.who;
+    f.status=taskOverall(people);
+  } else f.status=status;
+  f.doneAt= f.status==='done' ? (people.map(p=>p.doneAt).filter(Boolean).sort().pop() || now) : null;
+}
+async function setTaskStatus(id, status, emails){
+  const r=await mutateStoreValue('task:'+id, ()=>({id}), f=>applyPeopleStatus(f, emails, status));
+  if(r && tasksCache) tasksCache[id]=r;
+  return r;
+}
+
+/* --- универсальное окно --- */
+function openModal(html, wide){
+  const ov=document.createElement('div');
+  ov.className='md-ov';
+  ov.innerHTML=`<div class="panel md-box${wide?' wide':''}">${html}</div>`;
+  document.body.appendChild(ov);
+  const close=()=>{ ov.remove(); document.removeEventListener('keydown', esc); };
+  const esc=e=>{ if(e.key==='Escape') close(); };
+  document.addEventListener('keydown', esc);
+  ov.addEventListener('mousedown', e=>{ if(e.target===ov) close(); });
+  ov.querySelectorAll('[data-mclose]').forEach(b=>b.addEventListener('click', close));
+  return {el:ov, close};
+}
+
+/* --- вкладка «Задачи» --- */
+async function renderTasksTab(){
+  const body=document.getElementById('tasksBody');
+  if(!tasksCache) body.innerHTML='<div class="panel"><div class="empty">Загрузка…</div></div>';
+  try{ await Promise.all([loadTasks(), loadStaff()]); }
+  catch(e){
+    console.error('Задачи: не удалось загрузить', e);
+    body.innerHTML='<div class="panel"><div class="empty">Не удалось загрузить задачи — проверьте соединение и откройте вкладку ещё раз.</div></div>';
+    return;
+  }
+  paintTasks();
+}
+/* Доска: задача на нескольких исполнителей показывается отдельной карточкой на каждого —
+   карточка стоит в колонке ЕГО статуса и двигается только для него. Задача при этом одна:
+   название, срок, товары общие. Без исполнителя — одна карточка по статусу задачи. */
+function boardCards(list){
+  const cards=[];
+  list.forEach(t=>{
+    const people=taskPeople(t);
+    if(!people.length){ cards.push({t, pe:null, status:t.status||'todo'}); return; }
+    people.forEach(p=>{ if(!taskUi.who || taskUi.who===p.email) cards.push({t, pe:p.email, status:p.status||'todo'}); });
+  });
+  return cards;
+}
+function cardSorter(a,b){
+  if(a.status==='done' && b.status==='done'){
+    const da=(taskPeople(a.t).find(p=>p.email===a.pe)||a.t).doneAt||'', db=(taskPeople(b.t).find(p=>p.email===b.pe)||b.t).doneAt||'';
+    return db.localeCompare(da);
+  }
+  const da=a.t.due||'9999', db=b.t.due||'9999';
+  if(da!==db) return da.localeCompare(db);
+  const po={high:0,mid:1,low:2}; const d=(po[a.t.prio]??1)-(po[b.t.prio]??1);
+  return d || (a.t.title||'').localeCompare(b.t.title||'','ru') || (a.pe||'').localeCompare(b.pe||'');
+}
+// карточка — название и поля по строкам: исполнитель, приоритет, срок, товар
+function taskCardHtml(c, colIdx){
+  const t=c.t, pr=TASK_PRIO[t.prio]||TASK_PRIO.mid, ps=taskProds(t);
+  const who = c.pe ? staffName(c.pe) : (taskPeople(t).length ? taskPeople(t).map(p=>staffName(p.email)).join(', ') : '—');
+  let due='—';
+  if(t.due){ const d=taskDueInfo(t, c.status); due=fmtRuDate(t.due).slice(0,5)+(c.status!=='done' && d.days!==null && d.days<=1 ? ` <span class="${d.cls}">· ${d.lbl}</span>` : ''); }
+  // товары: одна строка на название, площадки через запятую
+  const byName={}; ps.forEach(p=>{ (byName[p.name]=byName[p.name]||[]).push(MP_LABEL[p.mp]); });
+  const names=Object.entries(byName);
+  const prodHtml = names.length ? names.slice(0,2).map(([n,m])=>`${hmEsc(n)} <span class="muted">(${m.join(', ')})</span>`).join('<br>')+(names.length>2?`<br><span class="muted">и ещё ${names.length-2}</span>`:'') : '—';
+  return `<div class="tk-card p-${t.prio||'mid'}" draggable="true" data-tid="${t.id}"${c.pe?` data-pe="${hmEsc(c.pe)}"`:''} title="Открыть задачу">
+    <div class="tk-t">${hmEsc(t.title)}</div>
+    <dl class="tk-dl">
+      <dt>Исполнитель</dt><dd>${hmEsc(who)}</dd>
+      <dt>Приоритет</dt><dd class="tk-pr-${t.prio||'mid'}">${pr[0]}</dd>
+      <dt>Срок</dt><dd>${due}</dd>
+      <dt>Товар</dt><dd>${prodHtml}</dd>
+      ${(t.checklist||[]).length?`<dt>Подпункты</dt><dd>${t.checklist.filter(x=>x.done).length} из ${t.checklist.length}</dd>`:''}
+    </dl>
+    ${t.src==='decision'?'<div class="tk-src">из Центра решений</div>':''}
+    <div class="tk-mv">${colIdx>0?`<button type="button" data-tkmove="-1">← ${TASK_COLS[colIdx-1][1]}</button>`:'<span></span>'}${colIdx<2?`<button type="button" data-tkmove="1">${TASK_COLS[colIdx+1][1]} →</button>`:''}</div>
+  </div>`;
+}
+const PERSON_MARK={todo:'', doing:'◐', done:'✓'};
+function paintTasks(){
+  const body=document.getElementById('tasksBody');
+  const all=Object.values(tasksCache||{}), today=todayISO();
+  const open=all.filter(t=>t.status!=='done');
+  const nToday=open.filter(t=>t.due===today).length, nOver=overdueTasks(all).length;
+  const f=all.filter(t=>(!taskUi.who || (taskUi.who==='-' ? !taskPeople(t).length : !!personStatus(t, taskUi.who)))
+    && (!taskUi.prio || t.prio===taskUi.prio) && (!taskUi.fromDc || t.src==='decision'));
+  const cards=boardCards(f);
+  const emails=[...new Set([...staffCache.map(s=>(s.email||'').toLowerCase()).filter(Boolean), ...all.flatMap(t=>taskPeople(t).map(p=>p.email)).filter(Boolean)])];
+  body.innerHTML=`<div class="tk-cnt">
+      <div class="panel tk-c"><b>${open.length}</b><span>открыто задач</span></div>
+      <div class="panel tk-c"><b class="${nToday?'amb':''}">${nToday}</b><span>на сегодня</span></div>
+      <div class="panel tk-c"><b class="${nOver?'neg':''}">${nOver}</b><span>просрочено</span></div>
+    </div>
+    <div class="tk-f">
+      <select id="tkWho"><option value="">Все исполнители</option><option value="-"${taskUi.who==='-'?' selected':''}>Без исполнителя</option>${emails.map(e=>`<option value="${hmEsc(e)}"${taskUi.who===e?' selected':''}>${hmEsc(staffName(e))}</option>`).join('')}</select>
+      <select id="tkPrio"><option value="">Любой приоритет</option>${Object.entries(TASK_PRIO).map(([k,v])=>`<option value="${k}"${taskUi.prio===k?' selected':''}>${v[0]}</option>`).join('')}</select>
+      <label class="tk-chk"><input type="checkbox" id="tkDc"${taskUi.fromDc?' checked':''}> Из Центра решений</label>
+    </div>
+    <div class="tk-kan">${TASK_COLS.map(([k,l],i)=>{
+      const c=cards.filter(x=>x.status===k).sort(cardSorter);
+      return `<div class="tk-col" data-col="${k}"><h4>${l}<span class="tk-n">${c.length}</span></h4>${c.map(x=>taskCardHtml(x,i)).join('') || '<div class="tk-empty">Пусто — перетащите сюда</div>'}</div>`;
+    }).join('')}</div>`;
+}
+// перемещение карточки: у карточки исполнителя — только его статус; карточка без исполнителя — статус задачи
+async function moveTask(id, status, pe){
+  const t=tasksCache && tasksCache[id]; if(!t) return;
+  const people=taskPeople(t);
+  const targets = pe ? [pe] : (people.length ? people.map(p=>p.email) : null);
+  const already = people.length ? people.filter(p=>!targets || targets.includes(p.email)).every(p=>p.status===status) : t.status===status;
+  if(already) return;
+  const prev=JSON.parse(JSON.stringify(t));
+  applyPeopleStatus(t, targets, status); paintTasks(); updateTasksBadge(); // сразу на экране
+  const r=await setTaskStatus(id, status, targets);
+  if(!r){ tasksCache[id]=prev; paintTasks(); homeToast('Не удалось сохранить — проверьте соединение'); }
+}
+(function initTasksEvents(){
+  const body=document.getElementById('tasksBody');
+  body.addEventListener('click', e=>{
+    const mv=e.target.closest('[data-tkmove]');
+    const card=e.target.closest('[data-tid]');
+    if(mv && card){
+      const t=tasksCache[card.dataset.tid], pe=card.dataset.pe||null;
+      const cur = pe ? personStatus(t, pe) : t.status;
+      const i=TASK_COLS.findIndex(c=>c[0]===cur), j=Math.max(0, Math.min(2, i+(+mv.dataset.tkmove)));
+      moveTask(t.id, TASK_COLS[j][0], pe); return;
+    }
+    if(card) openTaskEditor(tasksCache[card.dataset.tid]);
+  });
+  body.addEventListener('change', e=>{
+    if(e.target.id==='tkWho'){ taskUi.who=e.target.value; paintTasks(); }
+    if(e.target.id==='tkPrio'){ taskUi.prio=e.target.value; paintTasks(); }
+    if(e.target.id==='tkDc'){ taskUi.fromDc=e.target.checked; paintTasks(); }
+  });
+  // перетаскивание карточек между колонками (переносится карточка конкретного исполнителя)
+  body.addEventListener('dragstart', e=>{ const c=e.target.closest('[data-tid]'); if(!c) return; e.dataTransfer.setData('text/plain', c.dataset.tid+'|'+(c.dataset.pe||'')); e.dataTransfer.effectAllowed='move'; c.classList.add('drag'); });
+  body.addEventListener('dragend', e=>{ const c=e.target.closest('[data-tid]'); if(c) c.classList.remove('drag'); body.querySelectorAll('.tk-col.over').forEach(x=>x.classList.remove('over')); });
+  body.addEventListener('dragover', e=>{ const col=e.target.closest('.tk-col'); if(!col) return; e.preventDefault(); body.querySelectorAll('.tk-col.over').forEach(x=>{ if(x!==col) x.classList.remove('over'); }); col.classList.add('over'); });
+  body.addEventListener('drop', e=>{ const col=e.target.closest('.tk-col'); if(!col) return; e.preventDefault(); col.classList.remove('over'); const [id,pe]=(e.dataTransfer.getData('text/plain')||'').split('|'); if(id) moveTask(id, col.dataset.col, pe||null); });
+  document.getElementById('tkNewBtn').addEventListener('click', ()=>openTaskEditor(null));
+})();
+
+function openTaskEditor(t, preset){
+  const isNew=!t;
+  const v=t || {title:'', desc:'', prio:'mid', due:'', pid:'', assignees: myEmail() && staffCache.some(s=>(s.email||'').toLowerCase()===myEmail()) ? [{email:myEmail(), status:'todo', doneAt:null}] : [], ...(preset||{})};
+  const people=taskPeople(v);
+  const emails=[...new Set([...staffCache.map(s=>(s.email||'').toLowerCase()).filter(Boolean), ...people.map(p=>p.email)])];
+  const prods=activeProducts().slice().sort((a,b)=>(a.name+a.mp).localeCompare(b.name+b.mp,'ru'));
+  const personRow=e=>{ const p=people.find(x=>x.email===e);
+    return `<div class="tke-p"><label class="tk-chk"><input type="checkbox" data-pe="${hmEsc(e)}"${p?' checked':''}> ${hmEsc(staffName(e))}</label>
+      <select data-ps="${hmEsc(e)}"${p?'':' disabled'}>${TASK_COLS.map(([k,l])=>`<option value="${k}"${(p?p.status:'todo')===k?' selected':''}>${l}</option>`).join('')}</select></div>`; };
+  const m=openModal(`<h2>${isNew?'Новая задача':'Задача'}</h2>
+    <div class="md-f"><label>Что сделать</label><input id="tkeTitle" value="${hmEsc(v.title)}" placeholder="Например, проверить ставки после акции"></div>
+    <div class="md-f"><label>Описание</label><textarea id="tkeDesc" rows="5">${hmEsc(v.desc||'')}</textarea></div>
+    <div class="md-row">
+      <div class="md-f"><label>Приоритет</label><select id="tkePrio">${Object.entries(TASK_PRIO).map(([k,x])=>`<option value="${k}"${v.prio===k?' selected':''}>${x[0]}</option>`).join('')}</select></div>
+      <div class="md-f"><label>Срок</label><input id="tkeDue" type="date" value="${v.due||''}"></div>
+    </div>
+    <div class="md-f"><label>Подпункты</label>
+      <div class="tke-ck" id="tkeCk"></div>
+      <input id="tkeCkNew" placeholder="Добавить подпункт и нажать Enter">
+    </div>
+    <div class="md-f"><label>Товары</label>
+      <div class="ask-pick"><input id="tkePSearch" type="search" placeholder="Найти товар и добавить…" autocomplete="off"><div id="tkePRes" class="sres" style="display:none;top:40px;"></div></div>
+      <div class="tke-prods" id="tkeProds"></div>
+    </div>
+    <div class="md-f"><label>Исполнители и их статус</label>
+      ${emails.length ? `<div class="tke-people">${emails.map(personRow).join('')}</div>` : '<p class="note" style="margin:0;">Список сотрудников заполняется в «Настройках» → «Сотрудники».</p>'}
+      ${!emails.length && !isNew ? `<select id="tkeStatus">${TASK_COLS.map(([k,l])=>`<option value="${k}"${v.status===k?' selected':''}>${l}</option>`).join('')}</select>` : ''}
+    </div>
+    ${isNew?'':`<p class="note">${v.src==='decision'?'Создана из Центра решений. ':''}${v.createdBy?'Создал: '+hmEsc(staffName(v.createdBy))+(v.createdAt?', '+fmtRuDate(v.createdAt.slice(0,10)):''):''}</p>`}
+    <div class="md-err neg" id="tkeErr"></div>
+    <div class="row md-acts">
+      <button class="btn" id="tkeSave">Сохранить</button>
+      <button class="btn secondary" data-mclose>Отмена</button>
+      ${isNew?'':'<button class="btn danger" id="tkeDel" style="margin-left:auto;">Удалить</button>'}
+    </div>`);
+  const $=id=>m.el.querySelector('#'+id);
+  // подпункты: галочки, × — удалить, Enter в поле — добавить
+  let ck=(v.checklist||[]).map(x=>({...x}));
+  const paintCk=()=>{ $('tkeCk').innerHTML=ck.map((x,i)=>`<div class="tke-ckr"><label class="tk-chk"><input type="checkbox" data-cki="${i}"${x.done?' checked':''}> <span class="${x.done?'muted':''}">${hmEsc(x.text)}</span></label><button type="button" data-ckdel="${i}" title="Удалить">×</button></div>`).join(''); };
+  paintCk();
+  $('tkeCk').addEventListener('change', e=>{ const i=e.target.dataset.cki; if(i!==undefined){ ck[+i].done=e.target.checked; paintCk(); } });
+  $('tkeCk').addEventListener('click', e=>{ const b=e.target.closest('[data-ckdel]'); if(b){ ck.splice(+b.dataset.ckdel,1); paintCk(); } });
+  $('tkeCkNew').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); const tx=e.target.value.trim(); if(tx){ ck.push({text:tx, done:false}); e.target.value=''; paintCk(); } } });
+  // товары: поиск (по названию — каждая карточка и «все карточки» товара), выбранные — плашками с ×
+  let selPids=[...taskPids(v)];
+  const paintProds=()=>{ $('tkeProds').innerHTML = selPids.length ? selPids.map(id=>{ const p=state.products.find(x=>x.id===id); return p? `<span class="tk-prod"><span class="badge ${p.mp}">${MP_LABEL[p.mp]}</span>${hmEsc(p.name)}<button type="button" data-unpid="${id}" title="Убрать">×</button></span>` : ''; }).join('') : '<span class="muted sm">не привязана к товару</span>'; };
+  paintProds();
+  const pIn=$('tkePSearch'), pRes=$('tkePRes');
+  pIn.addEventListener('input', ()=>{
+    const q=pIn.value.trim().toLowerCase(); if(!q){ pRes.style.display='none'; return; }
+    const found=prods.filter(p=>p.name.toLowerCase().includes(q) && !selPids.includes(p.id));
+    const names=[...new Set(found.map(p=>p.name))].filter(n=>prods.filter(p=>p.name===n).length>1);
+    pRes.innerHTML = (names.map(n=>`<a data-addname="${hmEsc(n)}"><span><b>${hmEsc(n)}</b> — все карточки</span><small>${prods.filter(p=>p.name===n).map(p=>MP_LABEL[p.mp]).join(', ')}</small></a>`).join('')
+      + found.slice(0,15).map(p=>`<a data-addpid="${p.id}"><span>${hmEsc(p.name)}</span><small>${MP_LABEL[p.mp]}</small></a>`).join('')) || '<div class="empty" style="padding:10px;">Ничего не найдено</div>';
+    pRes.style.display='block';
+  });
+  pIn.addEventListener('blur', ()=>setTimeout(()=>{ pRes.style.display='none'; },150));
+  pRes.addEventListener('mousedown', e=>{
+    const a=e.target.closest('[data-addpid],[data-addname]'); if(!a) return; e.preventDefault();
+    const add=a.dataset.addpid ? [a.dataset.addpid] : prods.filter(p=>p.name===a.dataset.addname).map(p=>p.id);
+    add.forEach(id=>{ if(!selPids.includes(id)) selPids.push(id); });
+    pIn.value=''; pRes.style.display='none'; paintProds();
+  });
+  $('tkeProds').addEventListener('click', e=>{ const b=e.target.closest('[data-unpid]'); if(!b) return; selPids=selPids.filter(x=>x!==b.dataset.unpid); paintProds(); });
+  m.el.querySelectorAll('[data-pe]').forEach(cb=>cb.addEventListener('change', ()=>{ m.el.querySelector(`[data-ps="${CSS.escape(cb.dataset.pe)}"]`).disabled=!cb.checked; }));
+  setTimeout(()=>$('tkeTitle').focus(), 30);
+  $('tkeSave').addEventListener('click', async ()=>{
+    const title=$('tkeTitle').value.trim();
+    if(!title){ $('tkeErr').textContent='Напишите, что сделать'; return; }
+    const now=new Date().toISOString();
+    const assignees=[...m.el.querySelectorAll('[data-pe]')].filter(cb=>cb.checked).map(cb=>{
+      const st=m.el.querySelector(`[data-ps="${CSS.escape(cb.dataset.pe)}"]`).value, old=people.find(p=>p.email===cb.dataset.pe);
+      return {email:cb.dataset.pe, status:st, doneAt: st==='done' ? ((old && old.status==='done' && old.doneAt) || now) : null};
+    });
+    const fallback = $('tkeStatus') ? $('tkeStatus').value : (isNew ? 'todo' : v.status);
+    const status=taskOverall(assignees, fallback);
+    const doneAt= status==='done' ? (assignees.map(p=>p.doneAt).filter(Boolean).sort().pop() || (v.status==='done' && v.doneAt) || now) : null;
+    const patch={title, desc:$('tkeDesc').value.trim(), prio:$('tkePrio').value, due:$('tkeDue').value, pids:selPids, checklist:ck, assignees, status, doneAt};
+    $('tkeSave').disabled=true;
+    let r;
+    if(isNew){
+      const id=newId('t');
+      r=await patchTask(id, {id, ...patch, src:(preset&&preset.src)||'', decisionKey:(preset&&preset.decisionKey)||'', createdBy:myEmail(), createdAt:now});
+    } else {
+      r=await mutateStoreValue('task:'+v.id, ()=>({id:v.id}), f=>{ Object.assign(f, patch); delete f.who; delete f.pid; });
+      if(r && tasksCache) tasksCache[v.id]=r;
+    }
+    $('tkeSave').disabled=false;
+    if(!r){ $('tkeErr').textContent='Не удалось сохранить — проверьте соединение и попробуйте ещё раз'; return; }
+    m.close(); afterTasksChanged();
+  });
+  if(!isNew) $('tkeDel').addEventListener('click', async ()=>{
+    if(!confirm('Удалить задачу «'+v.title+'»?')) return;
+    await storeDelete('task:'+v.id);
+    if(tasksCache) delete tasksCache[v.id];
+    m.close(); afterTasksChanged();
+  });
+}
+function afterTasksChanged(){
+  updateTasksBadge();
+  const vis=id=>document.getElementById(id).style.display!=='none';
+  if(vis('tab-tasks')) paintTasks();
+  if(vis('tab-decisions')) paintDecisions();
+  if(vis('tab-home')) renderHomeTab();
+}
+
+/* --- Центр решений: правила по данным Воронки --- */
+function dcSet(name){ const v=+state.settings[name]; return v>0 ? v : SETTINGS_DEFAULT[name]; }
+const DC_AREA={sales:'Продажи', ads:'Реклама', plan:'План', reorder:'Закуп', ship:'Склад'};
+// руководитель (в «Сотрудниках») — исполнитель задач «Сформировать план» и «Пересчитать распределение»
+function leadEmail(){ const s=staffCache.find(x=>x.lead); return s ? (s.email||'').toLowerCase() : ''; }
+// кто какие задачи видит: 'own' — только свои, 'all' — все (по умолчанию); не из списка — все
+function myScope(){ const s=staffCache.find(x=>(x.email||'').toLowerCase()===myEmail()); return s && s.scope==='own' ? 'own' : 'all'; }
+let dcCache=null;      // {list, states, at}
+let dcTab='new';
+let dcBusy=false;
+
+async function computeDecisions(){
+  const today=todayISO(), lim=drrLimit(), lowDays=stockLowDays();
+  const month=monthNow(), dayN=+today.slice(8,10);
+  const prods=activeProducts();
+  const dmsArr=await Promise.all(prods.map(p=>getDailyMap(p.id)));
+  const dms={}; prods.forEach((p,i)=>{ dms[p.id]=dmsArr[i]||{}; });
+  const plbl=p=>`${p.name} (${MP_LABEL[p.mp]})`;
+  const out=[];
+  const win=p=>{ // 7 дней по последний заполненный день карточки против 7 дней перед ними
+    const dm=dms[p.id], P=askPeriod(7, dm), ok=d=>dm[d] && !dm[d].draft, oz=p.mp==='ozon';
+    return {P, full:[0,1,2,3,4,5,6].every(i=>ok(dateMinusDays(P.to,i))), fresh:ok(P.to) && P.to>=dateMinusDays(today,5),
+      a:askAgg(dm,P.from,P.to,oz), b:askAgg(dm,P.pFrom,P.pTo,oz)};
+  };
+  const W={}; prods.forEach(p=>{ W[p.id]=win(p); });
+
+  // 1. Падение заказов: подзадачи — по этапу воронки, который просел сильнее всего
+  const dropPct=dcSet('ordersDropPct');
+  const STAGE={
+    impr:{n:'показы', steps:['Вернуть или усилить рекламу','Проверить наличие на складах площадки и довезти','Подключить акцию','Обновить название и характеристики под ключевые запросы']},
+    ctr:{n:'CTR (видят, но не кликают)', steps:['Заменить главное фото или сделать A/B-тест','Проверить цену в выдаче относительно конкурентов','Подключить скидку или плашку акции']},
+    cr1:{n:'конверсия в корзину', steps:['Доработать инфографику и рич-контент под возражения покупателей','Ответить на негативные отзывы','Проверить цену относительно конкурентов']},
+    cr2:{n:'конверсия в заказ', steps:['Проверить цену в корзине и СПП','Проверить сроки доставки и довезти товар на ближние склады']}};
+  for(const p of prods){
+    const w=W[p.id]; if(!w.full || !w.fresh) continue;
+    const {a,b}=w; if(b.orders<5 || a.orders>b.orders*(1-dropPct/100)) continue;
+    const parts=[['impr',a.base,b.base],['ctr',a.ctr,b.ctr],['cr1',a.cr1,b.cr1],['cr2',a.cr2,b.cr2]]
+      .map(([k,x,y])=>({k,x,y,v:(x>0&&y>0)? Math.log(x/y) : null})).filter(c=>c.v!==null).sort((m,n)=>m.v-n.v);
+    const worst=parts[0] && parts[0].v<0 ? parts[0] : null;
+    const pct=(a.orders-b.orders)/b.orders*100, check=b.orders? b.rub/b.orders : (+p.currentPriceLK||0);
+    const fmtv=(k,v)=>k==='impr'? fmt(v) : fmt1(v)+'%';
+    const st=STAGE[worst ? worst.k : 'impr'];
+    out.push({key:'drop:'+p.id, area:'sales', urg: pct<=-50?'high':'mid', pid:p.id, ask:'orders',
+      title:`Найти и устранить причину падения заказов: ${plbl(p)}`,
+      situation:`За 7 дней (по ${fmtRuDate(w.P.to).slice(0,5)}) заказано ${fmt(a.orders)} шт на ${fmt(a.rub)} ₽ против ${fmt(b.orders)} шт на ${fmt(b.rub)} ₽ неделей раньше (${fmt1(pct)}%).`,
+      why: worst ? `Сильнее всего упали ${st.n}: ${fmtv(worst.k,worst.y)} → ${fmtv(worst.k,worst.x)}.` : 'Этапы воронки просели равномерно — вероятно, упали спрос или видимость карточки.',
+      steps:[...st.steps, 'Через 7 дней сравнить заказы'],
+      effect:Math.round((b.orders-a.orders)*check*30/7), dueDays:2, metric:`Заказы за 7 дней — снова от ${fmt(b.orders)} шт`});
+  }
+  // 2–4. Реклама (7 дней по последний заполненный день)
+  const growthPct=dcSet('drrGrowthPct');
+  for(const p of prods){
+    const w=W[p.id]; if(!w.fresh) continue;
+    const {a,b}=w;
+    if(a.ad>=ANOMALY_MIN.adRub && a.orders===0){
+      out.push({key:'adnone:'+p.id, area:'ads', urg:'high', pid:p.id, ask:'ads',
+        title:`Отключить неэффективную рекламу: ${plbl(p)}`,
+        situation:`За 7 дней (по ${fmtRuDate(w.P.to).slice(0,5)}) на рекламу потрачено ${fmt(a.ad)} ₽, заказов — 0.`,
+        why:'Реклама приводит показы и клики, но не заказы — деньги уходят впустую.',
+        steps:['Приостановить или снизить ставки','Проверить карточку','Проверить запросы и добавить минус-слова','Проверить остатки','Перезапустить после правок'],
+        effect:Math.round(a.ad*30/7), dueDays:1, metric:'Расход без заказов — 0 ₽ за 7 дней'});
+      continue;
+    }
+    if(a.ad>=ANOMALY_MIN.adRub && a.rub>0 && drrOver(a.drr)){
+      const over=a.ad-a.rub*lim/100;
+      out.push({key:'drr:'+p.id, area:'ads', urg: a.drr>lim*1.5?'high':'mid', pid:p.id, ask:'ads',
+        title:`Оптимизировать рекламу: ${plbl(p)}`,
+        situation:`За 7 дней (по ${fmtRuDate(w.P.to).slice(0,5)}) ДРР ${fmt1(a.drr)}% при пределе ${fmt1(lim)}%: реклама ${fmt(a.ad)} ₽ на заказы ${fmt(a.rub)} ₽.`,
+        why:`Сверх предела потрачено ${fmt(over)} ₽ за неделю.`,
+        steps:[`Проанализировать текущие РК: снизить ставки в дорогих кампаниях, отключить неэффективные запросы, перезапустить РК с лимитом ставки и ДРР ≤ ${fmt1(lim)}%`,'Перенести бюджет в кампании с лучшей конверсией','Через 7 дней проверить ДРР'],
+        effect:Math.round(over*30/7), dueDays:2, metric:`ДРР за 7 дней — не выше ${fmt1(lim)}%`});
+      continue;
+    }
+    if(a.ad>=ANOMALY_MIN.adRub && a.drr!==null && b.drr!==null && b.drr>0 && a.drr>=b.drr*(1+growthPct/100)){
+      const extra=a.ad-a.rub*b.drr/100;
+      out.push({key:'drrup:'+p.id, area:'ads', urg:'mid', pid:p.id, ask:'ads',
+        title:`Проверить рост ДРР: ${plbl(p)}`,
+        situation:`ДРР за 7 дней (по ${fmtRuDate(w.P.to).slice(0,5)}) ${fmt1(a.drr)}% против ${fmt1(b.drr)}% неделей раньше (+${fmt1((a.drr/b.drr-1)*100)}%).`,
+        why:'Реклама дорожает быстрее, чем растут заказы; если так пойдёт дальше, ДРР выйдет за предел.',
+        steps:['Найти подорожавшие кампании, сравнить ставки с прошлой неделей, проанализировать причину роста ДРР',
+          'Если упала конверсия карточки (цена выросла, СПП снизилась, появились плохие отзывы) — исправить карточку, а не ставки',
+          'Если подорожали ставки из-за конкурентов — снизить ставку до прибыльной, временно ограничить дневной бюджет',
+          'Перераспределить ставки на запросы, часы и регионы с лучшей отдачей'],
+        effect:Math.round(Math.max(0,extra)*30/7), dueDays:3, metric:`ДРР за 7 дней — около ${fmt1(b.drr)}%`});
+    }
+  }
+  // Неудачное изменение карточки (❌ в «Журнале изменений» на «Воронке и точках роста») — за последние 30 дней
+  const CHG_ACT={
+    photo_main:{t:'Сменить главное фото или провести A/B-тест', steps:['Вернуть прежнее главное фото или подготовить новый вариант','Запустить A/B-тест обложки']},
+    title:{t:'Вернуть или доработать заголовок', steps:['Вернуть прежний заголовок или переписать его под ключевые запросы','Проверить, по каким запросам теперь показывается карточка']},
+    photo_order:{t:'Вернуть прежний порядок фото или протестировать новый, доработать слайды', steps:['Вернуть прежний порядок фото или переставить слайды','Проверить, раскрывают ли первые слайды главные преимущества']},
+    description:{t:'Доработать описание', steps:['Вернуть прежнее описание или переписать его под возражения покупателей','Проверить индексацию ключевых слов']},
+    price:{t:'Пересмотреть цену', steps:['Сравнить цену с конкурентами','Вернуть прежнюю цену или подобрать промежуточную']},
+    ads:{t:'Пересмотреть изменения в рекламе', steps:['Вернуть прежние ставки и настройки кампании или найти неэффективные запросы']},
+    other:{t:'Разобраться с последствиями изменения', steps:['Вернуть изменение или доработать его']}};
+  for(const p of prods){
+    const dm=dms[p.id]; const fe=enrichEntries(dm, p.mp); if(!fe.length) continue;
+    const latest=fe[fe.length-1].date, since=dateMinusDays(today,30);
+    const byType={}; fe.forEach(e=>{ (e.changeTypes&&e.changeTypes.length ? e.changeTypes : (e.changeType?[e.changeType]:[])).forEach(t=>{ (byType[t]=byType[t]||[]).push(e.date); }); });
+    for(const e of fe){
+      if(e.draft || e.date<since) continue;
+      const types=e.changeTypes&&e.changeTypes.length ? e.changeTypes : (e.changeType?[e.changeType]:[]);
+      for(const t of types){
+        const d=e.date, cfg=CHANGE_ANALYSIS[t]||CHANGE_ANALYSIS.other, wait=EVAL_WINDOWS[t]===undefined?3:EVAL_WINDOWS[t];
+        const next=(byType[t]||[]).filter(x=>x>d).sort()[0]; if(next) continue; // после было такое же изменение — оцениваем его, а не это
+        const wStart=datePlusDays(d, wait); if(latest<wStart) continue; // ещё рано
+        const prev=(byType[t]||[]).filter(x=>x<d).sort().pop(), wb=dateMinusDays(d,7), pb=prev?datePlusDays(prev,1):null;
+        const bS=(pb && pb>wb)?pb:wb, bE=dateMinusDays(d,1);
+        const bv=avgMetricInRange(fe,bS,bE,cfg.primary), av=avgMetricInRange(fe,wStart,latest,cfg.primary);
+        if(bv===null || av===null) continue;
+        const den=SAMPLE_DENOM[cfg.primary];
+        if(den && (sumMetricInRange(fe,bS,bE,den)<MIN_SAMPLE[den] || sumMetricInRange(fe,wStart,latest,den)<MIN_SAMPLE[den])) continue; // мало данных — как ❓ в журнале
+        const rel = bv!==0 ? (av-bv)/Math.abs(bv)*100 : (av>0?100:0);
+        if(Math.abs(rel)<3 || (cfg.goodUp ? rel>0 : rel<0)) continue; // не ухудшение
+        if(t==='ads' && !drrOver(av)) continue; // ДРР вырос, но остался в пределе — не тревожим
+        let sec=null; if(cfg.secondary){ const sb=avgMetricInRange(fe,bS,bE,cfg.secondary), sa=avgMetricInRange(fe,wStart,latest,cfg.secondary); if(sb!==null && sa!==null) sec=dirFromRel(sb!==0?(sa-sb)/Math.abs(sb)*100:(sa>0?100:0)); }
+        let pr=null; if(t==='price'){ const a0=avgMetricInRange(fe,bS,bE,'priceLK'), a1=avgMetricInRange(fe,d,latest,'priceLK'); if(a0!==null && a1!==null) pr=a1>a0?'up':a1<a0?'down':'flat'; }
+        const act = t==='price' && pr==='flat' ? {t:'Найти причину падения конверсии в заказ', steps:['Проверить СПП, сроки доставки и наличие на складах','Сравнить цену для покупателя с конкурентами']} : (CHG_ACT[t]||CHG_ACT.other), ti=CHANGE_TYPES[t]||CHANGE_TYPES.other, pct=cfg.primary==='drr'||cfg.primary==='ctr'||cfg.primary.startsWith('cr');
+        out.push({key:'chg:'+p.id+':'+d+':'+t, area: t==='ads'?'ads':'sales', urg:'mid', pid:p.id, ask:'changes',
+          title:`${act.t}: ${plbl(p)}`,
+          situation:`Изменение ${fmtRuDate(d).slice(0,5)} — ${(e.changeNote||'').trim() || ti.label}: ${cfg.label} ${pct?fmt1(bv)+'%':fmt(bv)} → ${pct?fmt1(av)+'%':fmt(av)} (${rel>0?'+':''}${fmt1(rel)}%).`,
+          why:`По «Журналу изменений»: ${journalOutcomeText(t, dirFromRel(rel), sec, pr)}`,
+          steps:[...act.steps, `Через ${cfg.primary==='drr' ? Math.max(wait,1) : Math.max(wait,3)} дн. проверить ${cfg.label} в «Журнале изменений»`], // конверсии — не раньше чем через 3 дня
+          effect:0, dueDays:2, metric:`${cfg.label} — не хуже, чем до изменения (${pct?fmt1(bv)+'%':fmt(bv)})`});
+      }
+    }
+  }
+  // 5. Сформировать план продаж на месяц (до 10 числа) — пока у какой-то строки плана нет плана на месяц
+  const planKeys=[...new Set(prods.map(planKeyFor))];
+  const planDocs=await Promise.all(planKeys.map(k=>storeGet(k)));
+  const noPlan=planKeys.filter((k,i)=>!(+(((planDocs[i]||{})[month])||{}).planRub>0));
+  if(noPlan.length){
+    const due=month+'-10';
+    out.push({key:'planform:'+month, area:'plan', urg: today>=month+'-08' ? 'high' : 'mid', owner:'lead', go:'plan', dueDate:due,
+      title:`Сформировать план продаж на ${MONTHS_NOM[+month.slice(5)-1]}`,
+      situation:`Задайте план продаж на ${MONTHS_NOM[+month.slice(5)-1]} по всем товарам в «План и факт».`,
+      why:'По плану считаются выполнение, «Нужно в день» и прогноз на конец месяца, поэтому план нужен до 10 числа.',
+      steps:[], effect:0, metric:'План задан у всех товаров'});
+  }
+  // 6–8. Закуп и склад — по последним сохранённым неделям «Остатков и динамики»
+  try{
+    const smoothing=await getZakupMode();
+    const rows=(await zakupRowsWithSettings()).filter(x=>x.settings.active!==false);
+    const comp=await Promise.all(rows.map(x=>computeZakupRow(x.row, smoothing, x.settings)));
+    const excessDays=dcSet('excessDays');
+    for(const r of comp){
+      const members=r.members||[], price=members.length? members.reduce((s,p)=>s+(+p.currentPriceLK||0),0)/members.length : 0;
+      const staleNote=r.staleChannels.length? ` Остатки не за текущую неделю: ${r.staleChannels.join('; ')}.` : '';
+      // заказать у производства: остаток с товаром в пути ниже точки заказа
+      if((r.status==='danger' || r.status==='warn') && r.orderQty>0 && r.velocity>0){
+        const cover=(r.totalStock+r.inTransitQty)/r.velocity, short=Math.max(0, r.cycle-cover);
+        out.push({key:'reorder:'+r.rowKey, area:'reorder', pids:members.map(p=>p.id), urg: r.status==='danger'?'high':'mid', go:'zakup',
+          title:`Заказать партию у производства: ${r.name} — ${fmt(r.orderQty)} шт`,
+          situation:`Остаток ${fmt(r.totalStock)} шт${r.inTransitQty?` + в пути ${fmt(r.inTransitQty)} шт`:''}, продажи ${fmt1(r.velocity)} шт/день — хватит примерно на ${fmt(Math.floor(cover))} дн. Точка заказа ${fmt(r.reorderPoint)} шт (изготовление и доставка ${fmt(r.cycle)} дн. + страховой запас).`+staleNote,
+          why: r.status==='danger' ? 'Остаток с товаром в пути уже ниже точки заказа — новая партия придёт, когда товар закончится.' : 'До точки заказа осталось меньше 5 дней.',
+          steps:[`Согласовать партию ${fmt(r.orderQty)} шт`,'Внести поставку в «Планирование закупа»'],
+          effect:Math.round(Math.min(30,short)*r.velocity*price), dueDays: r.status==='danger'?1:3, metric:'Статус в «Обзоре закупа» — «Норма»'});
+      }
+      // избыток: всего запаса (МП + ФФ) больше чем на excessDays дней
+      if(r.velocity>0 && r.totalStock/r.velocity>excessDays){
+        const d=r.totalStock/r.velocity;
+        out.push({key:'excess:'+r.rowKey, area:'ship', pids:members.map(p=>p.id), urg:'mid', go:'stock',
+          title:`Ускорить продажи: избыток ${r.name}`,
+          situation:`Остаток ${fmt(r.totalStock)} шт при продажах ${fmt1(r.velocity)} шт/день — хватит примерно на ${fmt(Math.floor(d))} дн. (больше ${excessDays}).`+staleNote,
+          why:`В товаре заморожено примерно ${fmt(Math.max(0, r.totalStock-r.velocity*excessDays)*price)} ₽ сверх запаса на ${excessDays} дней.`,
+          steps:['Решить: акция, снижение цены, вывоз товара и перераспределение на другую площадку'],
+          effect:0, dueDays:7, metric:`Запас — не больше чем на ${excessDays} дней`});
+      }
+      // пополнить запас на площадке: на МП запаса меньше порога, а на ФФ товар есть; везём не больше чем на 2 недели
+      const ff=r.stockByCh ? r.stockByCh.ff : null;
+      if(!(ff>0)) continue;
+      for(const ch of ['wb','ozon','ym']){
+        const ms=(r.membersByCh||{})[ch]||[]; if(!ms.length) continue;
+        const st=r.stockByCh[ch]; if(st===null || st===undefined || !(r.stockFilled||{})[ch]) continue; // остаток на площадке не внесён — не гадаем
+        const yest=yesterdayISO(), v=ms.reduce((s,p)=>s+sumDays(dms[p.id]||{}, dateMinusDays(yest,13), yest, 'orders'),0)/14;
+        if(!(v>0)) continue;
+        const days=st/v; if(days>=lowDays) continue;
+        const qty=Math.min(ff, Math.ceil(Math.max(0, v*14-st)));
+        if(!(qty>0)) continue;
+        const lb={wb:'WB',ozon:'Ozon',ym:'ЯМ'}[ch], stale=r.staleChannels.filter(x=>x.startsWith(lb+' '));
+        out.push({key:'ship:'+r.rowKey+':'+ch, area:'ship', mp:ch, pids:ms.map(p=>p.id), urg: days<lowDays/2?'high':'mid', go:'distrib',
+          title:`Пополнить запас на площадке: ${r.name} (${MP_LABEL[ch]}) — ${fmt(qty)} шт`,
+          situation:`На ${MP_LABEL[ch]} ${fmt(st)} шт при продажах ${fmt1(v)} шт/день — хватит на ${fmt1(days)} дн. (меньше ${lowDays}).`+(stale.length? ` Остатки не за текущую неделю: ${stale.join('; ')}.` : ''),
+          why:'Если не довезти, товар закончится на площадке, а карточка потеряет позиции в выдаче.',
+          steps:[`Запланировать поставку и отгрузить ${fmt(qty)} шт`,'Внести в «Поставки по площадкам»'],
+          effect:Math.round(Math.min(qty, Math.max(0, lowDays-days)*v)*price), dueDays: days<lowDays/2?1:3, metric:`Запас на ${MP_LABEL[ch]} — от ${lowDays} дн.`});
+      }
+    }
+    // пересчитать распределение: делим то, что уже запланировано к отгрузке (план − отгружено), так,
+    // чтобы на каждой площадке запаса хватало на одинаковое число дней при её скорости продаж
+    const gapDays=dcSet('redistGapDays'), sup={};
+    (await Promise.all(SUPPLY_CH.map(c=>storeGet(supplyDocKey(month, c.ch))))).forEach((doc,i)=>{ sup[SUPPLY_CH[i].ch]=doc||{}; });
+    const lines=[], moves=[], freeFF=[];
+    for(const r of comp){
+      const chs=[];
+      for(const ch of ['wb','ozon','ym']){
+        const ms=(r.membersByCh||{})[ch]||[]; if(!ms.length || !(r.stockFilled||{})[ch]) continue;
+        const yest=yesterdayISO(), v=ms.reduce((s,p)=>s+sumDays(dms[p.id]||{}, dateMinusDays(yest,13), yest, 'orders'),0)/14;
+        if(!(v>0)) continue;
+        const pending=channelRowKeysFor(ms, ch).reduce((s,k)=>{ const e=sup[ch][k]; return s+(e ? Math.max(0,(supplyVal(e,'plan')||0)-(supplyVal(e,'shipped')||0)) : 0); },0);
+        chs.push({ch, v, mp:r.stockByCh[ch]||0, pending});
+      }
+      const pool=chs.reduce((s,c)=>s+c.pending,0);
+      if(chs.length<2 || !(pool>0)) continue;
+      chs.forEach(c=>{ c.days=(c.mp+c.pending)/c.v; });
+      const dMax=Math.max(...chs.map(c=>c.days)), dMin=Math.min(...chs.map(c=>c.days));
+      if(dMax-dMin<=gapDays) continue;
+      // одинаковые дни запаса; площадкам, где своего остатка уже больше, — 0, остальное делим заново
+      let act=chs.slice();
+      for(let k=0;k<3;k++){ const T=act.reduce((s,c)=>s+c.mp,0)+pool, V=act.reduce((s,c)=>s+c.v,0), D=T/V;
+        const neg=act.filter(c=>D*c.v-c.mp<0); chs.forEach(c=>{ c.target = act.includes(c) ? Math.max(0, D*c.v-c.mp) : 0; }); if(!neg.length) break; act=act.filter(c=>!neg.includes(c)); }
+      let sum=0; chs.forEach(c=>{ c.target=Math.round(c.target); sum+=c.target; }); if(sum!==pool){ const big=chs.slice().sort((a,b)=>b.target-a.target)[0]; big.target+=pool-sum; }
+      if(!chs.some(c=>Math.abs(c.target-c.pending)>=2)) continue;
+      lines.push(`${r.name}: запаса хватит — ${chs.map(c=>`${MP_LABEL[c.ch]} на ${fmt(Math.floor(c.days))} дн`).join(', ')}`);
+      moves.push(`${r.name}: осталось отгрузить ${chs.filter(c=>c.target!==c.pending).map(c=>`${MP_LABEL[c.ch]} ${fmt(c.pending)} → ${fmt(c.target)} шт`).join(', ')}`);
+      const ff=r.stockByCh ? r.stockByCh.ff : null; if(ff>0 && ff>pool) freeFF.push(`${r.name} — ${fmt(ff-pool)} шт`);
+    }
+    if(lines.length){
+      out.push({key:'redist:'+mondayOf(today), area:'ship', urg:'mid', owner:'lead', go:'distrib',
+        title:`Пересчитать распределение товара (${lines.length} ${lines.length===1?'товар':lines.length<5?'товара':'товаров'})`,
+        situation:`Запас на площадках сильно различается — разница больше ${gapDays} дней. ${lines.join('; ')}`+'.'+(freeFF.length?` На фулфилменте ещё не распределено: ${freeFF.join('; ')}.`:''),
+        why:'Площадки продают с разной скоростью: на одной товар закончится раньше, на другой залежится. Предложение делит то, что уже запланировано к отгрузке (план − отгружено), так, чтобы запаса везде хватало примерно на одинаковое число дней.',
+        steps:[...moves, 'Внести новые цифры в «Поставки по площадкам»'], effect:0, dueDays:3, metric:`Разница в днях запаса между площадками — не больше ${gapDays}`});
+    }
+  }catch(e){ console.error('Центр решений: не удалось посчитать закуп и склад', e); out.push({key:'_err_stock', error:'Решения по закупу и складу не посчитались — не удалось прочитать остатки. Нажмите «Пересчитать сейчас».'}); }
+  const uo={high:0, mid:1};
+  return out.sort((m,n)=>(uo[m.urg]??2)-(uo[n.urg]??2) || (n.effect||0)-(m.effect||0));
+}
+function dcStatusOf(d, st){
+  const today=todayISO(), pause=dcSet('rejectPauseDays');
+  if(!st) return d ? 'new' : null;
+  if(st.status==='work'){
+    const ts=(st.taskIds||[]).map(id=>(tasksCache||{})[id]);
+    const alive=ts.filter(Boolean);
+    const allDone = alive.length ? alive.every(t=>t.status==='done') : true; // задачи удалены через 30 дней — значит выполнены
+    if(!allDone) return 'work';
+    const doneAt=alive.map(t=>(t.doneAt||'').slice(0,10)).sort().pop() || (st.at||'').slice(0,10);
+    if(d && doneAt && doneAt<=dateMinusDays(today,pause)) return 'new'; // выполнили давно, а правило снова сработало
+    return 'done';
+  }
+  if(st.status==='later') return d ? 'new' : null; // «Отложить» убрано (решение Ольги) — старые отложенные снова новые
+  if(st.status==='rejected') return st.until>today ? 'rejected' : (d ? 'new' : null);
+  return d ? 'new' : null;
+}
+async function renderDecisionsTab(force){
+  const body=document.getElementById('decisionsBody');
+  if(dcBusy) return;
+  if(!dcCache || force) body.innerHTML='<div class="panel"><div class="empty">Считаю решения…</div></div>';
+  dcBusy=true;
+  try{
+    const [list, states]=await Promise.all([computeDecisions(), storeListDocs('decision:'), loadTasks(), loadStaff()]);
+    dcCache={list, states, at:new Date()};
+  }catch(e){
+    console.error('Центр решений: не удалось загрузить', e);
+    body.innerHTML='<div class="panel"><div class="empty">Не удалось загрузить данные — проверьте соединение и нажмите «Пересчитать сейчас».</div></div>';
+    dcBusy=false; return;
+  }
+  dcBusy=false;
+  paintDecisions();
+}
+function dcItems(){
+  if(!dcCache) return [];
+  const byKey={}; dcCache.list.filter(d=>!d.error).forEach(d=>{ byKey[d.key]=d; });
+  const st=k=>dcCache.states['decision:'+k];
+  const keys=new Set([...Object.keys(byKey), ...Object.keys(dcCache.states).map(k=>k.slice('decision:'.length))]);
+  const items=[];
+  keys.forEach(k=>{
+    const s=st(k), d=byKey[k], status=dcStatusOf(d, s);
+    if(!status) return;
+    items.push({status, d: status==='new' ? d : (s && s.snap) || d, s});
+  });
+  return items;
+}
+function paintDecisions(){
+  const body=document.getElementById('decisionsBody'); if(!dcCache) return;
+  updateDecisionsBadge();
+  const items=dcItems();
+  const tabs=[['new','Новые'],['work','В работе'],['done','Выполнены'],['rejected','Отклонены']];
+  const cnt=k=>items.filter(x=>x.status===k).length;
+  const total=items.filter(x=>x.status==='new'||x.status==='work').reduce((s,x)=>s+(x.d.effect||0),0);
+  const list=items.filter(x=>x.status===dcTab);
+  const errs=dcCache.list.filter(d=>d.error);
+  const uo={high:0, mid:1};
+  list.sort((m,n)=>(uo[m.d.urg]??2)-(uo[n.d.urg]??2) || (n.d.effect||0)-(m.d.effect||0));
+  body.innerHTML=`<div class="panel dc-sum"><span>Потенциальный эффект новых решений и решений в работе:</span> <b class="pos">+${fmt(total)} ₽/мес</b>
+      <div class="note">Решения строятся правилами по данным Воронки — без ИИ. Пересчитано ${dcCache.at.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}. Остатки — по последним сохранённым неделям «Остатков и динамики». Эффект — оценка в ₽ в месяц.</div></div>
+    ${errs.map(e=>`<div class="panel"><div class="neg">${hmEsc(e.error)}</div></div>`).join('')}
+    <div class="dc-tabs">${tabs.map(([k,l])=>`<button type="button" class="${dcTab===k?'on':''}" data-dctab="${k}">${l} <span>${cnt(k)}</span></button>`).join('')}</div>
+    <div class="dc-list">${list.map(dcCardHtml).join('') || '<div class="panel"><div class="empty">Здесь пока пусто</div></div>'}</div>`;
+}
+function dcCardHtml(x){
+  const d=x.d, s=x.s||{}, today=todayISO();
+  const p=d.pid ? state.products.find(q=>q.id===d.pid) : null;
+  const ts=(s.taskIds||[]).map(id=>(tasksCache||{})[id]).filter(Boolean), done=ts.filter(t=>t.status==='done').length;
+  const due=fmtRuDate(d.dueDate || datePlusDays((x.status==='new'? today : (s.at||'').slice(0,10)||today), d.dueDays||2)).slice(0,5);
+  const k=hmEsc(d.key);
+  return `<section class="panel dc-card ${d.urg}">
+    <div class="dc-top"><span class="badge ${d.urg==='high'?'b-red':'b-amber'}">${d.urg==='high'?'Срочно':'Важно'}</span><span class="badge b-violet">${DC_AREA[d.area]||''}</span>${p?`<span class="badge ${p.mp}">${MP_LABEL[p.mp]}</span>`:''}<span class="muted sm">срок: ${due}</span></div>
+    <h3>${hmEsc(d.title)}</h3>
+    <p>${hmEsc(d.situation)}</p>
+    <p class="muted"><b>Почему:</b> ${hmEsc(d.why)}</p>
+    ${(d.steps||[]).length?`<ol>${d.steps.map(t=>`<li>${hmEsc(t)}</li>`).join('')}</ol>`:''}
+    <div class="dc-kv">${d.effect>0?`<span>Эффект: <b class="pos">≈ +${fmt(d.effect)} ₽/мес</b></span>`:''}<span>Проверка: <b>${hmEsc(d.metric||'')}</b></span>
+      ${s.reason && x.status==='rejected'?`<span>Причина отказа: <b>${hmEsc(s.reason)}</b></span>`:''}
+      ${s.until && x.status==='rejected'?`<span>Не предлагать до: <b>${fmtRuDate(s.until).slice(0,5)}</b></span>`:''}
+      ${s.by && x.status!=='new'?`<span class="muted">${x.status==='work'||x.status==='done'?'Принял':'Отклонил'}: ${hmEsc(staffName(s.by))}</span>`:''}</div>
+    ${(()=>{ if(!ts.length) return ''; if(!ts.some(t=>(t.checklist||[]).length)){ const st=ts[0].status||'todo'; return `<div class="dc-prog"><span class="sm muted">Задача: <b class="${st==='done'?'pos':''}">${TASK_COLS.find(c=>c[0]===st)?.[1]||''}</b></span></div>`; } const ck=ts.flatMap(t=>t.checklist||[]), all=ck.length||ts.length, n=ck.length? ck.filter(c=>c.done).length : done;
+      return `<div class="dc-prog"><div class="hm-bar thin"><i style="width:${n/all*100}%"></i></div><span class="sm muted">${ck.length?`подпунктов выполнено: ${n} из ${all}`:`задач выполнено: ${n} из ${all}`}${ts.every(t=>t.status==='done')?' · задача выполнена':''}</span></div>`; })()}
+    <div class="row dc-acts">
+      ${x.status==='new'?`<button class="btn" data-dcact="accept" data-k="${k}">Принять</button>`:''}
+      ${x.status==='new'?`<button class="btn danger" data-dcact="reject" data-k="${k}">Отклонить</button>`:''}
+      ${x.status==='work'?'<button class="btn secondary" data-dcact="tasks">Открыть задачи</button>':''}
+      ${d.ask?`<button class="btn secondary" data-dcact="ask" data-k="${k}">Разобрать в «Спросить»</button>`:''}
+      ${p?`<button class="btn secondary" data-dcact="open" data-pid="${p.id}">Открыть товар</button>`:d.go?`<button class="btn secondary" data-dcact="go" data-go="${d.go}">Открыть раздел</button>`:''}
+    </div></section>`;
+}
+// свежие цифры, если правило срабатывает сейчас; иначе — снимок на момент решения
+function dcFind(key){ const fresh=dcCache && dcCache.list.find(d=>d.key===key); if(fresh) return fresh; const it=dcItems().find(x=>x.d && x.d.key===key); return it ? it.d : null; }
+async function dcSaveState(key, patch){
+  const r=await mutateStoreValue('decision:'+key, ()=>({}), f=>{ Object.assign(f, patch); });
+  if(r && dcCache) dcCache.states['decision:'+key]=r;
+  return r;
+}
+async function dcAccept(d, btn){
+  btn.disabled=true;
+  const today=todayISO(), due=d.dueDate || datePlusDays(today, d.dueDays||2), me=myEmail(), now=new Date().toISOString();
+  // исполнитель: задачи по плану и распределению — руководитель; по площадке — сотрудники этой площадки; иначе — тот, кто принял
+  const mpOf = d.mp || (d.pid ? (state.products.find(p=>p.id===d.pid)||{}).mp : null);
+  const byMp = mpOf ? staffCache.filter(s=>(s.mps||[]).includes(mpOf) && s.email).map(s=>s.email.toLowerCase()) : [];
+  const owners = d.owner==='lead' && leadEmail() ? [leadEmail()] : byMp.length ? byMp : (staffCache.some(s=>(s.email||'').toLowerCase()===me) ? [me] : []);
+  const desc=(d.situation||'')+((d.steps||[]).length ? '\n\n'+d.steps.map(s=>'— '+s).join('\n') : '');
+  const tasks=[{id:newId('t'), title:d.title, desc, checklist:[], status:'todo', prio:d.urg==='high'?'high':'mid', due,
+    assignees: owners.map(e=>({email:e, status:'todo', doneAt:null})), pids:d.pids||(d.pid?[d.pid]:[]), src:'decision', decisionKey:d.key, createdBy:me, createdAt:now, doneAt:null}];
+  const res=await Promise.all(tasks.map(t=>patchTask(t.id, t)));
+  const ok=res.filter(Boolean);
+  if(ok.length!==tasks.length){ homeToast('Не все задачи сохранились — проверьте соединение'); }
+  if(!ok.length){ btn.disabled=false; return; }
+  const r=await dcSaveState(d.key, {status:'work', at:now, by:me, taskIds:ok.map(t=>t.id), snap:d, until:null, reason:null});
+  if(!r){ homeToast('Не удалось сохранить решение — проверьте соединение'); btn.disabled=false; return; }
+  updateTasksBadge();
+  homeToast('Решение принято — задача создана во вкладке «Задачи»');
+  paintDecisions();
+}
+(function initDecisionsEvents(){
+  const body=document.getElementById('decisionsBody');
+  body.addEventListener('click', async e=>{
+    const t=e.target.closest('[data-dctab]'); if(t){ dcTab=t.dataset.dctab; paintDecisions(); return; }
+    const b=e.target.closest('[data-dcact]'); if(!b) return;
+    const act=b.dataset.dcact;
+    if(act==='tasks'){ taskUi.fromDc=true; goTab('tasks'); return; }
+    if(act==='open'){ openProductDaily(b.dataset.pid); return; }
+    if(act==='go'){ goTab(b.dataset.go); return; }
+    const d=dcFind(b.dataset.k); if(!d) return;
+    if(act==='ask'){
+      askState.q=d.ask; if(d.pid){ askState.pid=d.pid; askRemember(d.pid); } if(d.mp) askState.mp=d.mp;
+      openAsk(d.pid?{pid:d.pid}:{}); runAsk(); return;
+    }
+    if(act==='accept'){ dcAccept(d, b); return; }
+    if(act==='reject'){
+      const pause=dcSet('rejectPauseDays');
+      const m=openModal(`<h2>Отклонить решение</h2><p class="hint">${hmEsc(d.title)}</p>
+        <div class="md-f"><label>Причина</label><textarea id="dcReason" rows="3" placeholder="Например, уже делаем по-другому"></textarea></div>
+        <p class="note">Такое же решение по этому товару не будет предлагаться ${pause} дней.</p><div class="md-err neg" id="dcErr"></div>
+        <div class="row md-acts"><button class="btn danger" id="dcRejOk">Отклонить</button><button class="btn secondary" data-mclose>Отмена</button></div>`);
+      setTimeout(()=>m.el.querySelector('#dcReason').focus(), 30);
+      m.el.querySelector('#dcRejOk').addEventListener('click', async ()=>{
+        const reason=m.el.querySelector('#dcReason').value.trim();
+        if(!reason){ m.el.querySelector('#dcErr').textContent='Напишите причину — она поможет команде'; return; }
+        const r=await dcSaveState(d.key, {status:'rejected', reason, until:datePlusDays(todayISO(), pause), at:new Date().toISOString(), by:myEmail(), snap:d});
+        if(!r){ m.el.querySelector('#dcErr').textContent='Не удалось сохранить — проверьте соединение'; return; }
+        m.close(); paintDecisions();
+      });
+    }
+  });
+  document.getElementById('dcRecalcBtn').addEventListener('click', ()=>renderDecisionsTab(true));
+})();
+
+/* --- «Настройки» → «Сотрудники» --- */
+function renderStaffPanel(){
+  const wrap=document.getElementById('staffWrap');
+  const rows=staffCache.length ? staffCache : [];
+  wrap.innerHTML=`<table class="st-tbl"><thead><tr><th>Имя</th><th>Почта для входа</th><th title="Задачи из Центра решений по этой площадке назначаются на сотрудника">Площадки</th><th title="Что показывает число у «Задач» в меню">Счётчик в меню</th><th title="Исполнитель задач «Сформировать план продаж» и «Пересчитать распределение»">Руководитель</th><th></th></tr></thead><tbody>${rows.map(s=>staffRowHtml(s)).join('')}</tbody></table>
+    <div class="row" style="margin-top:10px;"><button class="btn secondary" id="staffAddBtn">+ Добавить сотрудника</button><button class="btn" id="staffSaveBtn">Сохранить</button><span id="staffNote" class="note" style="margin:0;"></span></div>`;
+  markSettingsOrig(document.getElementById('staffPanel'));
+}
+function staffRowHtml(s){
+  return `<tr data-sid="${hmEsc(s.id||'')}"><td><input class="st-name" value="${hmEsc(s.name||'')}" placeholder="Имя"></td><td><input class="st-email" type="email" value="${hmEsc(s.email||'')}" placeholder="name@example.com"></td><td class="st-mps">${['wb','ozon','ym'].map(m=>`<label class="tk-chk"><input type="checkbox" data-mp="${m}"${(s.mps||[]).includes(m)?' checked':''}> ${MP_LABEL[m]}</label>`).join('')}</td><td><select class="st-scope"><option value="all"${s.scope!=='own'?' selected':''}>мои | все</option><option value="own"${s.scope==='own'?' selected':''}>только мои</option></select></td><td class="st-lead"><input type="radio" name="stLead"${s.lead?' checked':''}></td><td><button type="button" class="btn secondary st-del" title="Удалить из списка">×</button></td></tr>`;
+}
+(function initStaffEvents(){
+  const panel=document.getElementById('staffPanel');
+  panel.addEventListener('click', async e=>{
+    if(e.target.id==='staffAddBtn'){
+      const tb=panel.querySelector('tbody'); tb.insertAdjacentHTML('beforeend', staffRowHtml({id:newId('s'), name:'', email:''}));
+      tb.lastElementChild.querySelectorAll('input').forEach(i=>{ i.dataset.orig='__new__'; i.classList.add('cell-dirty'); });
+      tb.lastElementChild.querySelector('.st-name').focus(); return;
+    }
+    if(e.target.classList.contains('st-del')){
+      const tr=e.target.closest('tr'); tr.remove();
+      panel.insertAdjacentHTML('beforeend','<i class="cell-dirty" hidden></i>'); // удаление — тоже несохранённая правка
+      return;
+    }
+    if(e.target.id==='staffSaveBtn'){
+      const note=document.getElementById('staffNote');
+      const list=[...panel.querySelectorAll('tbody tr')].map(tr=>({id:tr.dataset.sid||newId('s'), name:tr.querySelector('.st-name').value.trim(), email:tr.querySelector('.st-email').value.trim().toLowerCase(), scope:tr.querySelector('.st-scope').value, lead:tr.querySelector('.st-lead input').checked, mps:[...tr.querySelectorAll('.st-mps input:checked')].map(i=>i.dataset.mp)}))
+        .filter(s=>s.name||s.email);
+      const bad=list.find(s=>!s.name || (s.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s.email)));
+      if(bad){ note.style.color='var(--neg)'; note.textContent=!bad.name? 'У каждого сотрудника должно быть имя' : 'Проверьте почту: '+bad.email; return; }
+      const dup=list.find((s,i)=>s.email && list.findIndex(x=>x.email===s.email)!==i);
+      if(dup){ note.style.color='var(--neg)'; note.textContent='Почта повторяется: '+dup.email; return; }
+      e.target.disabled=true;
+      const r=await mutateStoreValue('staff', ()=>[], f=>{ f.length=0; list.forEach(s=>f.push(s)); });
+      e.target.disabled=false;
+      if(!r){ note.style.color='var(--neg)'; note.textContent='Не удалось сохранить — проверьте соединение и попробуйте ещё раз'; return; }
+      staffCache=r; panel.querySelectorAll('i.cell-dirty[hidden]').forEach(x=>x.remove());
+      renderStaffPanel(); const n2=document.getElementById('staffNote'); n2.style.color='var(--pos)'; n2.textContent='Сохранено';
+    }
+  });
+})();
+
+/* --- «Спросить»: просроченные задачи --- */
+ASK_CALC.tasks=async function(){
+  const all=Object.values(await loadTasks()); await loadStaff();
+  const ov=overdueTasks(all).sort((a,b)=>a.due.localeCompare(b.due));
+  const title='Просроченные задачи';
+  if(!ov.length) return {title, lead:'Просроченных задач нет.', html:'', links:[['tasks','Задачи']]};
+  const byWho={}; ov.forEach(t=>{ const ns=taskPendingNames(t); (ns.length?ns:['без исполнителя']).forEach(k=>{ byWho[k]=(byWho[k]||0)+1; }); });
+  const rows=ov.map(t=>{ const ps=taskProds(t); return [hmEsc(t.title), taskPendingNames(t).length? hmEsc(taskPendingNames(t).join(', ')) : '<span class="muted">—</span>', ps.length? ps.map(p=>hmEsc(p.name)+' · '+MP_LABEL[p.mp]).join('<br>') : '—', `<span class="neg">${-taskDueInfo(t).days} дн.</span>`]; });
+  return {title, lead:`Просрочено задач: <b>${ov.length}</b>. По исполнителям: ${Object.entries(byWho).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${hmEsc(k)} — ${n}`).join(', ')}.`,
+    html:askTable(['Задача','Не выполнили','Товар','Просрочено'], rows, [0,1,2]), links:[['tasks','Задачи']]};
+};
+
 paintThemeButton();
 document.getElementById('themeToggle').addEventListener('click', ()=>setTheme(currentTheme()==='light' ? 'dark' : 'light'));
 
@@ -5639,6 +6598,8 @@ document.getElementById('tabs').addEventListener('click', async (e)=>{
   document.getElementById('tab-'+e.target.dataset.tab).style.display='block';
   if(productsReadyPromise) await productsReadyPromise;
   if(e.target.dataset.tab==='home'){ renderHomeTab(); }
+  if(e.target.dataset.tab==='tasks'){ renderTasksTab(); }
+  if(e.target.dataset.tab==='decisions'){ renderDecisionsTab(); }
   if(e.target.dataset.tab==='analytics'){ renderAnalyticsTab(); }
   if(e.target.dataset.tab==='settings'){ renderSettingsTab(); }
   if(e.target.dataset.tab==='plan'){ syncProductSelector('plan_product_mp','plan_product'); renderPlanTab(); }
@@ -5694,6 +6655,7 @@ if(USE_FIREBASE){
         document.getElementById('userBar').style.display='flex';
         showApp();
         await startApp();
+        refreshNavCounts();
       } else {
         showLogin();
       }
@@ -5731,7 +6693,7 @@ if(USE_FIREBASE){
 } else {
   // локальный тестовый режим (window.storage) — вход не нужен
   showApp();
-  startApp();
+  startApp().then(()=>refreshNavCounts());
 }
 </script>
 </body>
