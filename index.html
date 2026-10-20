@@ -548,6 +548,7 @@
   .dc-kv{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--tx2);margin:4px 0 2px;}
   .dc-prog{display:flex;align-items:center;gap:10px;margin-top:8px;} .dc-prog .hm-bar{flex:1;margin:0;}
   .dc-acts{margin-top:12px;align-items:center;}
+  .dc-forever{margin:0 0 6px;font-size:13.5px;}
   .set-sub{font-size:13px;margin:6px 0 8px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;}
   .st-tbl{border-collapse:collapse;}
   .st-tbl th{text-align:left;font-size:11px;padding:4px 8px 6px 0;}
@@ -956,7 +957,7 @@
         <div class="field"><label>Перекос запаса, дней</label><input id="set_dc_redist" type="number" min="3" max="90" step="1" style="width:140px;"></div>
         <div class="field"><label>Пауза после отказа, дней</label><input id="set_dc_pause" type="number" min="1" max="180" step="1" style="width:160px;"></div>
       </div>
-      <p class="note">ДРР выше предела подсвечивается красным на «Главной» и в столбце «Итого» строки «ДРР, %» в «Ежедневных данных», а товары и площадки с такой ДРР попадают в подсказки на «Главной». «Запас мало» — сколько дней запаса считать тревожным сигналом (по умолчанию 14; на «Главной» и в «Аналитике», красным — меньше половины). «Скорость продаж для закупа» — по последней закрытой неделе или среднее за 2 недели (защищает точку заказа от скачка из-за одной нетипичной недели). <b>Центр решений:</b> «Рост ДРР» — на сколько процентов ДРР товара за 7 дней выросла к прошлой неделе; «Падение заказов» — на сколько процентов меньше заказов за 7 дней; «Избыток» — решение «Ускорить продажи» появляется, если всего запаса (площадки + фулфилмент) больше чем на это число дней; «Перекос запаса» — решение «Пересчитать распределение» появляется, если дни запаса на площадках различаются больше чем на это число; «Пауза после отказа» — сколько дней не предлагать отклонённое решение по тому же товару. Предел ДРР и «Запас мало» тоже используются в решениях.</p>
+      <p class="note">ДРР выше предела подсвечивается красным на «Главной» и в столбце «Итого» строки «ДРР, %» в «Ежедневных данных», а товары и площадки с такой ДРР попадают в подсказки на «Главной». «Запас мало» — сколько дней запаса считать тревожным сигналом (по умолчанию 14; на «Главной» и в «Аналитике», красным — меньше половины). «Скорость продаж для закупа» — по последней закрытой неделе или среднее за 2 недели (защищает точку заказа от скачка из-за одной нетипичной недели). <b>Центр решений:</b> «Рост ДРР» — на сколько процентов ДРР товара за 7 дней выросла к прошлой неделе; «Падение заказов» — на сколько процентов меньше заказов за 7 дней; «Избыток» — решение «Ускорить продажи» появляется, если на площадке остатка больше чем на это число дней при её продажах, а на другой площадке товар продаётся быстрее (по умолчанию 60; остаток меньше 5 шт не учитывается); «Перекос запаса» — решение «Пересчитать распределение» появляется, если дни запаса на площадках различаются больше чем на это число; «Пауза после отказа» — сколько дней не предлагать отклонённое решение по тому же товару. Предел ДРР и «Запас мало» тоже используются в решениях.</p>
     </div>
     <div class="panel" id="staffPanel">
       <h2>Сотрудники</h2>
@@ -991,8 +992,8 @@
     <div class="panel">
       <h2>Центр решений</h2>
       <p>Список того, что стоит сделать сегодня. Решения строятся <b>правилами</b> по данным Воронки (без ИИ) при каждом открытии вкладки и по кнопке «Пересчитать сейчас». В каждом: направление, срочность («Срочно» / «Важно»), действие, ситуация с цифрами, почему, шаги, оценка эффекта в ₽ в месяц, срок и как проверить результат.</p>
-      <p><b>Правила</b> (пороги — в «Настройках»). <b>Найти и устранить причину падения заказов</b> — у карточки за 7 дней (по последний заполненный день) заказов на «Падение заказов» % и больше меньше, чем неделей раньше (все 7 дней заполнены, неделей раньше от 5 шт); подзадачи подбираются по этапу, который просел сильнее всего: показы, CTR, конверсия в корзину или в заказ. <b>Отключить неэффективную рекламу</b> — за 7 дней реклама от 500 ₽ и ни одного заказа. <b>Оптимизировать рекламу</b> — ДРР карточки за 7 дней выше предела. <b>Проверить рост ДРР</b> — ДРР ещё в пределе, но выросла к прошлой неделе на «Рост ДРР» % и больше. <b>Сформировать план продаж</b> — с 1-го числа, пока у какой-то строки плана нет плана на текущий месяц; срок — 10 число; исполнитель — руководитель из «Сотрудников». <b>Заказать партию у производства</b> — статус в «Обзоре закупа» «Просрочено» или «Скоро закупать»; сколько — как «Закуп, шт». <b>Ускорить продажи: избыток</b> — всего запаса (площадки + фулфилмент) больше чем на «Избыток» дней. <b>Пополнить запас на площадке</b> — на WB/Ozon/ЯМ запаса меньше «Запас мало» дней (продажи — средние за 14 дней), а на фулфилменте товар есть; сколько — до запаса на 2 недели, но не больше, чем есть на ФФ. <b>Пересчитать распределение товара</b> — по товарам, у которых дни запаса на площадках (остаток + ещё не отгруженное по плану «Поставок по площадкам») различаются больше чем на «Перекос запаса» дней; предлагается новая раскладка уже запланированного к отгрузке (план − отгружено) так, чтобы запаса везде хватало примерно на одинаковое число дней при скорости продаж каждой площадки за 14 дней; общее количество не меняется. Нераспределённый остаток на ФФ показывается подсказкой. Одна задача на неделю, исполнитель — руководитель. <b>Неудачное изменение карточки</b> — изменение за последние 30 дней, которое «Журнал изменений» на «Воронке и точках роста» оценил как неудачное (❌: главный показатель этого типа правки ухудшился на 3% и больше, данных достаточно, после него не было такого же изменения); название — что сделать по типу правки (главное фото — «Сменить главное фото или провести A/B-тест», заголовок, порядок фото, описание, цена, реклама); проверка результата — через 3 дня и позже (для ДРР — по окну журнала), в «Почему» — вывод журнала. По рекламе — только если ДРР после изменения выше предела. Остатки — из последних сохранённых недель «Остатков и динамики»; если неделя не текущая, это написано в решении.</p>
-      <p><b>Кнопки.</b> «Принять» — создаётся <b>одна задача</b>: название — действие решения, в описании — ситуация с цифрами и вторым абзацем что сделать (без подпунктов; у задачи «Сформировать план продаж» — только ситуация). Исполнитель: «Сформировать план продаж» и «Пересчитать распределение» — руководитель; решения по конкретной площадке — сотрудники, у которых эта площадка отмечена в «Сотрудниках» (если их несколько — назначаются все, у каждого своя карточка); если таких нет — тот, кто принял. Решение уходит в «В работе», там виден статус задачи; когда задача выполнена (все исполнители перенесли её в «Готово») — в «Выполнены». «Отклонить» — с причиной; такое же решение по тому же товару не предлагается «Пауза после отказа» дней. «Разобрать в «Спросить»» — открывает подходящий готовый вопрос по этому товару или площадке. Вкладки: Новые / В работе / Выполнены / Отклонены. Состояние решений общее для всей команды.</p>
+      <p><b>Правила</b> (пороги — в «Настройках»). <b>Найти и устранить причину падения заказов</b> — у карточки за 7 дней (по последний заполненный день) заказов на «Падение заказов» % и больше меньше, чем неделей раньше (все 7 дней заполнены, неделей раньше от 5 шт); подзадачи подбираются по этапу, который просел сильнее всего: показы, CTR, конверсия в корзину или в заказ. <b>Отключить неэффективную рекламу</b> — за 7 дней реклама от 500 ₽ и ни одного заказа. <b>Оптимизировать рекламу</b> — ДРР карточки за 7 дней выше предела. <b>Проверить рост ДРР</b> — ДРР ещё в пределе, но выросла к прошлой неделе на «Рост ДРР» % и больше. <b>Сформировать план продаж</b> — с 1-го числа, пока у какой-то строки плана нет плана на текущий месяц; срок — 10 число; исполнитель — руководитель из «Сотрудников». <b>Заказать партию у производства</b> — статус в «Обзоре закупа» «Просрочено» или «Скоро закупать»; сколько — как «Закуп, шт». <b>Ускорить продажи: избыток (площадка)</b> — на WB, Ozon или ЯМ остаток от 5 шт, и его больше чем на «Избыток» дней (по умолчанию 60) при продажах этой площадки, а на другой площадке этот товар продаётся быстрее; или остаток есть, а продаж за 14 дней нет. Скорость — средняя за 14 дней по последний заполненный день. Исполнитель — сотрудники этой площадки. <b>Пополнить запас на площадке</b> — одно решение (и одна задача) на площадку со списком товаров; новое — раз в неделю. Товар попадает в список, если на WB/Ozon/ЯМ запаса меньше «Запас мало» дней (продажи — средние за 14 дней по последний заполненный день), а на фулфилменте товар есть; сколько — до запаса на 2 недели, но не больше, чем есть на ФФ. <b>Пересчитать распределение товара</b> — по товарам, у которых дни запаса на площадках (остаток + ещё не отгруженное по плану «Поставок по площадкам») различаются больше чем на «Перекос запаса» дней; предлагается новая раскладка уже запланированного к отгрузке (план − отгружено) так, чтобы запаса везде хватало примерно на одинаковое число дней при скорости продаж каждой площадки за 14 дней; общее количество не меняется. Нераспределённый остаток на ФФ показывается подсказкой. Одна задача на неделю, исполнитель — руководитель. <b>Неудачное изменение карточки</b> — изменение за последние 30 дней, которое «Журнал изменений» на «Воронке и точках роста» оценил как неудачное (❌: главный показатель этого типа правки ухудшился на 3% и больше, данных достаточно, после него не было такого же изменения); название — что сделать по типу правки (главное фото — «Сменить главное фото или провести A/B-тест», заголовок, порядок фото, описание, цена, реклама); проверка результата — через 3 дня и позже (для ДРР — по окну журнала), в «Почему» — вывод журнала. По рекламе — только если ДРР после изменения выше предела. Остатки — из последних сохранённых недель «Остатков и динамики»; если неделя не текущая, это написано в решении.</p>
+      <p><b>Кнопки.</b> «Принять» — создаётся <b>одна задача</b>: название — действие решения, в описании — ситуация с цифрами и вторым абзацем что сделать (без подпунктов; у задачи «Сформировать план продаж» — только ситуация). Исполнитель: «Сформировать план продаж» и «Пересчитать распределение» — руководитель; решения по конкретной площадке — сотрудники, у которых эта площадка отмечена в «Сотрудниках» (если их несколько — назначаются все, у каждого своя карточка); если таких нет — тот, кто принял. Решение уходит в «В работе», там виден статус задачи; когда задача выполнена (все исполнители перенесли её в «Готово») — в «Выполнены». «Отклонить» — с причиной; такое же решение по тому же товару не предлагается «Пауза после отказа» дней, а с галочкой «Больше не предлагать» — никогда. Во вкладке «Отклонены» есть кнопка «Вернуть» — отказ отменяется, и если правило срабатывает, решение снова появляется в «Новых». «Разобрать в «Спросить»» — открывает подходящий готовый вопрос по этому товару или площадке. Вкладки: Новые / В работе / Выполнены / Отклонены. Состояние решений общее для всей команды.</p>
     </div>
     <div class="panel">
       <h2>Задачи</h2>
@@ -4899,7 +4900,8 @@ let productsReadyPromise=null;
    (Главная вернётся сама; «Аналитику» доделать: остаток по карточке вместо группы). */
 const STOCK_API_READY=false;
 const SETTINGS_KEY='settings:general';
-const SETTINGS_DEFAULT={drrLimit:15, stockLowDays:14, drrGrowthPct:30, ordersDropPct:30, planLagPct:85, postponeDays:3, rejectPauseDays:14, excessDays:90, redistGapDays:14};
+const SETTINGS_DEFAULT={drrLimit:15, stockLowDays:14, drrGrowthPct:30, ordersDropPct:30, planLagPct:85, postponeDays:3, rejectPauseDays:14, excessDays:60, redistGapDays:14};
+const EXCESS_MIN_QTY=5; // «Избыток»: меньший остаток на площадке не считаем
 state.settings={...SETTINGS_DEFAULT};
 async function loadSettings(){
   try{ const s=await storeGet(SETTINGS_KEY); state.settings={...SETTINGS_DEFAULT, ...(s||{})}; }
@@ -6157,6 +6159,8 @@ async function computeDecisions(){
       a:askAgg(dm,P.from,P.to,oz), b:askAgg(dm,P.pFrom,P.pTo,oz)};
   };
   const W={}; prods.forEach(p=>{ W[p.id]=win(p); });
+  // скорость продаж карточек, шт/день: 14 дней по последний заполненный день каждой карточки (ЯМ приходит с задержкой)
+  const v14=ms=>ms.reduce((s,p)=>{ const dm=dms[p.id]||{}, P=askPeriod(14, dm); return s+sumDays(dm, P.from, P.to, 'orders')/14; },0);
 
   // 1. Падение заказов: подзадачи — по этапу воронки, который просел сильнее всего
   const dropPct=dcSet('ordersDropPct');
@@ -6276,7 +6280,7 @@ async function computeDecisions(){
     const smoothing=await getZakupMode();
     const rows=(await zakupRowsWithSettings()).filter(x=>x.settings.active!==false);
     const comp=await Promise.all(rows.map(x=>computeZakupRow(x.row, smoothing, x.settings)));
-    const excessDays=dcSet('excessDays');
+    const excessDays=dcSet('excessDays'), shipBy={};
     for(const r of comp){
       const members=r.members||[], price=members.length? members.reduce((s,p)=>s+(+p.currentPriceLK||0),0)/members.length : 0;
       const staleNote=r.staleChannels.length? ` Остатки не за текущую неделю: ${r.staleChannels.join('; ')}.` : '';
@@ -6290,15 +6294,27 @@ async function computeDecisions(){
           steps:[`Согласовать партию ${fmt(r.orderQty)} шт`,'Внести поставку в «Планирование закупа»'],
           effect:Math.round(Math.min(30,short)*r.velocity*price), dueDays: r.status==='danger'?1:3, metric:'Статус в «Обзоре закупа» — «Норма»'});
       }
-      // избыток: всего запаса (МП + ФФ) больше чем на excessDays дней
-      if(r.velocity>0 && r.totalStock/r.velocity>excessDays){
-        const d=r.totalStock/r.velocity;
-        out.push({key:'excess:'+r.rowKey, area:'ship', pids:members.map(p=>p.id), urg:'mid', go:'stock',
-          title:`Ускорить продажи: избыток ${r.name}`,
-          situation:`Остаток ${fmt(r.totalStock)} шт при продажах ${fmt1(r.velocity)} шт/день — хватит примерно на ${fmt(Math.floor(d))} дн. (больше ${excessDays}).`+staleNote,
-          why:`В товаре заморожено примерно ${fmt(Math.max(0, r.totalStock-r.velocity*excessDays)*price)} ₽ сверх запаса на ${excessDays} дней.`,
+      // избыток на площадке (от EXCESS_MIN_QTY шт): остатка больше чем на excessDays дней, а на другой площадке этот товар продаётся быстрее;
+      // или остаток есть, а продаж за 14 дней нет. Скорость — 14 дней по последний заполненный день.
+      const vBy={}; ['wb','ozon','ym'].forEach(ch=>{ const ms=(r.membersByCh||{})[ch]||[]; if(ms.length) vBy[ch]=v14(ms); });
+      for(const ch of ['wb','ozon','ym']){
+        const ms=(r.membersByCh||{})[ch]||[]; if(!ms.length) continue;
+        const st=r.stockByCh[ch]; if(!(st>=EXCESS_MIN_QTY) || !(r.stockFilled||{})[ch]) continue; // остаток не внесён или мал — не тревожим
+        const v=vBy[ch];
+        const faster=Object.entries(vBy).filter(([c,x])=>c!==ch && x>v).sort((p,q)=>q[1]-p[1])[0];
+        if(v>0 && (st/v<=excessDays || !faster)) continue;
+        const mprice=ms.reduce((s,p)=>s+(+p.currentPriceLK||0),0)/ms.length;
+        const extra=Math.max(0, st-v*excessDays);
+        const lb={wb:'WB',ozon:'Ozon',ym:'ЯМ'}[ch], stale=r.staleChannels.filter(x=>x.startsWith(lb+' '));
+        out.push({key:'excess:'+r.rowKey+':'+ch, area:'ship', mp:ch, pids:ms.map(p=>p.id), urg:'mid', go:'stock',
+          title:`Ускорить продажи: избыток ${r.name} (${MP_LABEL[ch]})`,
+          situation:(v>0 ? `На ${MP_LABEL[ch]} ${fmt(st)} шт при продажах ${fmt1(v)} шт/день — хватит примерно на ${fmt(Math.floor(st/v))} дн. (больше ${excessDays}).`
+            : `На ${MP_LABEL[ch]} ${fmt(st)} шт, а продаж за последние 14 дней нет.`)
+            +(faster? ` На ${MP_LABEL[faster[0]]} этот товар продаётся быстрее — ${fmt1(faster[1])} шт/день.` : '')
+            +(stale.length? ` Остатки не за текущую неделю: ${stale.join('; ')}.` : ''),
+          why:`На ${MP_LABEL[ch]} заморожено примерно ${fmt(extra*mprice)} ₽ сверх запаса на ${excessDays} дней.`,
           steps:['Решить: акция, снижение цены, вывоз товара и перераспределение на другую площадку'],
-          effect:0, dueDays:7, metric:`Запас — не больше чем на ${excessDays} дней`});
+          effect:0, dueDays:7, metric:`Запас на ${MP_LABEL[ch]} — не больше чем на ${excessDays} дней`});
       }
       // пополнить запас на площадке: на МП запаса меньше порога, а на ФФ товар есть; везём не больше чем на 2 недели
       const ff=r.stockByCh ? r.stockByCh.ff : null;
@@ -6306,19 +6322,26 @@ async function computeDecisions(){
       for(const ch of ['wb','ozon','ym']){
         const ms=(r.membersByCh||{})[ch]||[]; if(!ms.length) continue;
         const st=r.stockByCh[ch]; if(st===null || st===undefined || !(r.stockFilled||{})[ch]) continue; // остаток на площадке не внесён — не гадаем
-        const yest=yesterdayISO(), v=ms.reduce((s,p)=>s+sumDays(dms[p.id]||{}, dateMinusDays(yest,13), yest, 'orders'),0)/14;
+        const v=v14(ms);
         if(!(v>0)) continue;
         const days=st/v; if(days>=lowDays) continue;
         const qty=Math.min(ff, Math.ceil(Math.max(0, v*14-st)));
         if(!(qty>0)) continue;
         const lb={wb:'WB',ozon:'Ozon',ym:'ЯМ'}[ch], stale=r.staleChannels.filter(x=>x.startsWith(lb+' '));
-        out.push({key:'ship:'+r.rowKey+':'+ch, area:'ship', mp:ch, pids:ms.map(p=>p.id), urg: days<lowDays/2?'high':'mid', go:'distrib',
-          title:`Пополнить запас на площадке: ${r.name} (${MP_LABEL[ch]}) — ${fmt(qty)} шт`,
-          situation:`На ${MP_LABEL[ch]} ${fmt(st)} шт при продажах ${fmt1(v)} шт/день — хватит на ${fmt1(days)} дн. (меньше ${lowDays}).`+(stale.length? ` Остатки не за текущую неделю: ${stale.join('; ')}.` : ''),
-          why:'Если не довезти, товар закончится на площадке, а карточка потеряет позиции в выдаче.',
-          steps:[`Запланировать поставку и отгрузить ${fmt(qty)} шт`,'Внести в «Поставки по площадкам»'],
-          effect:Math.round(Math.min(qty, Math.max(0, lowDays-days)*v)*price), dueDays: days<lowDays/2?1:3, metric:`Запас на ${MP_LABEL[ch]} — от ${lowDays} дн.`});
+        (shipBy[ch]=shipBy[ch]||[]).push({name:r.name, st, v, days, qty, pids:ms.map(p=>p.id), stale, high: days<lowDays/2,
+          effect:Math.round(Math.min(qty, Math.max(0, lowDays-days)*v)*price)});
       }
+    }
+    // «Пополнить запас» — одно решение на площадку (одна задача), внутри — список товаров; новое — каждую неделю
+    for(const ch of ['wb','ozon','ym']){
+      const L=(shipBy[ch]||[]).sort((a,b)=>a.days-b.days); if(!L.length) continue;
+      const stale=[...new Set(L.flatMap(x=>x.stale))], n=L.length, total=L.reduce((s,x)=>s+x.qty,0);
+      out.push({key:'shipmp:'+ch+':'+mondayOf(today), area:'ship', mp:ch, pids:L.flatMap(x=>x.pids), urg: L.some(x=>x.high)?'high':'mid', go:'distrib',
+        title:`Пополнить запас на ${MP_LABEL[ch]}: ${n} ${n===1?'товар':n<5?'товара':'товаров'}, ${fmt(total)} шт`,
+        situation:`Запаса меньше чем на ${lowDays} дн.: ${L.map(x=>`${x.name} — ${fmt(x.st)} шт, ${fmt1(x.v)} шт/день, хватит на ${fmt1(x.days)} дн`).join('; ')}.`+(stale.length? ` Остатки не за текущую неделю: ${stale.join('; ')}.` : ''),
+        why:'Если не довезти, товар закончится на площадке, а карточка потеряет позиции в выдаче.',
+        steps:[`Запланировать поставку и отгрузить: ${L.map(x=>`${x.name} — ${fmt(x.qty)} шт`).join(', ')}`,'Внести в «Поставки по площадкам»'],
+        effect:L.reduce((s,x)=>s+x.effect,0), dueDays: L.some(x=>x.high)?1:3, metric:`Запас на ${MP_LABEL[ch]} — от ${lowDays} дн. по всем товарам`});
     }
     // пересчитать распределение: делим то, что уже запланировано к отгрузке (план − отгружено), так,
     // чтобы на каждой площадке запаса хватало на одинаковое число дней при её скорости продаж
@@ -6329,7 +6352,7 @@ async function computeDecisions(){
       const chs=[];
       for(const ch of ['wb','ozon','ym']){
         const ms=(r.membersByCh||{})[ch]||[]; if(!ms.length || !(r.stockFilled||{})[ch]) continue;
-        const yest=yesterdayISO(), v=ms.reduce((s,p)=>s+sumDays(dms[p.id]||{}, dateMinusDays(yest,13), yest, 'orders'),0)/14;
+        const v=v14(ms);
         if(!(v>0)) continue;
         const pending=channelRowKeysFor(ms, ch).reduce((s,k)=>{ const e=sup[ch][k]; return s+(e ? Math.max(0,(supplyVal(e,'plan')||0)-(supplyVal(e,'shipped')||0)) : 0); },0);
         chs.push({ch, v, mp:r.stockByCh[ch]||0, pending});
@@ -6436,13 +6459,14 @@ function dcCardHtml(x){
     ${(d.steps||[]).length?`<ol>${d.steps.map(t=>`<li>${hmEsc(t)}</li>`).join('')}</ol>`:''}
     <div class="dc-kv">${d.effect>0?`<span>Эффект: <b class="pos">≈ +${fmt(d.effect)} ₽/мес</b></span>`:''}<span>Проверка: <b>${hmEsc(d.metric||'')}</b></span>
       ${s.reason && x.status==='rejected'?`<span>Причина отказа: <b>${hmEsc(s.reason)}</b></span>`:''}
-      ${s.until && x.status==='rejected'?`<span>Не предлагать до: <b>${fmtRuDate(s.until).slice(0,5)}</b></span>`:''}
+      ${s.until && x.status==='rejected'?`<span>Не предлагать: <b>${s.forever ? 'больше никогда' : 'до '+fmtRuDate(s.until).slice(0,5)}</b></span>`:''}
       ${s.by && x.status!=='new'?`<span class="muted">${x.status==='work'||x.status==='done'?'Принял':'Отклонил'}: ${hmEsc(staffName(s.by))}</span>`:''}</div>
     ${(()=>{ if(!ts.length) return ''; if(!ts.some(t=>(t.checklist||[]).length)){ const st=ts[0].status||'todo'; return `<div class="dc-prog"><span class="sm muted">Задача: <b class="${st==='done'?'pos':''}">${TASK_COLS.find(c=>c[0]===st)?.[1]||''}</b></span></div>`; } const ck=ts.flatMap(t=>t.checklist||[]), all=ck.length||ts.length, n=ck.length? ck.filter(c=>c.done).length : done;
       return `<div class="dc-prog"><div class="hm-bar thin"><i style="width:${n/all*100}%"></i></div><span class="sm muted">${ck.length?`подпунктов выполнено: ${n} из ${all}`:`задач выполнено: ${n} из ${all}`}${ts.every(t=>t.status==='done')?' · задача выполнена':''}</span></div>`; })()}
     <div class="row dc-acts">
       ${x.status==='new'?`<button class="btn" data-dcact="accept" data-k="${k}">Принять</button>`:''}
       ${x.status==='new'?`<button class="btn danger" data-dcact="reject" data-k="${k}">Отклонить</button>`:''}
+      ${x.status==='rejected'?`<button class="btn secondary" data-dcact="unreject" data-k="${k}">Вернуть</button>`:''}
       ${x.status==='work'?'<button class="btn secondary" data-dcact="tasks">Открыть задачи</button>':''}
       ${d.ask?`<button class="btn secondary" data-dcact="ask" data-k="${k}">Разобрать в «Спросить»</button>`:''}
       ${p?`<button class="btn secondary" data-dcact="open" data-pid="${p.id}">Открыть товар</button>`:d.go?`<button class="btn secondary" data-dcact="go" data-go="${d.go}">Открыть раздел</button>`:''}
@@ -6484,6 +6508,10 @@ async function dcAccept(d, btn){
     if(act==='tasks'){ taskUi.fromDc=true; goTab('tasks'); return; }
     if(act==='open'){ openProductDaily(b.dataset.pid); return; }
     if(act==='go'){ goTab(b.dataset.go); return; }
+    if(act==='unreject'){
+      const key=b.dataset.k; await storeDelete('decision:'+key); if(dcCache) delete dcCache.states['decision:'+key];
+      homeToast('Отказ отменён — если правило срабатывает, решение снова во вкладке «Новые»'); paintDecisions(); return;
+    }
     const d=dcFind(b.dataset.k); if(!d) return;
     if(act==='ask'){
       askState.q=d.ask; if(d.pid){ askState.pid=d.pid; askRemember(d.pid); } if(d.mp) askState.mp=d.mp;
@@ -6494,13 +6522,16 @@ async function dcAccept(d, btn){
       const pause=dcSet('rejectPauseDays');
       const m=openModal(`<h2>Отклонить решение</h2><p class="hint">${hmEsc(d.title)}</p>
         <div class="md-f"><label>Причина</label><textarea id="dcReason" rows="3" placeholder="Например, уже делаем по-другому"></textarea></div>
-        <p class="note">Такое же решение по этому товару не будет предлагаться ${pause} дней.</p><div class="md-err neg" id="dcErr"></div>
+        <label class="tk-chk dc-forever"><input type="checkbox" id="dcForever"> Больше не предлагать (навсегда)</label>
+        <p class="note" id="dcRejNote">Такое же решение по этому товару не будет предлагаться ${pause} дней.</p><div class="md-err neg" id="dcErr"></div>
         <div class="row md-acts"><button class="btn danger" id="dcRejOk">Отклонить</button><button class="btn secondary" data-mclose>Отмена</button></div>`);
       setTimeout(()=>m.el.querySelector('#dcReason').focus(), 30);
+      m.el.querySelector('#dcForever').addEventListener('change', e=>{ m.el.querySelector('#dcRejNote').textContent = e.target.checked ? 'Такое же решение по этому товару больше не будет предлагаться. Вернуть можно во вкладке «Отклонены».' : `Такое же решение по этому товару не будет предлагаться ${pause} дней.`; });
       m.el.querySelector('#dcRejOk').addEventListener('click', async ()=>{
         const reason=m.el.querySelector('#dcReason').value.trim();
         if(!reason){ m.el.querySelector('#dcErr').textContent='Напишите причину — она поможет команде'; return; }
-        const r=await dcSaveState(d.key, {status:'rejected', reason, until:datePlusDays(todayISO(), pause), at:new Date().toISOString(), by:myEmail(), snap:d});
+        const forever=m.el.querySelector('#dcForever').checked;
+        const r=await dcSaveState(d.key, {status:'rejected', reason, forever, until: forever ? '9999-12-31' : datePlusDays(todayISO(), pause), at:new Date().toISOString(), by:myEmail(), snap:d});
         if(!r){ m.el.querySelector('#dcErr').textContent='Не удалось сохранить — проверьте соединение'; return; }
         m.close(); paintDecisions();
       });
