@@ -453,6 +453,8 @@
   table.antable td.an-name:hover{color:var(--blue);}
   .an-trend{font-weight:600;white-space:nowrap;}
   .an-trend.up{color:var(--pos);} .an-trend.down{color:var(--neg);} .an-trend.flat{color:var(--tx3);}
+  table.antable td.an-name.an-fam, table.antable td.an-name.an-fam:hover{cursor:default;color:var(--tx);}
+  .an-was{display:block;font-size:11px;font-weight:400;color:var(--tx3);margin-top:2px;white-space:nowrap;}
   table.antable td.neg{color:var(--neg);font-weight:600;}
   table.antable td.amb{color:var(--warn);font-weight:600;}
   .an-explain{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:var(--inset);border:1px solid var(--line);font-size:12.5px;color:var(--tx2);line-height:1.6;}
@@ -562,6 +564,10 @@
   .dc-card ol{margin:6px 0 8px 18px;padding:0;font-size:13px;line-height:1.6;color:var(--tx);}
   .dc-kv{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--tx2);margin:4px 0 2px;}
   .dc-prog{display:flex;align-items:center;gap:10px;margin-top:8px;} .dc-prog .hm-bar{flex:1;margin:0;}
+  .tk-cf{cursor:pointer;} .tk-cf:hover{border-color:var(--violet);} .tk-cf.on{border-color:var(--violet);box-shadow:inset 0 0 0 1px var(--violet);}
+  .dc-rel{margin-top:10px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;color:var(--tx2);}
+  .dc-rel b{color:var(--tx);} .dc-rel ul{margin:4px 0 6px;padding-left:18px;} .dc-rel li{margin:2px 0;}
+  .dc-rel a{color:var(--violet);cursor:pointer;text-decoration:none;} .dc-rel a:hover{text-decoration:underline;}
   .dc-acts{margin-top:12px;align-items:center;}
   .dc-forever{margin:0 0 6px;font-size:13.5px;}
   .set-sub{font-size:13px;margin:6px 0 8px;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;}
@@ -890,6 +896,7 @@
             <button data-days="28">28 дней</button>
           </div>
           <div class="segmented" id="anMpToggle">
+            <button data-mp="all">Все площадки</button>
             <button data-mp="wb" class="active">Wildberries</button>
             <button data-mp="ozon">Ozon</button>
             <button data-mp="ym">Яндекс Маркет</button>
@@ -1010,11 +1017,15 @@
       <p>Список того, что стоит сделать сегодня. Решения строятся <b>правилами</b> по данным Воронки (без ИИ) при каждом открытии вкладки и по кнопке «Пересчитать сейчас». В каждом: направление, срочность («Срочно» / «Важно»), действие, ситуация с цифрами, почему, шаги, оценка эффекта в ₽ в месяц, срок и как проверить результат.</p>
       <p><b>Правила</b> (пороги — в «Настройках»). <b>Найти и устранить причину падения заказов</b> — у карточки за 7 дней (по последний заполненный день) заказов на «Падение заказов» % и больше меньше, чем неделей раньше (все 7 дней заполнены, неделей раньше от 5 шт); подзадачи подбираются по этапу, который просел сильнее всего: показы, CTR, конверсия в корзину или в заказ. <b>Отключить неэффективную рекламу</b> — за 7 дней реклама от 500 ₽ и ни одного заказа. <b>Оптимизировать рекламу</b> — ДРР карточки за 7 дней выше предела. <b>Проверить рост ДРР</b> — ДРР ещё в пределе, но выросла к прошлой неделе на «Рост ДРР» % и больше. <b>Сформировать план продаж</b> — с 1-го числа, пока у какой-то строки плана нет плана на текущий месяц; срок — 10 число; исполнитель — руководитель из «Сотрудников». <b>Заказать партию у производства</b> — статус в «Обзоре закупа» «Просрочено» или «Скоро закупать»; сколько — как «Закуп, шт». <b>Ускорить продажи: избыток (площадка)</b> — на WB, Ozon или ЯМ остаток от 5 шт, и его больше чем на «Избыток» дней (по умолчанию 60) при продажах этой площадки, а на другой площадке этот товар продаётся быстрее; или остаток есть, а продаж за 14 дней нет. Скорость — средняя за 14 дней по последний заполненный день. Исполнитель — сотрудники этой площадки. <b>Пополнить запас на площадке</b> — одно решение (и одна задача) на площадку со списком товаров; новое — раз в неделю. Товар попадает в список, если на WB/Ozon/ЯМ запаса меньше «Запас мало» дней (продажи — средние за 14 дней по последний заполненный день), а на фулфилменте товар есть; сколько — до запаса на 2 недели, но не больше, чем есть на ФФ. <b>Пересчитать распределение товара</b> — по товарам, у которых дни запаса на площадках (остаток + ещё не отгруженное по плану «Поставок по площадкам») различаются больше чем на «Перекос запаса» дней; предлагается новая раскладка уже запланированного к отгрузке (план − отгружено) так, чтобы запаса везде хватало примерно на одинаковое число дней при скорости продаж каждой площадки за 14 дней; общее количество не меняется. Нераспределённый остаток на ФФ показывается подсказкой. Одна задача на неделю, исполнитель — руководитель. <b>Неудачное изменение карточки</b> — изменение за последние 30 дней, которое «Журнал изменений» на «Воронке и точках роста» оценил как неудачное (❌: главный показатель этого типа правки ухудшился на 3% и больше, данных достаточно, после него не было такого же изменения); название — что сделать по типу правки (главное фото — «Сменить главное фото или провести A/B-тест», заголовок, порядок фото, описание, цена, реклама); проверка результата — через 3 дня и позже (для ДРР — по окну журнала), в «Почему» — вывод журнала. По рекламе — только если ДРР после изменения выше предела. Остатки — из последних сохранённых недель «Остатков и динамики»; если неделя не текущая, это написано в решении.</p>
       <p><b>Кнопки.</b> «Принять» — открывается окно, где можно поменять срок задачи и написать комментарий (необязательно); создаётся <b>одна задача</b>, комментарий — последним абзацем её описания и на карточке решения в «В работе»: название — действие решения, в описании — ситуация с цифрами и вторым абзацем что сделать (без подпунктов; у задачи «Сформировать план продаж» — только ситуация). Исполнитель: «Сформировать план продаж» и «Пересчитать распределение» — руководитель; решения по конкретной площадке — сотрудники, у которых эта площадка отмечена в «Сотрудниках» (если их несколько — назначаются все, у каждого своя карточка); если таких нет — тот, кто принял. Решение пропадает из списка — дальше работа идёт в задаче; когда задача выполнена и прошла «Пауза после отказа», такое же решение может появиться снова, если проблема вернулась. «Отклонить» — с причиной; такое же решение по тому же товару не предлагается «Пауза после отказа» дней, а с галочкой «Больше не предлагать» — никогда. В блоке «Отклонённые» внизу есть кнопка «Вернуть» — отказ отменяется, и если правило срабатывает, решение снова появляется в списке. «Разобрать в «Спросить»» — открывает подходящий готовый вопрос по этому товару или площадке. На вкладке — только новые решения: принятые становятся задачами и дальше живут во вкладке «Задачи». Отклонённые — свёрнутым блоком «Отклонённые» внизу (там же «Вернуть»). Состояние решений общее для всей команды.</p>
+      <p><b>Задачи по этому товару.</b> Если по товару из решения уже есть незакрытые задачи на той же площадке (любые, в том числе созданные вручную; дубли карточек этой площадки тоже учитываются), на карточке решения видно «По этому товару уже есть задачи в работе: N» и до трёх задач — нажмите на название, чтобы открыть задачу. «Все задачи по товару» — откроет «Задачи» с фильтром по этому товару. «Привязать решение к задаче» — если уже существующая задача решает эту проблему: новая задача не создаётся, решение уходит из списка и считается «в работе», пока выбранная задача не выполнена (дальше — как у принятого решения: после выполнения и «Паузы после отказа» оно может появиться снова). Без привязки решение остаётся в списке — пометка только подсказывает, что товаром уже занимаются.</p>
     </div>
     <div class="panel">
       <h2>Задачи</h2>
       <p>Общая доска задач команды: «К выполнению», «В работе», «Готово». Карточку можно перетащить мышкой в другую колонку или нажать «←» / «→» на ней. Щелчок по карточке открывает задачу: название, описание, приоритет, срок, <b>товары</b> (можно несколько: найдите по названию и добавьте карточку или сразу «все карточки» товара; убрать — × на плашке) и <b>исполнители</b> (из «Настроек» → «Сотрудники») — их может быть несколько, у каждого свой статус; там же «Удалить». Под описанием — кнопки «Разобрать в «Спросить»» (подходящий готовый вопрос по товару задачи) и «Открыть товар» (его «Ежедневные данные»; только если в задаче один товар); у задач без товара из Центра решений — «Открыть раздел». Срок показывается как «сегодня», «завтра», «до дд.мм» или «просрочено N дн.» (красным).</p>
       <p><b>Несколько исполнителей.</b> Задача создаётся одна, а на доске у каждого исполнителя — своя карточка (в строке «Исполнитель» — его имя). Каждый двигает свою карточку, и она стоит в колонке его статуса. Статусы всех исполнителей видны в окне задачи. Название, срок, описание и товары общие: поменяли в задаче — изменилось на всех карточках. Задача считается выполненной, когда все исполнители перенесли свои карточки в «Готово». Фильтр по исполнителю показывает только его карточки.</p>
+      <p><b>Порядок карточек.</b> Список «Сортировка» рядом с фильтрами: «дата ▲» — сверху ближайший срок (как раньше), «дата ▼» — сверху самый дальний; «приоритет ▼» — сверху высокий, «приоритет ▲» — сверху низкий (▲ — по возрастанию, ▼ — по убыванию). При одинаковом сроке карточки дальше идут по приоритету, при одинаковом приоритете — по сроку; задачи без срока всегда внизу. Колонка «Готово» всегда по дате выполнения — свежие сверху. Выбор запоминается на этом компьютере.</p>
+      <p><b>Фильтр «Срок».</b> «Просрочено», «Сегодня», «Завтра», «Ближайшие 7 дней» (вместе с просроченными) — только незакрытые задачи; «Без срока» — задачи, где срок не указан. Плашки «на сегодня» и «просрочено» вверху тоже нажимаются и включают этот фильтр; повторное нажатие снимает его. Приоритет выбирается в соседнем фильтре.</p>
+      <p><b>Фильтр «Товар».</b> Показывает задачи по товару целиком — по всем его карточкам на WB, Ozon и Я.Маркете, включая дубли (например, «Набор медиум» — это и WB, и Ozon, и обе карточки ЯМ). Карточки считаются одним товаром, если у них одинаковое название (пометка «дубль» не учитывается) или общая «Группа плана» — так же, как в «Планировании закупа». В списке только товары, по которым есть задачи; «Без товара» — задачи, где товар не выбран.</p>
       <p>В меню у «Задач» — число карточек «К выполнению» (у сотрудника из списка — только его), у «Центра решений» — число новых решений. В задаче можно вести <b>подпункты</b> с галочками (добавить — ввести текст и Enter), на карточке видно «Подпункты: 1 из 3». Вверху — счётчики задач «открыто / на сегодня / просрочено» (по задаче целиком, а не по карточкам) и фильтры по исполнителю, приоритету и «Из Центра решений» (задачи, созданные кнопкой «Принять»). На карточке по строкам: исполнитель, приоритет, срок (если сегодня, завтра или просрочено — с пометкой), товар (по названию, площадки в скобках). Цвет полоски слева — приоритет: красный — высокий, жёлтый — средний, синий — низкий. Каждая задача хранится отдельно, поэтому сотрудники могут одновременно менять разные задачи. <b>Выполненные задачи удаляются через 30 дней</b> после выполнения.</p>
     </div>
     <div class="panel">
@@ -1025,7 +1036,7 @@
     </div>
     <div class="panel">
       <h2>Аналитика и реклама</h2>
-      <p>Таблица по карточкам одной площадки (кнопки WB / Ozon / Я.Маркет) из «Ежедневных данных». <b>Период</b> — «С начала месяца», 7, 14 или 28 дней (по умолчанию 7), всегда <b>по вчера включительно</b>. Тренд сравнивает период с таким же периодом перед ним, а «С начала месяца» — с теми же днями прошлого месяца; даты сравнения написаны вверху. Сверху: заказано ₽, тренд, расход на рекламу, ДРР.</p>
+      <p>Таблица по карточкам одной площадки (кнопки WB / Ozon / Я.Маркет) или всех сразу («Все площадки» — одна строка на товар: сумма всех его карточек на WB, Ozon и Я.Маркете вместе с дублями; карточки по отдельности — на кнопках площадок; итоги сверху — по всем площадкам) из «Ежедневных данных». <b>Период</b> — «С начала месяца», 7, 14 или 28 дней (по умолчанию 7), всегда <b>по вчера включительно</b>. Тренд сравнивает период с таким же периодом перед ним, а «С начала месяца» — с теми же днями прошлого месяца; даты сравнения написаны вверху. Сверху: заказано ₽ (и штуки, с прошлым периодом), тренд, расход на рекламу, ДРР. В таблице под «Заказано, ₽» и «Заказано, шт» серым — «было» за период для сравнения; «Тренд, ₽» и «Тренд, шт» — разница со стрелкой ▲/▼ и процентом под ней.</p>
       <p><b>Одна таблица по каждой карточке:</b> заказано ₽, тренд (процент — при наведении), заказано шт, расход на рекламу (все типы вместе), ДРР (красным — выше предела), ДРР от продаж (скоро), CPO (расход ÷ заказы), CPC (расход ÷ клики), оценка «В норме / Выше предела / Нет заказов / Нет рекламы», остаток на складах площадки (скоро) и «хватит на» — остаток ÷ средние заказы в день за 14 дней (скоро). Если таблица не помещается по ширине, она прокручивается вбок внутри карточки.</p>
       <p><b>Одна строка — одна карточка</b>, в том числе у карточек одной «Группы плана». Скрытые товары не показываются. Сортировка — по клику на заголовок, клик по товару открывает его в «Ежедневных данных».</p>
       <p><b>Остаток и «Хватит на»</b> (скоро) — появятся вместе с API: остатки будут обновляться ежедневно и по каждой карточке. Сейчас остаток вносится раз в неделю, и расчёт был бы неточным.</p>
@@ -5430,7 +5441,8 @@ async function renderAnalyticsTab(){
   const mp=anState.mp;
   const P=anPeriod(), yest=yesterdayISO(), from14=dateMinusDays(yest,13);
   document.getElementById('anPeriod').textContent=`${fmtRuDate(P.from)} — ${fmtRuDate(P.to)} · сравнение с ${fmtRuDate(P.pFrom)} — ${fmtRuDate(P.pTo)}`;
-  const prods=activeProducts().filter(p=>p.mp===mp);
+  // «Все площадки» — все карточки сразу, у названия — значок площадки
+  const prods=activeProducts().filter(p=>mp==='all' || p.mp===mp);
   if(prods.length===0){ body.innerHTML='<div class="panel"><div class="empty">На этой площадке нет товаров</div></div>'; return; }
   // Остаток и «Хватит на» пока не считаются: остаток вносится раз в неделю, расчёт был бы неточным.
   // TODO (этап «Интеграции»): включить по ежедневным остаткам из API — по каждой карточке отдельно.
@@ -5444,57 +5456,85 @@ async function renderAnalyticsTab(){
   if(my!==anRenderToken) return;
   const dmById={}; prods.forEach((p,i)=>{ dmById[p.id]=dms[i]||{}; });
   const limit=drrLimit(), lowDays=stockLowDays();
-  const rows=prods.map(p=>{
-    const dm=dmById[p.id];
-    const x={id:p.id, name:p.name, group:p.planGroup||null};
-    x.rub=sumDays(dm,P.from,P.to,'ordersRub'); x.units=sumDays(dm,P.from,P.to,'orders'); x.ad=sumDays(dm,P.from,P.to,'adspend'); x.clicks=sumDays(dm,P.from,P.to,'clicks');
-    x.prev=sumDays(dm,P.pFrom,P.pTo,'ordersRub');
+  const derive=x=>{
     x.trend=x.rub-x.prev; x.trendPct = x.prev>0 ? x.trend/x.prev*100 : null;
+    x.trendU=x.units-x.prevU; x.trendUPct = x.prevU>0 ? x.trendU/x.prevU*100 : null;
     x.drr = x.rub>0 ? x.ad/x.rub*100 : null;
     // без расхода на рекламу цена клика и заказа не имеют смысла — показываем «—», а не 0 ₽
     x.cpc = (x.ad>0 && x.clicks>0) ? x.ad/x.clicks : null;
     x.cpo = (x.ad>0 && x.units>0) ? x.ad/x.units : null;
     x.mark = x.ad<=0 ? 'off' : x.units<=0 ? 'none' : drrOver(x.drr) ? 'bad' : 'ok';
-    x.hasData=Object.keys(dm).some(d=>d>=P.from && d<=P.to && !dm[d].draft);
     return x;
+  };
+  const cards=prods.map(p=>{
+    const dm=dmById[p.id];
+    const x={id:p.id, name:p.name, group:p.planGroup||null, mp:p.mp};
+    x.rub=sumDays(dm,P.from,P.to,'ordersRub'); x.units=sumDays(dm,P.from,P.to,'orders'); x.ad=sumDays(dm,P.from,P.to,'adspend'); x.clicks=sumDays(dm,P.from,P.to,'clicks');
+    x.prev=sumDays(dm,P.pFrom,P.pTo,'ordersRub'); x.prevU=sumDays(dm,P.pFrom,P.pTo,'orders');
+    x.hasData=Object.keys(dm).some(d=>d>=P.from && d<=P.to && !dm[d].draft);
+    return derive(x);
   });
-  const tot=rows.reduce((s,r)=>({rub:s.rub+r.rub, units:s.units+r.units, ad:s.ad+r.ad, clicks:s.clicks+r.clicks, prev:s.prev+r.prev}),{rub:0,units:0,ad:0,clicks:0,prev:0});
+  // «Все площадки»: строка = товар целиком (WB + Ozon + ЯМ + дубли, как в фильтре задач) — только название, без площадок
+  let rows=cards;
+  if(mp==='all'){
+    const byId=new Map(cards.map(c=>[c.id,c]));
+    rows=taskProductFamilies().map(fm=>{
+      const cs=[...fm.ids].map(id=>byId.get(id)).filter(Boolean);
+      if(!cs.length) return null;
+      const f=k=>cs.reduce((s,c)=>s+c[k],0);
+      const x={id:cs[0].id, fam:fm.key, name:fm.name, cards:cs,
+        rub:f('rub'), units:f('units'), ad:f('ad'), clicks:f('clicks'), prev:f('prev'), prevU:f('prevU'), hasData:cs.some(c=>c.hasData)};
+      return derive(x);
+    }).filter(Boolean);
+  }
+  const tot=cards.reduce((s,r)=>({rub:s.rub+r.rub, units:s.units+r.units, ad:s.ad+r.ad, clicks:s.clicks+r.clicks, prev:s.prev+r.prev, prevU:s.prevU+r.prevU}),{rub:0,units:0,ad:0,clicks:0,prev:0,prevU:0});
   const totDrr = tot.rub>0 ? tot.ad/tot.rub*100 : null, totTrend=tot.rub-tot.prev, totTrendPct = tot.prev>0 ? totTrend/tot.prev*100 : null;
-  const sk={name:r=>r.name.toLowerCase(), rub:r=>r.rub, trend:r=>r.trend, units:r=>r.units, ad:r=>r.ad, drr:r=>r.drr??-1, cpo:r=>r.cpo??-1, cpc:r=>r.cpc??-1, mark:r=>({bad:0,none:1,ok:2,off:3})[r.mark]};
+  const sk={name:r=>r.name.toLowerCase(), rub:r=>r.rub, trend:r=>r.trend, units:r=>r.units, trendU:r=>r.trendU, ad:r=>r.ad, drr:r=>r.drr??-1, cpo:r=>r.cpo??-1, cpc:r=>r.cpc??-1, mark:r=>({bad:0,none:1,ok:2,off:3})[r.mark]};
   const key=sk[anState.sort]||sk.rub;
-  rows.sort((a,b)=>{ const x=key(a), y=key(b); return (x<y?-1:x>y?1:0)*anState.dir || b.rub-a.rub; });
+  const sorter=(a,b)=>{ const x=key(a), y=key(b); return (x<y?-1:x>y?1:0)*anState.dir || b.rub-a.rub; };
+  rows.sort(sorter);
   const th=(k,label,num)=>`<th class="an-sort${num?' num':''}${anState.sort===k?' on':''}" data-ansort="${k}">${label}${anState.sort===k?(anState.dir<0?' ▼':' ▲'):''}</th>`;
   const soonTh=`<th class="num" title="Расход на рекламу ÷ фактически выкупленная сумма (с учётом отмен и возвратов). Появится после подключения API площадок. Выкуп приходит через дни и недели после заказа, поэтому за короткий период этот ДРР будет завышен — смотрите его за 28 дней.">ДРР от продаж<span class="an-soon-h">СКОРО</span></th>`;
   const soonTd='<td class="num" style="color:var(--tx3);">—</td>';
   const drrTd=v=>`<td class="num${drrOver(v)?' neg':''}">${v!==null? fmt1(v)+'%' : '—'}</td>`;
-  const trendHtml=r=>{
-    if(r.rub===0 && r.prev===0) return '<span class="an-trend flat">—</span>';
-    const cls=r.trend>0?'up':r.trend<0?'down':'flat';
-    const tip = r.trendPct!==null ? `${r.trendPct>0?'+':''}${fmt1(r.trendPct)}% · ${fmt(r.rub)} ₽ против ${fmt(r.prev)} ₽` : `${fmt(r.rub)} ₽, в периоде для сравнения продаж не было`;
-    return `<span class="an-trend ${cls}" title="${tip}">${r.trend>0?'▲ +':r.trend<0?'▼ ':''}${fmt(r.trend)} ₽</span>`;
+  // тренд: стрелка и разница, под ней — процент к прошлому периоду; u — в штуках
+  const trendHtml=(r,u)=>{
+    const cur=u?r.units:r.rub, prev=u?r.prevU:r.prev, d=u?r.trendU:r.trend, pct=u?r.trendUPct:r.trendPct, unit=u?' шт':' ₽';
+    if(cur===0 && prev===0) return '<span class="an-trend flat">—</span>';
+    const cls=d>0?'up':d<0?'down':'flat';
+    const tip = pct!==null ? `${fmt(cur)}${unit} против ${fmt(prev)}${unit}` : `${fmt(cur)}${unit}, в периоде для сравнения продаж не было`;
+    const sub = pct!==null ? (pct>0?'+':'')+fmt1(pct)+'%' : '';
+    return `<span class="an-trend ${cls}" title="${tip}">${d>0?'▲ +':d<0?'▼ ':''}${fmt(d)}${unit}<span class="an-was">${sub}</span></span>`;
   };
+  const wasHtml=(v,unit)=>`<span class="an-was" title="За период для сравнения">было ${fmt(v)}${unit}</span>`;
   const MARK={ok:['ok','В норме'], bad:['bad','Выше предела'], none:['none','Нет заказов'], off:['off','Нет рекламы']};
-  const thead=`${th('name','Товар')}${th('rub','Заказано, ₽',1)}${th('trend','Тренд, ₽',1)}${th('units','Заказано, шт',1)}${th('ad','Расход на рекламу, ₽',1)}${th('drr','ДРР',1)}${soonTh}${th('cpo','CPO, ₽',1)}${th('cpc','CPC, ₽',1)}${th('mark','Оценка')}<th class="num" title="Появится вместе с API: остатки будут обновляться ежедневно по каждой карточке. Сейчас остаток вносится раз в неделю, и расчёт был бы неточным.">Остаток<span class="an-soon-h">СКОРО</span></th><th class="num" title="Остаток ÷ средние заказы в день за последние 14 дней. Появится вместе с ежедневными остатками из API.">Хватит на<span class="an-soon-h">СКОРО</span></th><th></th>`;
-  const rowsHtml=rows.map(r=>`<tr>
-    <td class="an-name" data-anopen="${r.id}" title="Открыть в «Ежедневных данных»">${hmEsc(r.name)}${r.group?` <span class="badge" style="background:var(--funnel-bg);color:var(--funnel);">группа: ${hmEsc(r.group)}</span>`:''}${r.hasData?'':' <span class="badge b-gray">нет данных</span>'}</td>
-    <td class="num">${fmt(r.rub)} ₽</td><td class="num">${trendHtml(r)}</td><td class="num">${fmt(r.units)}</td>
+  const thead=`${th('name','Товар')}${th('rub','Заказано, ₽',1)}${th('trend','Тренд, ₽',1)}${th('units','Заказано, шт',1)}${th('trendU','Тренд, шт',1)}${th('ad','Расход на рекламу, ₽',1)}${th('drr','ДРР',1)}${soonTh}${th('cpo','CPO, ₽',1)}${th('cpc','CPC, ₽',1)}${th('mark','Оценка')}<th class="num" title="Появится вместе с API: остатки будут обновляться ежедневно по каждой карточке. Сейчас остаток вносится раз в неделю, и расчёт был бы неточным.">Остаток<span class="an-soon-h">СКОРО</span></th><th class="num" title="Остаток ÷ средние заказы в день за последние 14 дней. Появится вместе с ежедневными остатками из API.">Хватит на<span class="an-soon-h">СКОРО</span></th><th></th>`;
+  const nameTd=r=>{
+    // «Все площадки»: название товара не открывает «Ежедневные данные» и не подсвечивается
+    if(r.cards) return `<td class="an-name an-fam">${hmEsc(r.name)}${r.hasData?'':' <span class="badge b-gray">нет данных</span>'}</td>`;
+    return `<td class="an-name" data-anopen="${r.id}" title="Открыть в «Ежедневных данных»">${mp==='all'?`<span class="badge ${r.mp}">${MP_LABEL[r.mp]}</span> `:''}${hmEsc(r.name)}${r.group?` <span class="badge" style="background:var(--funnel-bg);color:var(--funnel);">группа: ${hmEsc(r.group)}</span>`:''}${r.hasData?'':' <span class="badge b-gray">нет данных</span>'}</td>`;
+  };
+  const rowHtml=r=>`<tr>
+    ${nameTd(r)}
+    <td class="num">${fmt(r.rub)} ₽${wasHtml(r.prev,' ₽')}</td><td class="num">${trendHtml(r)}</td><td class="num">${fmt(r.units)}${wasHtml(r.prevU,'')}</td><td class="num">${trendHtml(r,1)}</td>
     <td class="num">${fmt(r.ad)} ₽</td>${drrTd(r.drr)}${soonTd}
     <td class="num">${r.cpo!==null? fmt(r.cpo)+' ₽' : '—'}</td><td class="num">${r.cpc!==null? fmt1(r.cpc)+' ₽' : '—'}</td>
     <td><span class="ad-mark ${MARK[r.mark][0]}">${MARK[r.mark][1]}</span></td>
     ${soonTd}${soonTd}
     <td class="an-askcell"><button type="button" class="an-ask" data-anask="${r.id}" title="Спросить про этот товар"><svg class="hm-qi" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg><span>Спросить</span></button></td>
-  </tr>`).join('');
+  </tr>`;
+  const rowsHtml=rows.map(r=>rowHtml(r)).join('');
   const hours=[2,1,1,1,1,2,3,5,7,9,10,11,12,12,11,11,12,13,14,15,14,11,7,4];
   body.innerHTML=`<div class="hm-kpis">
-      <div class="panel hm-kpi"><div class="hm-lbl">Заказано, ₽</div><div class="hm-val">${fmt(tot.rub)} ₽</div></div>
+      <div class="panel hm-kpi"><div class="hm-lbl">Заказано, ₽</div><div class="hm-val">${fmt(tot.rub)} ₽</div><div class="sm muted">было ${fmt(tot.prev)} ₽ · ${fmt(tot.units)} шт (было ${fmt(tot.prevU)} шт)</div></div>
       <div class="panel hm-kpi"><div class="hm-lbl">Тренд к ${P.label}, ₽</div><div class="hm-val ${totTrend>0?'pos':totTrend<0?'neg':''}">${totTrend>0?'▲ +':totTrend<0?'▼ ':''}${fmt(totTrend)} ₽</div><div class="sm muted">${totTrendPct!==null? (totTrendPct>0?'+':'')+fmt1(totTrendPct)+'% · было '+fmt(tot.prev)+' ₽' : 'в периоде для сравнения продаж не было'}</div></div>
       <div class="panel hm-kpi"><div class="hm-lbl">Расход на рекламу</div><div class="hm-val">${fmt(tot.ad)} ₽</div></div>
       <div class="panel hm-kpi"><div class="hm-lbl">ДРР</div><div class="hm-val${drrOver(totDrr)?' neg':''}">${totDrr!==null? fmt1(totDrr)+'%' : '—'}</div></div>
     </div>
     <div class="panel">
       <div class="table-scroll"><table class="antable"><thead><tr>${thead}</tr></thead><tbody>${rowsHtml}</tbody></table></div>
-      <div class="an-explain">Одна строка — одна карточка, в том числе у карточек одной «Группы плана». Скрытые товары не показываются. Нажмите на заголовок столбца, чтобы отсортировать, на товар — чтобы открыть его в «Ежедневных данных».<br>
-        <b>Заказано, ₽ / шт</b> — сумма заказов за период. <b>Тренд</b> — заказано ₽ за период минус заказано ₽ за период для сравнения (указан вверху); ▲ — рост, ▼ — падение, процент — при наведении. <b>Расход на рекламу</b> — за период (все типы рекламы вместе). <b>Оценка:</b> «В норме» — ДРР не выше предела; «Выше предела» — ДРР выше; «Нет заказов» — расход есть, заказов нет; «Нет рекламы» — расхода не было. <b>Остаток</b> — на складах этой площадки. <b>Хватит на</b> — остаток ÷ средние заказы в день за последние 14 дней; красным — меньше ${lowDays} дн.</div>
+      <div class="an-explain">${mp==='all' ? 'Одна строка — товар целиком: сумма его карточек на WB, Ozon и Я.Маркете вместе с дублями (одинаковое название без «дубль» или общая «Группа плана»). Карточки по отдельности (и переход в «Ежедневные данные» по названию) — на кнопках площадок.' : 'Одна строка — одна карточка, в том числе у карточек одной «Группы плана».'} Скрытые товары не показываются. Нажмите на заголовок столбца, чтобы отсортировать, на товар — чтобы открыть его в «Ежедневных данных».<br>
+        <b>Заказано, ₽ / шт</b> — сумма заказов за период. Под значением серым — <b>«было»</b>: сколько заказали за период для сравнения (указан вверху). <b>Тренд, ₽ / шт</b> — разница с периодом для сравнения; ▲ — рост, ▼ — падение, под ней — изменение в процентах (если в периоде для сравнения заказов не было, процента нет). <b>Расход на рекламу</b> — за период (все типы рекламы вместе). <b>Оценка:</b> «В норме» — ДРР не выше предела; «Выше предела» — ДРР выше; «Нет заказов» — расход есть, заказов нет; «Нет рекламы» — расхода не было. <b>Остаток</b> — на складах этой площадки. <b>Хватит на</b> — остаток ÷ средние заказы в день за последние 14 дней; красным — меньше ${lowDays} дн.</div>
     </div>
     <div class="panel hm-card" style="margin-top:16px;"><div class="hm-h">Заказы по часам <span class="ad-soon">скоро</span></div>
       <div class="muted sm">Покажет, в какие часы приходит больше заказов: пиковый час, лучшее окно на 4 часа и часы без заказов — для настройки расписания показов и ручных ставок там, где кабинет это позволяет.</div>
@@ -5873,7 +5913,24 @@ const TASK_PRIO={high:['Высокий','b-red'],mid:['Средний','b-amber'
 const TASK_KEEP_DAYS=30;
 let tasksCache=null;   // {id: задача} — последняя загрузка
 let staffCache=[];
-const taskUi={who:'', prio:'', fromDc:false};
+const taskUi={who:'', prio:'', fromDc:false, prod:'', due:'', sort:'due'};
+// порядок карточек в колонках «К выполнению» и «В работе» («Готово» — всегда по дате выполнения, свежие сверху)
+try{ const v=localStorage.getItem('tkSort'); if(v) taskUi.sort=v; }catch(_){} // выбранный порядок запоминается на этом компьютере
+const TASK_SORT={prioAsc:'Сортировка: приоритет ▲', prio:'Сортировка: приоритет ▼', due:'Сортировка: дата ▲', dueDesc:'Сортировка: дата ▼'};
+const TASK_SORT_HINT={prioAsc:'сверху низкий приоритет', prio:'сверху высокий приоритет', due:'сверху ближайший срок', dueDesc:'сверху самый дальний срок'};
+// фильтр «Срок»: over — просрочено, today, tomorrow, week — ближайшие 7 дней (вместе с просроченными), none — без срока
+const TASK_DUE_F={over:'Просрочено', today:'Сегодня', tomorrow:'Завтра', week:'Ближайшие 7 дней', none:'Без срока'};
+function taskDueMatch(t, f){
+  if(!f) return true;
+  if(f==='none') return !t.due;
+  if(!t.due || t.status==='done') return false;
+  const today=todayISO();
+  if(f==='over') return t.due<today;
+  if(f==='today') return t.due===today;
+  if(f==='tomorrow') return t.due===datePlusDays(today,1);
+  if(f==='week') return t.due<=datePlusDays(today,6);
+  return true;
+}
 
 // счётчик у пункта меню (0 — не показываем)
 function setNavCount(tab, n, title){
@@ -6023,10 +6080,12 @@ function cardSorter(a,b){
     const da=(taskPeople(a.t).find(p=>p.email===a.pe)||a.t).doneAt||'', db=(taskPeople(b.t).find(p=>p.email===b.pe)||b.t).doneAt||'';
     return db.localeCompare(da);
   }
-  const da=a.t.due||'9999', db=b.t.due||'9999';
-  if(da!==db) return da.localeCompare(db);
-  const po={high:0,mid:1,low:2}; const d=(po[a.t.prio]??1)-(po[b.t.prio]??1);
-  return d || (a.t.title||'').localeCompare(b.t.title||'','ru') || (a.pe||'').localeCompare(b.pe||'');
+  // без срока — всегда внизу, при любом порядке
+  const da=a.t.due||'', db=b.t.due||'';
+  const byDue = (da===db) ? 0 : !da ? 1 : !db ? -1 : (taskUi.sort==='dueDesc' ? db.localeCompare(da) : da.localeCompare(db));
+  const po={high:0,mid:1,low:2}; const byPrio=((po[a.t.prio]??1)-(po[b.t.prio]??1))*(taskUi.sort==='prioAsc'?-1:1);
+  const first = (taskUi.sort==='prio'||taskUi.sort==='prioAsc') ? (byPrio||byDue) : (byDue||byPrio);
+  return first || (a.t.title||'').localeCompare(b.t.title||'','ru') || (a.pe||'').localeCompare(b.pe||'');
 }
 // карточка — название и поля по строкам: исполнитель, приоритет, срок, товар
 function taskCardHtml(c, colIdx){
@@ -6052,23 +6111,47 @@ function taskCardHtml(c, colIdx){
   </div>`;
 }
 const PERSON_MARK={todo:'', doing:'◐', done:'✓'};
+// Фильтр «Товар»: один товар = все его карточки на всех площадках и дубли (как строки закупа:
+// одинаковое название без «_дубль» или одна «Группа плана»). Скрытые карточки тоже учитываются — по ним бывают старые задачи.
+function taskProductFamilies(){
+  const prods=state.products, parent=new Map(prods.map(p=>[p.id,p.id]));
+  const find=id=>{ while(parent.get(id)!==id) id=parent.get(id); return id; };
+  const seen=new Map();
+  const link=(k,id)=>{ if(seen.has(k)){ const a=find(id), b=find(seen.get(k)); if(a!==b) parent.set(a,b); } else seen.set(k,id); };
+  prods.forEach(p=>{ link('n:'+zakupMatchName(p.name), p.id); if(p.planGroup) link('g:'+sanitizeGroupKey(p.planGroup), p.id); });
+  const fams=new Map();
+  prods.forEach(p=>{ const r=find(p.id); if(!fams.has(r)) fams.set(r,[]); fams.get(r).push(p); });
+  return [...fams.values()].map(ms=>{
+    const plain=ms.filter(m=>!/дубль/i.test(m.name)).sort((a,b)=>a.name.length-b.name.length);
+    return { key:find(ms[0].id), name:(plain[0]||ms[0]).name, ids:new Set(ms.map(m=>m.id)) };
+  });
+}
 function paintTasks(){
   const body=document.getElementById('tasksBody');
   const all=Object.values(tasksCache||{}), today=todayISO();
   const open=all.filter(t=>t.status!=='done');
   const nToday=open.filter(t=>t.due===today).length, nOver=overdueTasks(all).length;
+  // в списке «Товар» — только товары, по которым есть задачи
+  const fams=taskProductFamilies().filter(fm=>all.some(t=>taskPids(t).some(id=>fm.ids.has(id)))).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+  if(taskUi.prod && taskUi.prod!=='-' && !fams.some(fm=>fm.key===taskUi.prod)) taskUi.prod='';
+  const fam=fams.find(fm=>fm.key===taskUi.prod);
   const f=all.filter(t=>(!taskUi.who || (taskUi.who==='-' ? !taskPeople(t).length : !!personStatus(t, taskUi.who)))
-    && (!taskUi.prio || t.prio===taskUi.prio) && (!taskUi.fromDc || t.src==='decision'));
+    && (!taskUi.prio || t.prio===taskUi.prio) && (!taskUi.fromDc || t.src==='decision')
+    && (!taskUi.prod || (taskUi.prod==='-' ? !taskPids(t).length : taskPids(t).some(id=>fam.ids.has(id))))
+    && taskDueMatch(t, taskUi.due));
   const cards=boardCards(f);
   const emails=[...new Set([...staffCache.map(s=>(s.email||'').toLowerCase()).filter(Boolean), ...all.flatMap(t=>taskPeople(t).map(p=>p.email)).filter(Boolean)])];
   body.innerHTML=`<div class="tk-cnt">
       <div class="panel tk-c"><b>${open.length}</b><span>открыто задач</span></div>
-      <div class="panel tk-c"><b class="${nToday?'amb':''}">${nToday}</b><span>на сегодня</span></div>
-      <div class="panel tk-c"><b class="${nOver?'neg':''}">${nOver}</b><span>просрочено</span></div>
+      <div class="panel tk-c tk-cf${taskUi.due==='today'?' on':''}" data-tkdue="today" title="Показать задачи на сегодня"><b class="${nToday?'amb':''}">${nToday}</b><span>на сегодня</span></div>
+      <div class="panel tk-c tk-cf${taskUi.due==='over'?' on':''}" data-tkdue="over" title="Показать просроченные задачи"><b class="${nOver?'neg':''}">${nOver}</b><span>просрочено</span></div>
     </div>
     <div class="tk-f">
       <select id="tkWho"><option value="">Все исполнители</option><option value="-"${taskUi.who==='-'?' selected':''}>Без исполнителя</option>${emails.map(e=>`<option value="${hmEsc(e)}"${taskUi.who===e?' selected':''}>${hmEsc(staffName(e))}</option>`).join('')}</select>
       <select id="tkPrio"><option value="">Любой приоритет</option>${Object.entries(TASK_PRIO).map(([k,v])=>`<option value="${k}"${taskUi.prio===k?' selected':''}>${v[0]}</option>`).join('')}</select>
+      <select id="tkDue"><option value="">Любой срок</option>${Object.entries(TASK_DUE_F).map(([k,v])=>`<option value="${k}"${taskUi.due===k?' selected':''}>${v}</option>`).join('')}</select>
+      <select id="tkProd" title="Товар со всеми карточками: все площадки и дубли"><option value="">Все товары</option><option value="-"${taskUi.prod==='-'?' selected':''}>Без товара</option>${fams.map(fm=>`<option value="${fm.key}"${taskUi.prod===fm.key?' selected':''}>${hmEsc(fm.name)}</option>`).join('')}</select>
+      <select id="tkSort" title="Порядок карточек в колонках">${Object.entries(TASK_SORT).map(([k,v])=>`<option value="${k}" title="${TASK_SORT_HINT[k]}"${taskUi.sort===k?' selected':''}>${v}</option>`).join('')}</select>
       <label class="tk-chk"><input type="checkbox" id="tkDc"${taskUi.fromDc?' checked':''}> Из Центра решений</label>
     </div>
     <div class="tk-kan">${TASK_COLS.map(([k,l],i)=>{
@@ -6091,6 +6174,8 @@ async function moveTask(id, status, pe){
 (function initTasksEvents(){
   const body=document.getElementById('tasksBody');
   body.addEventListener('click', e=>{
+    const cf=e.target.closest('[data-tkdue]');
+    if(cf){ taskUi.due = taskUi.due===cf.dataset.tkdue ? '' : cf.dataset.tkdue; paintTasks(); return; } // повторный клик — снять фильтр
     const mv=e.target.closest('[data-tkmove]');
     const card=e.target.closest('[data-tid]');
     if(mv && card){
@@ -6104,6 +6189,9 @@ async function moveTask(id, status, pe){
   body.addEventListener('change', e=>{
     if(e.target.id==='tkWho'){ taskUi.who=e.target.value; paintTasks(); }
     if(e.target.id==='tkPrio'){ taskUi.prio=e.target.value; paintTasks(); }
+    if(e.target.id==='tkProd'){ taskUi.prod=e.target.value; paintTasks(); }
+    if(e.target.id==='tkDue'){ taskUi.due=e.target.value; paintTasks(); }
+    if(e.target.id==='tkSort'){ taskUi.sort=e.target.value; try{ localStorage.setItem('tkSort', taskUi.sort); }catch(_){} paintTasks(); }
     if(e.target.id==='tkDc'){ taskUi.fromDc=e.target.checked; paintTasks(); }
   });
   // перетаскивание карточек между колонками (переносится карточка конкретного исполнителя)
@@ -6556,8 +6644,23 @@ function paintDecisions(){
     ${rej.length?`<details class="dc-rej"${dcRejOpen?' open':''}><summary>Отклонённые — ${rej.length}</summary><div class="dc-list">${rej.map(dcCardHtml).join('')}</div></details>`:''}`;
   const det=body.querySelector('.dc-rej'); if(det) det.addEventListener('toggle', ()=>{ dcRejOpen=det.open; });
 }
+// Незакрытые задачи по тому же товару (любая карточка товара, дубли, все площадки), кроме задач самого решения
+function dcRelatedTasks(d, s){
+  const pids=d.pids||(d.pid?[d.pid]:[]); if(!pids.length || !tasksCache) return {tasks:[], famKey:''};
+  // площадка решения: своя у решения (поставки, избыток) или площадка карточки; учитываем только карточки этой площадки (вкл. дубли)
+  const mpOf=id=>(state.products.find(p=>p.id===id)||{}).mp;
+  const mps=new Set(d.mp ? [d.mp] : pids.map(mpOf).filter(Boolean));
+  const fams=taskProductFamilies().filter(fm=>pids.some(id=>fm.ids.has(id)))
+    .map(fm=>({...fm, ids:new Set([...fm.ids].filter(id=>mps.has(mpOf(id))))}));
+  if(!fams.length) return {tasks:[], famKey:''};
+  const own=new Set((s&&s.taskIds)||[]);
+  const tasks=Object.values(tasksCache).filter(t=>t.status!=='done' && !own.has(t.id) && taskPids(t).some(id=>fams.some(fm=>fm.ids.has(id))))
+    .sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+  return {tasks, famKey: fams.length===1 ? fams[0].key : ''};
+}
 function dcCardHtml(x){
   const d=x.d, s=x.s||{}, today=todayISO();
+  const rel = x.status==='new' ? dcRelatedTasks(d, s) : {tasks:[]};
   const p=d.pid ? state.products.find(q=>q.id===d.pid) : null;
   const ts=(s.taskIds||[]).map(id=>(tasksCache||{})[id]).filter(Boolean), done=ts.filter(t=>t.status==='done').length;
   const due=fmtRuDate(d.dueDate || datePlusDays((x.status==='new'? today : (s.at||'').slice(0,10)||today), d.dueDays||2)).slice(0,5);
@@ -6575,6 +6678,10 @@ function dcCardHtml(x){
       ${s.by && x.status!=='new'?`<span class="muted">${x.status==='work'||x.status==='done'?'Принял':'Отклонил'}: ${hmEsc(staffName(s.by))}</span>`:''}</div>
     ${(()=>{ if(!ts.length) return ''; if(!ts.some(t=>(t.checklist||[]).length)){ const st=ts[0].status||'todo'; return `<div class="dc-prog"><span class="sm muted">Задача: <b class="${st==='done'?'pos':''}">${TASK_COLS.find(c=>c[0]===st)?.[1]||''}</b></span></div>`; } const ck=ts.flatMap(t=>t.checklist||[]), all=ck.length||ts.length, n=ck.length? ck.filter(c=>c.done).length : done;
       return `<div class="dc-prog"><div class="hm-bar thin"><i style="width:${n/all*100}%"></i></div><span class="sm muted">${ck.length?`подпунктов выполнено: ${n} из ${all}`:`задач выполнено: ${n} из ${all}`}${ts.every(t=>t.status==='done')?' · задача выполнена':''}</span></div>`; })()}
+    ${s.linked && ts.length?`<div class="dc-kv"><span>Привязано к задаче: <b>${hmEsc(ts[0].title)}</b></span></div>`:''}
+    ${rel.tasks.length?`<div class="dc-rel">По этому товару уже есть задачи в работе: <b>${rel.tasks.length}</b>
+      <ul>${rel.tasks.slice(0,3).map(t=>`<li><a data-dcact="opentask" data-tid="${t.id}">${hmEsc(t.title)}</a> <span class="muted">· ${TASK_COLS.find(c=>c[0]===(t.status||'todo'))?.[1]||''}${t.due?' · срок '+fmtRuDate(t.due).slice(0,5):''}</span></li>`).join('')}${rel.tasks.length>3?`<li class="muted">и ещё ${rel.tasks.length-3}</li>`:''}</ul>
+      ${rel.famKey?`<a data-dcact="reltasks" data-fam="${rel.famKey}">Все задачи по товару</a> · `:''}<a data-dcact="link" data-k="${k}">Привязать решение к задаче</a></div>`:''}
     <div class="row dc-acts">
       ${x.status==='new'?`<button class="btn" data-dcact="accept" data-k="${k}">Принять</button>`:''}
       ${x.status==='new'?`<button class="btn danger" data-dcact="reject" data-k="${k}">Отклонить</button>`:''}
@@ -6620,6 +6727,8 @@ async function dcAccept(d, btn, comment, dueOverride){
     if(act==='tasks'){ taskUi.fromDc=true; goTab('tasks'); return; }
     if(act==='open'){ openProductDaily(b.dataset.pid); return; }
     if(act==='go'){ goTab(b.dataset.go); return; }
+    if(act==='opentask'){ const t=(tasksCache||{})[b.dataset.tid]; if(t) openTaskEditor(t); return; }
+    if(act==='reltasks'){ Object.assign(taskUi, {who:'', prio:'', fromDc:false, due:'', prod:b.dataset.fam}); goTab('tasks'); return; }
     if(act==='unreject'){
       const key=b.dataset.k; await storeDelete('decision:'+key); if(dcCache) delete dcCache.states['decision:'+key];
       homeToast('Отказ отменён — если правило срабатывает, решение снова во вкладке «Новые»'); paintDecisions(); return;
@@ -6637,6 +6746,25 @@ async function dcAccept(d, btn, comment, dueOverride){
         <div class="row md-acts"><button class="btn" id="dcAccOk">Принять</button><button class="btn secondary" data-mclose>Отмена</button></div>`);
       setTimeout(()=>m.el.querySelector('#dcComment').focus(), 30);
       m.el.querySelector('#dcAccOk').addEventListener('click', async ()=>{ const c=m.el.querySelector('#dcComment').value.trim(), du=m.el.querySelector('#dcDue').value; m.close(); await dcAccept(d, b, c, du||null); });
+      return;
+    }
+    // «Привязать к задаче»: решение уходит в работу без новой задачи — его закрывает выбранная (в т.ч. созданная вручную) задача
+    if(act==='link'){
+      const rel=dcRelatedTasks(d, null).tasks, relIds=new Set(rel.map(t=>t.id));
+      const others=Object.values(tasksCache||{}).filter(t=>t.status!=='done' && !relIds.has(t.id)).sort((a,b)=>(a.title||'').localeCompare(b.title||'','ru'));
+      const opt=t=>`<option value="${t.id}">${hmEsc(t.title)}${t.due?' — срок '+fmtRuDate(t.due).slice(0,5):''}</option>`;
+      const m=openModal(`<h2>Привязать решение к задаче</h2><p class="hint">${hmEsc(d.title)}</p>
+        <div class="md-f"><label>Задача, которая закрывает это решение</label><select id="dcLinkSel">
+          ${rel.length?`<optgroup label="По этому товару">${rel.map(opt).join('')}</optgroup>`:''}${others.length?`<optgroup label="Другие задачи">${others.map(opt).join('')}</optgroup>`:''}</select></div>
+        <p class="note">Новая задача не создаётся. Решение будет «в работе», пока эта задача не выполнена, — как принятое.</p><div class="md-err neg" id="dcErr"></div>
+        <div class="row md-acts"><button class="btn" id="dcLinkOk">Привязать</button><button class="btn secondary" data-mclose>Отмена</button></div>`);
+      m.el.querySelector('#dcLinkOk').addEventListener('click', async ()=>{
+        const tid=m.el.querySelector('#dcLinkSel').value;
+        if(!tid){ m.el.querySelector('#dcErr').textContent='Нет открытых задач'; return; }
+        const r=await dcSaveState(d.key, {status:'work', at:new Date().toISOString(), by:myEmail(), taskIds:[tid], linked:true, snap:d, until:null, reason:null, comment:null});
+        if(!r){ m.el.querySelector('#dcErr').textContent='Не удалось сохранить — проверьте соединение'; return; }
+        m.close(); homeToast('Решение привязано к задаче'); paintDecisions();
+      });
       return;
     }
     if(act==='reject'){
