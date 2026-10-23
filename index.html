@@ -191,6 +191,13 @@
   table.daytable .wow{display:inline-block;margin-left:8px;font-size:11px;font-weight:600;white-space:nowrap;cursor:help;}
   table.daytable .wow.good{color:var(--pos);} table.daytable .wow.bad{color:var(--neg);} table.daytable .wow.flat{color:var(--tx3);}
   table.daytable td.sticky2{white-space:nowrap;}
+  table.daytable td.sticky3, table.daytable th.sticky3{min-width:96px;max-width:96px;width:96px;font-weight:400;padding-left:8px;padding-right:8px;}
+  table.daytable .dl-spark{display:block;width:80px;height:20px;fill:var(--violet);opacity:.75;}
+  .pf-table td.pf-open{cursor:pointer;} .pf-table td.pf-open:hover{color:var(--blue);}
+  .dl-tasks{margin-top:10px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;}
+  .dl-tasks summary{cursor:pointer;color:var(--tx2);} .dl-tasks ul{margin:6px 0 2px;padding-left:18px;} .dl-tasks li{margin:3px 0;}
+  .dl-tasks a{color:var(--violet);cursor:pointer;} .dl-tasks a:hover{text-decoration:underline;}
+  .dl-tasks-none{margin-top:8px;}
   table.daytable th.th2{white-space:normal;line-height:1.35;}
   table.daytable .pl{display:inline-block;padding:2px 8px;border-radius:7px;font-weight:600;line-height:1.35;}
   table.daytable .pl.pl-ok{background:var(--pos-bg);color:var(--pos);}
@@ -781,6 +788,7 @@
         <div class="field"><label>Площадка</label><select id="daily_mp"><option value="wb">Wildberries</option><option value="ozon">Ozon</option><option value="ym">Яндекс Маркет</option></select></div>
         <div class="field" style="min-width:220px;"><label>Товар</label><select id="daily_product"></select></div>
       </div>
+      <div id="dailyTasksWrap"></div>
     </div>
     <div class="panel">
       <h2>История по товару</h2>
@@ -1083,6 +1091,9 @@
       <p><b>План по дням</b> — строки «Нужно в день, ₽» и «Выполнение плана» под «Заказы, ₽» (только для просмотра). «Нужно в день» пересчитывается каждый день: (план месяца из «План и факт» − уже заказано за предыдущие дни месяца) ÷ дни до конца месяца, включая этот день. Недобрали — на следующие дни нужно больше, перевыполнили — меньше; если план месяца уже выполнен — 0 ₽ и ✓. При наведении виден и ровный план (план месяца ÷ число дней). Если товар в группе плана — берётся план группы, а факт — сумма «Заказы, ₽» всех карточек группы (появляется строка «Заказы группы, ₽»). Выполнение дня = заказано ₽ за день ÷ «нужно» этого дня; считается для заполненных дней (черновики не учитываются). Цвет: зелёный — 100% и больше, жёлтый — 85–99%, красный — меньше 85%. Ячейка ДРР дня красная, если ДРР выше предела из «Настроек». В «Итого»: в строке «Нужно в день» — сколько нужно заказывать в день с сегодняшнего дня до конца месяца (за прошлые месяцы — план месяца); в «Выполнении плана» — то же, что на «План и факт» (заказы за месяц ÷ план месяца), цвет — по темпу: успеваем ли за ровный план прошедших дней. Если плана на месяц нет — «—» без цвета.</p>
       <p><b>Числа</b> — показываются с разрядами (4 216), суммы в рублях — с «₽». При щелчке по ячейке число становится «голым» для правки; вводить можно и с пробелами (15 300).</p>
       <p><b>Изменение к прошлой неделе</b> — рядом со значением в столбце «Итого / Среднее, Δ к пр. нед.»: 7 последних заполненных дней месяца против 7 дней до них (например, «▲12%»; «≈» — почти без изменений); при наведении — период и сами значения. Стрелка показывает, куда изменилось число (▲ выросло, ▼ уменьшилось), а цвет — хорошо это или плохо. Есть у строк: СПП, показы, CTR, CR клик→корзина, заказы шт, CR корзина→заказ, CR клик→заказ, заказы ₽, ДРР и (у Ozon) позиция в поиске. Позиция — в пунктах: «▲ 2 п.» — карточка поднялась на 2 места (зелёный), «▼ 3 п.» — опустилась (красный). Для конверсий, CTR, ДРР, CPC и CPO сравниваются показатели недели целиком (отношение сумм), для цен, СПП и позиции — средние за неделю. Зелёный — изменение в лучшую сторону, красный — в худшую: рост — красный у ДРР, CPC, CPO, отмен, позиции в поиске, расхода на рекламу, цены для покупателя и цены с Ozon картой; рост — зелёный у цены в ЛК и СПП. Плашки нет, если данных мало (например, меньше 5 заказов или 20 кликов за неделю) — чтобы не пугать процентами на единичных значениях.</p>
+      <p><b>Динамика</b> — столбец сразу за «Итого», тоже закреплён: маленькие столбики, по одному на каждый день месяца по сегодня; высота — от самого большого значения строки в этом месяце, пустое место — день не заполнен. Есть у числовых строк (цены, трафик, воронка, общий расход на рекламу, ДРР, CPC, CPO), нет у видов рекламы (АРК, Поиск, БПР, БПК, Полки), типа изменения, комментария, акции и ставок.</p>
+      <p><b>Задачи по этому товару</b> — под выбором товара: незакрытые задачи по этой карточке и её дублям на той же площадке (любые, в том числе из Центра решений). Нажмите на строку, чтобы раскрыть список, на задачу — чтобы открыть её. Если задач нет — так и написано.</p>
+      <p><b>Из «План и факт»</b> (режим «По площадке») можно перейти к товару: нажмите на его название в таблице — откроются его «Ежедневные данные». У группы плана откроется карточка группы с самым свежим заполненным днём (скрытые карточки не открываются).</p>
       <p><b>Прошлые дни</b> — в таблице открыты для ввода все дни месяца до сегодняшнего, в том числе те, которых ещё нет в базе (например, до даты добавления товара). День создаётся при сохранении первой внесённой ячейки как черновик (🕓) — цена в такие дни автоматически не подставляется, её нужно вписать вручную. Будущие дни закрыты.</p>
       <p><b>Как появляется сегодняшний день</b> — при выборе товара дашборд сам проверяет, есть ли уже запись за сегодня, и если нет — создаёт её, подтягивая цену, ставки и акцию с последнего известного дня (если пропустили несколько дней подряд — достроит сразу всю цепочку). Ничего печатать для этого не нужно; повторные заходы в тот же день ничего не задваивают.</p>
       <p><b>Цена в ЛК / для покупателя / с Ozon картой</b> — уже стоит в строке за сегодня, подтянутая с прошлого дня. Если цена изменилась — просто впишите новую прямо в ячейку за сегодня, это обычная правка конкретного дня.</p>
@@ -3196,10 +3207,11 @@ async function renderPlanTab(){
     const productData=await Promise.all(products.map(async p=>{
       const pm=await getPlanMap(p);
       const pl=pm[month]||{planRub:0,planUnits:0,plannedPrice:null};
-      const f=await productMonthFact(p.id, month);
-      return {p, pl, f};
+      const [f, dm]=await Promise.all([productMonthFact(p.id, month), getDailyMap(p.id)]);
+      const last=Object.keys(dm||{}).filter(d=>!dm[d].draft).sort().pop()||'';
+      return {p, pl, f, last};
     }));
-    for(const {p, pl, f} of productData){
+    for(const {p, pl, f, last} of productData){
       const isDupGroup = p.planGroup && seenGroups.has(p.planGroup);
       if(p.planGroup) seenGroups.add(p.planGroup);
       if(!isDupGroup){ planRub+=+pl.planRub||0; planUnits+=+pl.planUnits||0; }
@@ -3208,12 +3220,13 @@ async function renderPlanTab(){
       if(rowsMap.has(rowKey)){
         const existing=rowsMap.get(rowKey);
         existing.factRub+=f.factRub; existing.factUnits+=f.factUnits;
+        if(!p.hidden && (existing.hidden || last>existing.last)){ existing.pid=p.id; existing.last=last; existing.hidden=false; } // открываем карточку группы с самым свежим днём
       } else {
         rowsMap.set(rowKey, {
           name: p.name+(p.planGroup?` (группа «${p.planGroup}»)`:''),
           planRub: pl.planRub||0, planUnits: pl.planUnits||0,
           plannedPrice: pl.plannedPrice!=null? pl.plannedPrice : (month>=monthNow()? (p.currentPriceLK||null) : null),
-          factRub: f.factRub, factUnits: f.factUnits
+          factRub: f.factRub, factUnits: f.factUnits, pid:p.id, last, hidden:!!p.hidden
         });
       }
       if(isCurrentMonth && daysElapsed>0){
@@ -3224,7 +3237,7 @@ async function renderPlanTab(){
     }
     const rowsData=[...rowsMap.values()].filter(r=>r.planRub>0 || r.planUnits>0);
     const remainingPct = planRub>0? Math.max(0,(planRub-factRub)/planRub*100) : null;
-    const rows=rowsData.map(r=>`<tr><td class="txt">${r.name}</td><td>${r.plannedPrice!=null? fmt(r.plannedPrice)+' ₽' : '—'}</td><td>${fmt(r.planRub)} ₽</td><td>${fmt(r.factRub)} ₽</td><td>${r.planRub>0? fmt1(r.factRub/r.planRub*100)+'%' : '—'}</td><td>${fmt(r.planUnits)}</td><td>${fmt(r.factUnits)}</td></tr>`).join('');
+    const rows=rowsData.map(r=>`<tr><td class="txt pf-open" data-pfopen="${r.pid}" title="Открыть в «Ежедневных данных»${r.name.includes('(группа')?' — карточку группы с последним заполненным днём':''}">${r.name}</td><td>${r.plannedPrice!=null? fmt(r.plannedPrice)+' ₽' : '—'}</td><td>${fmt(r.planRub)} ₽</td><td>${fmt(r.factRub)} ₽</td><td>${r.planRub>0? fmt1(r.factRub/r.planRub*100)+'%' : '—'}</td><td>${fmt(r.planUnits)}</td><td>${fmt(r.factUnits)}</td></tr>`).join('');
     let runRateKpiMp='';
     if(isCurrentMonth){
       const runRateUnitsRounded=Math.round(runRateUnitsTotal);
@@ -3241,8 +3254,9 @@ async function renderPlanTab(){
         <div class="kpi"><div class="label">Факт, шт / план, шт</div><div class="value">${fmt(factUnits)} / ${fmt(planUnits)}</div></div>
         ${runRateKpiMp}
       </div>
-      <div class="table-scroll"><table><thead><tr><th>Товар</th><th>Плановая цена</th><th>План ₽</th><th>Факт ₽</th><th>План, %</th><th>План шт</th><th>Факт шт</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="table-scroll"><table class="pf-table"><thead><tr><th>Товар</th><th>Плановая цена</th><th>План ₽</th><th>Факт ₽</th><th>План, %</th><th>План шт</th><th>Факт шт</th></tr></thead><tbody>${rows}</tbody></table></div>
     </div>`;
+    summaryWrap.querySelectorAll('[data-pfopen]').forEach(td=>td.addEventListener('click', ()=>openProductDaily(td.dataset.pfopen)));
     return;
   }
 
@@ -3800,7 +3814,26 @@ function rerenderDailyLocalKeepFocus(){
 }
 
 // Полная загрузка из базы (смена товара/месяца, вход на вкладку, после «Отменить»)
+// задачи по товару: незакрытые, по этой карточке и её дублям на той же площадке (как пометка в Центре решений)
+let dailyTasksOpen=false;
+async function renderDailyTasks(){
+  const el=document.getElementById('dailyTasksWrap'); if(!el) return;
+  const pid=document.getElementById('daily_product').value, p=state.products.find(x=>x.id===pid);
+  if(!p){ el.innerHTML=''; return; }
+  try{ if(!tasksCache) await Promise.all([loadTasks(), loadStaff()]); }catch(e){ el.innerHTML=''; return; }
+  if(document.getElementById('daily_product').value!==pid) return;
+  const fm=taskProductFamilies().find(f=>f.ids.has(pid));
+  const ids=new Set([...(fm?fm.ids:[pid])].filter(id=>(state.products.find(x=>x.id===id)||{}).mp===p.mp));
+  const list=Object.values(tasksCache||{}).filter(t=>t.status!=='done' && taskPids(t).some(id=>ids.has(id))).sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+  if(!list.length){ el.innerHTML='<div class="dl-tasks-none muted sm">Открытых задач по этому товару нет</div>'; return; }
+  el.innerHTML=`<details class="dl-tasks"${dailyTasksOpen?' open':''}><summary>Задачи по этому товару: <b>${list.length}</b></summary><ul>${list.map(t=>{
+      const d=taskDueInfo(t), who=taskPeople(t).map(x=>staffName(x.email)).join(', ');
+      return `<li><a data-dltask="${t.id}">${hmEsc(t.title)}</a> <span class="muted sm">· ${TASK_COLS.find(c=>c[0]===(t.status||'todo'))?.[1]||''}${t.due?` · <span class="${d.cls}">${d.lbl}</span>`:''}${who?' · '+hmEsc(who):''}</span></li>`; }).join('')}</ul></details>`;
+  const det=el.querySelector('details'); det.addEventListener('toggle', ()=>{ dailyTasksOpen=det.open; });
+  el.querySelectorAll('[data-dltask]').forEach(a=>a.addEventListener('click', ()=>{ const t=tasksCache[a.dataset.dltask]; if(t) openTaskEditor(t); }));
+}
 async function renderDailyTab(){
+  renderDailyTasks();
   await renderAnomalies();
   const productId=document.getElementById('daily_product').value;
   const wrap=document.getElementById('dailyTableWrap');
@@ -4034,12 +4067,23 @@ function renderDailyTableLocal(){
     return r.agg==='avg' ? sum/vals.length : sum;
   }
   const SECTION_COLORS={'Цена':'var(--section-bg)','Трафик':'var(--section-bg)','Воронка':'var(--section-bg)','Реклама и финансы':'var(--section-bg)','Акции':'var(--section-bg)','Изменения':'var(--section-bg)'};
+  // «Динамика»: столбик на каждый день месяца по сегодня (пусто — день не заполнен), высота — от максимума строки
+  const sparkHtml=r=>{
+    if(r.isText || r.isEditableChangeType || r.isEditableComment || r.isEditablePromo || r.isEditableBid) return '';
+    if(/^adspend_/.test(r.editField||'')) return ''; // виды рекламы (АРК, Поиск, БПР, БПК, Полки) — без динамики (решение Ольги)
+    const vals=dates.filter(d=>d<=today).map(d=>{ const e=enrichedByDate[d]; if(!e || e.draft) return null; const v=r.get(e); return (v===null||v===undefined||!isFinite(v)) ? null : +v; });
+    const nums=vals.filter(v=>v!==null); if(nums.length<2) return '';
+    const max=Math.max(...nums.map(Math.abs)); if(!(max>0)) return '';
+    const n=dates.length, bw=100/n;
+    const bars=vals.map((v,i)=>v===null?'':`<rect x="${(i*bw+bw*0.15).toFixed(2)}" y="${(20-Math.max(1,Math.abs(v)/max*20)).toFixed(2)}" width="${(bw*0.7).toFixed(2)}" height="${Math.max(1,Math.abs(v)/max*20).toFixed(2)}" rx="0.6"/>`).join('');
+    return `<svg class="dl-spark" viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true">${bars}</svg>`;
+  };
   const bodyRows=rows.map(r=>{
     if(r.section!==undefined){
       const bg=SECTION_COLORS[r.section]||'var(--bg)';
-      return `<tr class="section-row" style="background:${bg};"><td class="sticky" style="background:${bg};">${r.section}</td><td class="sticky2" style="background:${bg};"></td>${dates.map(()=>`<td style="background:${bg};"></td>`).join('')}</tr>`;
+      return `<tr class="section-row" style="background:${bg};"><td class="sticky" style="background:${bg};">${r.section}</td><td class="sticky2" style="background:${bg};"></td><td class="sticky2 sticky3" style="background:${bg};"></td>${dates.map(()=>`<td style="background:${bg};"></td>`).join('')}</tr>`;
     }
-    if(r.planRow) return `<tr class="row-plan"><td class="sticky txt">${r.label}</td>${planAgg(r.planRow)}${dates.map(d=>planCell(r.planRow,d)).join('')}</tr>`;
+    if(r.planRow) return `<tr class="row-plan"><td class="sticky txt">${r.label}</td>${planAgg(r.planRow)}<td class="sticky2 sticky3"></td>${dates.map(d=>planCell(r.planRow,d)).join('')}</tr>`;
     const cells=dates.map(d=>{
       const e=enrichedByDate[d]||null;
       const val=r.get(e);
@@ -4093,14 +4137,16 @@ function renderDailyTableLocal(){
     const labelCell = r.isEditableBid
       ? `<td class="sticky txt"><input type="text" class="bidlabel-edit-input" data-bidindex="${r.bidIndex}" value="${(r.label||'').replace(/"/g,'&quot;')}" style="border:none;background:transparent;font-family:inherit;font-weight:600;font-size:inherit;color:inherit;padding:2px;width:100%;"></td>`
       : `<td class="sticky txt">${r.label}</td>`;
-    return `<tr class="${rowClass}">${labelCell}${aggCell}${cells}</tr>`;
+    return `<tr class="${rowClass}">${labelCell}${aggCell}<td class="sticky2 sticky3">${sparkHtml(r)}</td>${cells}</tr>`;
   }).join('');
 
   if(!hasAnyDataThisMonth && !monthHasPastDays){
     wrap.innerHTML=`<div class="empty">Месяц ${month} ещё не наступил — выберите другой месяц</div>`;
   } else {
     document.getElementById('dailyPlanNote').textContent=`Выполнение плана: зелёный — план дня выполнен, жёлтый — 85–99%, красный — меньше 85% или ДРР выше ${fmt1(drrLimit())}%.`;
-    wrap.innerHTML=`<table class="daytable"><thead><tr><th class="sticky">Показатель</th><th class="sticky2 th2" title="Рядом со значением — изменение за 7 последних заполненных дней к 7 дням до них">Итого / Среднее<br>Δ к пр. нед.</th>${theadCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+    wrap.innerHTML=`<table class="daytable"><thead><tr><th class="sticky">Показатель</th><th class="sticky2 th2" title="Рядом со значением — изменение за 7 последних заполненных дней к 7 дням до них">Итого / Среднее<br>Δ к пр. нед.</th><th class="sticky2 sticky3" title="Столбик на каждый день месяца по сегодня; высота — от самого большого значения строки в этом месяце; пустое место — день не заполнен">Динамика</th>${theadCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+    // «Динамика» закреплена сразу за «Итого», ширина которого зависит от чисел
+    const t2=wrap.querySelector('th.sticky2:not(.sticky3)'); if(t2){ const left=190+t2.offsetWidth; wrap.querySelectorAll('.sticky3').forEach(c=>{ c.style.left=left+'px'; }); }
   }
 
   wrap.querySelectorAll('.changetype-display').forEach(div=>{
@@ -6333,6 +6379,7 @@ function afterTasksChanged(){
   if(vis('tab-tasks')) paintTasks();
   if(vis('tab-decisions')) paintDecisions();
   if(vis('tab-home')) renderHomeTab();
+  if(vis('tab-daily')) renderDailyTasks();
 }
 
 /* --- Центр решений: правила по данным Воронки --- */
