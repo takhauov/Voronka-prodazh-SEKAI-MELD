@@ -1329,7 +1329,7 @@ function pct(a,b){ return (b && b>0)? a/b*100 : null; }
 const USE_FIREBASE = true;
 /* Сервер данных (Timeweb). Пусто — дашборд работает с Firebase, как раньше.
    Когда переедем: адрес сервера, например 'https://data.example.ru' — тогда данные и вход идут через него. */
-const SERVER_URL = '';
+const SERVER_URL = 'https://voronka.5-42-109-231.sslip.io';
 const USE_SERVER = !!SERVER_URL;
 // Цвета графиков берутся из текущей темы (переменные --chart-*)
 function themeVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
