@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Воронка продаж — WB / Ozon / Яндекс Маркет</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -554,6 +555,7 @@
   .tk-chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2);cursor:pointer;}
   .tk-keep{margin:0 0 0 auto;}
   .tk-kan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;}
+  .tk-mcols{display:none;} /* переключатель колонок — только на телефоне */
   .tk-col{background:var(--tk-col-bg);border:1px solid var(--line);border-radius:var(--radius);padding:12px;min-height:220px;transition:border-color .15s;}
   .tk-col.over{border-color:var(--blue);box-shadow:var(--glow);}
   .tk-col h4{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--tx2);display:flex;align-items:center;gap:8px;}
@@ -758,6 +760,109 @@
   :root[data-theme="light"] .hm-ins, :root[data-theme="light"] .growth-card{background:#fafbfe;}
   :root[data-theme="light"] .hm-toast{background:#fff;}
   /* кнопка темы на «Главной» */
+
+  /* на сенсорном экране наведения нет — кнопка всегда видна */
+  @media (hover:none){ .supplytable tr:not(:hover) .supply-rsvadd:not(:focus){visibility:visible;} }
+
+  /* ===== Телефон и узкий планшет: меню выезжает по кнопке ☰, всё в одну колонку. Компьютерную версию эти правила не трогают ===== */
+  .mtop,.m-scrim{display:none;}
+  @media print{ .mtop,.m-scrim{display:none !important;} }
+  @media (max-width:820px){
+    :root{--mtop-h:52px;}
+    html{-webkit-text-size-adjust:100%;}
+    .mtop{display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:30;height:var(--mtop-h);padding:0 8px;background:var(--surface);border-bottom:1px solid var(--line);}
+    .mtop-btn{position:relative;width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;border:0;border-radius:10px;background:transparent;color:var(--tx);cursor:pointer;}
+    .mtop-btn svg{width:22px;height:22px;}
+    .mtop-btn.has-count::after{content:"";position:absolute;top:9px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--red);border:2px solid var(--surface);}
+    .mtop-t{flex:1;min-width:0;font-size:15.5px;font-weight:600;color:var(--tx-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .m-scrim{position:fixed;inset:0;background:rgba(3,4,10,.5);z-index:55;}
+    body.m-menu .m-scrim{display:block;}
+    body.m-menu{overflow:hidden;}
+    .side{width:min(84vw,300px);transform:translateX(-105%);transition:transform .22s;z-index:60;}
+    body.m-menu .side{transform:none;box-shadow:12px 0 40px rgba(0,0,0,.35);}
+    #sideToggle{display:none;}
+    nav#tabs button,.side-toggle{min-height:44px;}
+    #userBar #logoutBtn{min-height:42px;font-size:13px !important;}
+    .main{margin-left:0;padding:12px 12px calc(28px + env(safe-area-inset-bottom));}
+
+    /* карточки и подписи */
+    .panel,#tab-help .panel{padding:14px;border-radius:12px;margin-bottom:12px;}
+    .row{gap:10px;}
+    .pg-top{flex-wrap:wrap;gap:10px;}
+    #loginScreen{margin:32px auto !important;}
+
+    /* поля и кнопки: под палец; шрифт 16px — иначе iPhone увеличивает страницу при нажатии на поле */
+    input:not([type=checkbox]):not([type=radio]),select,textarea{font-size:16px;min-height:42px;max-width:100%;}
+    td input:not([type=checkbox]):not([type=radio]),td select{min-height:36px;padding:4px 6px;}
+    input[type=checkbox],input[type=radio]{width:20px;height:20px;}
+    .field{min-width:0 !important;flex:1 1 calc(50% - 5px);}
+    .field>input,.field>select,.field>textarea{width:100%;}
+    button.btn{min-height:42px;}
+    td button.btn,.an-ask,.wh-tbl button.wh-ic,.supply-rsvadd{min-height:36px;min-width:36px;}
+    .segmented{max-width:100%;overflow-x:auto;scrollbar-width:none;}
+    .segmented::-webkit-scrollbar{display:none;}
+    .segmented button{flex:none;min-height:38px;white-space:nowrap;}
+
+    /* таблицы: листаются внутри своей карточки, первый столбец узкий и закреплён */
+    th,td{padding:7px 6px;}
+    table.daytable td.sticky,table.daytable th.sticky{min-width:118px;max-width:118px;}
+    td.sticky2,th.sticky2{position:static;box-shadow:none;}
+    .table-scroll > table:not(.daytable):not(.supplytable):not(.pgtable) th:first-child,
+    .table-scroll > table:not(.daytable):not(.supplytable):not(.pgtable) td:first-child{max-width:140px;white-space:normal;}
+    #dailyTableWrap{max-height:calc(100dvh - var(--mtop-h) - 16px);}
+    .fscroll{display:none !important;}
+    /* закреплённые панели «Сохранить» — под верхней панелью */
+    .main [style*="position:sticky"][style*="top:0"]{top:var(--mtop-h) !important;}
+
+    /* окна и боковая панель — на весь экран */
+    .md-ov{padding:0;align-items:stretch;}
+    .md-box,.md-box.wide{width:100% !important;max-width:100% !important;height:100dvh;max-height:100dvh !important;border-radius:0;border:0;}
+    .ask-panel{width:100%;max-width:100%;}
+    .ask-panel:not(.open){box-shadow:none;}
+    .hm-toast{left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));transform:none;text-align:center;}
+
+    /* сетки показателей */
+    .hm-top{gap:10px;}
+    .hm-search{flex:1 1 100%;max-width:none;min-width:0;order:3;}
+    .hm-srcs{margin-left:0;}
+    .hm-kpis,.wh-kpis,.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+    .hm-kpi{padding:12px 12px 10px;}
+    .hm-val,.wh-kpis .hm-val{font-size:21px;letter-spacing:-.3px;overflow-wrap:anywhere;}
+    /* название раздела уже в верхней панели */
+    .hm-top h1,.pg-top h1{display:none;}
+    .pg-top .btn{margin-left:0;flex:1 1 100%;}
+    .row>*{min-width:0;max-width:100%;}
+    .charts-row{grid-template-columns:minmax(0,1fr);}
+    .charts-row>*{min-width:0;}
+    .pg-var span:first-child,.tke-sbr .sb-t{min-width:0;}
+    .wh-fit td:first-child input{min-width:150px;}
+
+    /* Задачи: счётчики в ряд, фильтры в две колонки, колонки доски — переключателем */
+    .tk-cnt{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+    .tk-c{flex-direction:column;align-items:flex-start;gap:0;padding:10px 12px;}
+    .tk-c span{font-size:12px;}
+    .tk-f{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+    .tk-f select{width:100%;}
+    .tk-mcols{display:flex;width:100%;margin-bottom:10px;}
+    .tk-mcols button{flex:1 1 0;padding:6px 4px;font-size:12.5px;}
+    .tk-col{min-height:0;padding:0;background:transparent;border:0;}
+    .tk-col:not(.m-on),.tk-col h4{display:none;}
+    .tk-card{padding:12px;}
+    .tk-mv button{padding:10px 0;font-size:13px;color:var(--tx2);}
+
+    /* Воронка: столбцы уже, подсказки длинного текста — не для телефона */
+    .fstage{grid-template-columns:82px minmax(0,1fr) 66px 48px;gap:6px;}
+    #tab-daily .panel>.hint{display:none;}
+
+    /* Склад */
+    .wh-tbl td.wh-name{min-width:150px;}
+    .wh-ml{flex-wrap:wrap;}
+    .wh-ml .whmItem{flex:1 1 100%;}
+    .wh-mvf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}
+    .wh-mvf select,.wh-mvf input{width:100%;max-width:none;}
+    .wh-mvf .wh-dt{grid-column:1 / -1;}
+    .wh-mvf .wh-dt input{flex:1;min-width:0;}
+  }
 </style>
 </head>
 <body>
@@ -777,6 +882,11 @@
 </div>
 
 <div class="wrap" id="mainApp" style="display:none;">
+ <header class="mtop">
+  <button type="button" id="mMenuBtn" class="mtop-btn" aria-label="Открыть меню" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <div id="mTitle" class="mtop-t">Главная</div>
+ </header>
+ <div id="mScrim" class="m-scrim"></div>
  <aside class="side">
   <div class="header-bar">
     <div>
@@ -1117,6 +1227,11 @@
 
   <!-- СПРАВКА -->
   <div id="tab-help" class="tabpane" style="display:none;">
+    <div class="panel">
+      <h2>Телефон</h2>
+      <p>Дашборд открывается на телефоне по тому же адресу и с тем же паролем. <b>Меню</b> спрятано под кнопкой ☰ вверху слева, красная точка на ней — есть новые решения или задачи. <b>Таблицы</b> листаются пальцем вбок, первый столбец остаётся на месте. <b>Окна</b> открываются на весь экран, закрываются кнопкой «Отмена» или «Закрыть» внизу окна.</p>
+      <p>В <b>«Задачах»</b> колонки переключаются кнопками «К выполнению / В работе / Готово», а задача переносится надписью внизу карточки («В работе →»), перетаскивание работает только на компьютере. Подсказки, которые появляются при наведении мыши, на телефоне не видны. «Ежедневные данные», «Настройки» и «Планирование закупа» можно открыть и пролистать, но заполнять их удобнее на компьютере.</p>
+    </div>
     <div class="panel">
       <h2>Центр решений</h2>
       <p>Список того, что стоит сделать сегодня. Решения строятся <b>правилами</b> по данным Воронки (без ИИ) при каждом открытии вкладки и по кнопке «Пересчитать сейчас». В каждом: направление, срочность («Срочно» / «Важно»), действие, ситуация с цифрами, почему, шаги, оценка эффекта в ₽ в месяц, срок и как проверить результат.</p>
@@ -6787,6 +6902,7 @@ function paintTasks(){
     && (!taskUi.prod || (taskUi.prod==='-' ? !taskPids(t).length : taskPids(t).some(id=>fam.ids.has(id))))
     && taskDueMatch(t, taskUi.due));
   const cards=boardCards(f);
+  const mcol=taskUi.col||TASK_COLS[0][0];
   const emails=[...new Set([...staffCache.map(s=>(s.email||'').toLowerCase()).filter(Boolean), ...all.flatMap(t=>taskPeople(t).map(p=>p.email)).filter(Boolean)])];
   body.innerHTML=`<div class="tk-cnt">
       <div class="panel tk-c"><b>${open.length}</b><span>открыто задач</span></div>
@@ -6801,9 +6917,10 @@ function paintTasks(){
       <select id="tkSort" title="Порядок карточек в колонках">${Object.entries(TASK_SORT).map(([k,v])=>`<option value="${k}" title="${TASK_SORT_HINT[k]}"${taskUi.sort===k?' selected':''}>${v}</option>`).join('')}</select>
       <label class="tk-chk"><input type="checkbox" id="tkDc"${taskUi.fromDc?' checked':''}> Из Центра решений</label>
     </div>
+    <div class="segmented tk-mcols">${TASK_COLS.map(([k,l])=>`<button type="button" data-tkcol="${k}"${k===mcol?' class="active"':''}>${l} · ${cards.filter(x=>x.status===k).length}</button>`).join('')}</div>
     <div class="tk-kan">${TASK_COLS.map(([k,l],i)=>{
       const c=cards.filter(x=>x.status===k).sort(cardSorter);
-      return `<div class="tk-col" data-col="${k}"><h4>${l}<span class="tk-n">${c.length}</span></h4>${c.map(x=>taskCardHtml(x,i)).join('') || '<div class="tk-empty">Пусто — перетащите сюда</div>'}</div>`;
+      return `<div class="tk-col${k===mcol?' m-on':''}" data-col="${k}"><h4>${l}<span class="tk-n">${c.length}</span></h4>${c.map(x=>taskCardHtml(x,i)).join('') || `<div class="tk-empty">${window.matchMedia('(max-width:820px)').matches?'Пусто':'Пусто — перетащите сюда'}</div>`}</div>`;
     }).join('')}</div>`;
 }
 // перемещение карточки: у карточки исполнителя — только его статус; карточка без исполнителя — статус задачи
@@ -6823,6 +6940,8 @@ async function moveTask(id, status, pe){
   body.addEventListener('click', e=>{
     const cf=e.target.closest('[data-tkdue]');
     if(cf){ taskUi.due = taskUi.due===cf.dataset.tkdue ? '' : cf.dataset.tkdue; paintTasks(); return; } // повторный клик — снять фильтр
+    const cb=e.target.closest('[data-tkcol]');
+    if(cb){ taskUi.col=cb.dataset.tkcol; paintTasks(); return; }
     const mv=e.target.closest('[data-tkmove]');
     const card=e.target.closest('[data-tid]');
     if(mv && card){
@@ -8195,10 +8314,24 @@ document.getElementById('themeToggle').addEventListener('click', ()=>setTheme(cu
   let collapsed=false;
   try{ collapsed=localStorage.getItem(KEY)==='1'; }catch(e){}
   const btn=document.getElementById('sideToggle');
-  const apply=()=>{ document.body.classList.toggle('side-collapsed',collapsed); btn.title=collapsed?'Развернуть меню':'Свернуть меню'; btn.textContent=collapsed?'Развернуть меню':'Свернуть меню'; };
+  const phone=window.matchMedia('(max-width:820px)');
+  const apply=()=>{ document.body.classList.toggle('side-collapsed',collapsed && !phone.matches); btn.title=collapsed?'Развернуть меню':'Свернуть меню'; btn.textContent=collapsed?'Развернуть меню':'Свернуть меню'; };
   document.querySelectorAll('#tabs button').forEach(b=>{ b.title=b.textContent.trim(); });
   apply();
+  phone.addEventListener('change',apply);
   btn.addEventListener('click',()=>{ collapsed=!collapsed; apply(); try{ localStorage.setItem(KEY,collapsed?'1':'0'); }catch(e){} });
+})();
+
+// Телефон: кнопка ☰ открывает меню, в верхней панели — название раздела и точка, если есть счётчики в меню
+(function(){
+  const menu=document.getElementById('mMenuBtn'), title=document.getElementById('mTitle'), tabs=document.getElementById('tabs');
+  const setMenu=on=>{ document.body.classList.toggle('m-menu',on); menu.setAttribute('aria-expanded',on?'true':'false'); };
+  menu.addEventListener('click',()=>setMenu(!document.body.classList.contains('m-menu')));
+  document.getElementById('mScrim').addEventListener('click',()=>setMenu(false));
+  tabs.addEventListener('click',e=>{ if(e.target.tagName==='BUTTON'){ setMenu(false); if(menu.offsetParent) window.scrollTo(0,0); } });
+  const sync=()=>{ const a=tabs.querySelector('button.active'); if(a) title.textContent=a.textContent.trim(); menu.classList.toggle('has-count',!!tabs.querySelector('button[data-count]')); };
+  new MutationObserver(sync).observe(tabs,{subtree:true,attributes:true,attributeFilter:['class','data-count']});
+  sync();
 })();
 
 (function initSwitchDash(){
