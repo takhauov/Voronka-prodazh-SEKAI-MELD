@@ -3359,7 +3359,8 @@ async function renderPlanTab(){
   // «Остаток на ФФ»: внесено вручную — оно; иначе план поставок площадки из «Поставок по площадкам»
   const ffManual=(plan.stockFF!==undefined && plan.stockFF!==null && plan.stockFF!=='');
   const ffStockVal=ffManual ? plan.stockFF : (ffAuto ? ffAuto : '');
-  const plannedPrice = (plan.plannedPrice!==undefined && plan.plannedPrice!==null && plan.plannedPrice!=='') ? plan.plannedPrice : '';
+  // плановая цена: сохранённая; если для текущего/будущего месяца ещё не сохраняли — текущая «Цена в ЛК» (запишется при «Сохранить план»)
+  const plannedPrice = (plan.plannedPrice!==undefined && plan.plannedPrice!==null && plan.plannedPrice!=='') ? plan.plannedPrice : (!isPastMonth && +product?.currentPriceLK>0 ? +product.currentPriceLK : '');
   const groupBanner = product.planGroup
     ? `<div class="note" style="margin-bottom:12px;">Общий план на группу «${product.planGroup}»: ${productsInGroup(product.planGroup).map(p=>p.name).join(', ')}. Остаток на МП суммируется по всем карточкам группы, остаток на ФФ и поступление вносятся общие на группу.</div>`
     : '';
