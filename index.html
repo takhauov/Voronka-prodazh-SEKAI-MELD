@@ -360,6 +360,8 @@
   .wh-tbl .wh-open{cursor:pointer;} .wh-tbl .wh-open:hover{color:var(--blue);} .wh-caret{display:inline-block;width:12px;color:var(--tx3);}
   .wh-tbl .neg{color:var(--neg);} .wh-tbl td.wh-code{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--tx2);} .wh-muted{color:var(--tx3);} .wh-tbl select,.wh-tbl input{font-size:12.5px;}
   .wh-tbl button.wh-ic{background:none;border:none;cursor:pointer;color:var(--tx3);padding:2px 6px;font-size:14px;} .wh-tbl button.wh-ic:hover{color:var(--tx);}
+  .wh-tbl tr.wh-sum td{background:var(--inset);border-top:1px solid var(--line2);}
+  .wh-tbl tr.wh-total td{font-size:14px;border-top:2px solid var(--line2);}
   .wh-tbl tr.wh-grp td{background:var(--section-bg);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--tx2);}
   .wh-tbl .wh-d{display:block;font-size:11px;color:var(--tx3);font-weight:400;} .wh-tbl .wh-d.neg{color:var(--neg);}
   .wh-st{display:inline-block;margin:0 4px 4px 0;padding:2px 8px;border-radius:7px;font-size:11.5px;font-weight:600;white-space:nowrap;}
@@ -1335,7 +1337,7 @@
       <p>Учёт товара на своих складах — вместо МоегоСклада. Пять вкладок: <b>Остатки</b>, <b>Остатки и динамика</b> (недельный ввод остатков WB / Ozon / ЯМ — раньше отдельный раздел меню), <b>Движения</b>, <b>В пути</b>, <b>Справочник</b>. Кнопка <b>«+ Движение»</b> (в одном движении можно указать несколько товаров — «+ Ещё товар»; каждый товар запишется отдельной строкой журнала) — внести приёмку, отгрузку (на площадку или «Сайт/Другое» — продажи с сайта и прочие отгрузки не на маркетплейс: уменьшают склад, резерв в «Поставках по площадкам» не трогают; с 30.10.2026), возврат (склад выбирается: основной или брак), перемещение между складами, списание или корректировку.</p>
       <p><b>Итого по отбору</b> (вкладка «Движения») — выберите движение, например «Отгрузка», склад и даты: над журналом появится таблица штук по товарам и площадкам. Считаются все строки отбора. Кнопка «Скопировать» переносит её в Excel или Google Таблицы, например для сверки счёта. Авто-отгрузки в журнале есть с 30.10.2026.</p>
       <p><b>Остаток считается из движений</b>, отдельно по каждому складу: приёмки и возвраты прибавляют, отгрузки и списания вычитают, перемещение переносит с одного склада на другой, корректировка добавляет или убирает (например, по итогам пересчёта). Стартовые остатки перенесены из МоегоСклада. Остаток рабочих складов («Свой склад») используют «Распределение товара» и Центр решений; отгрузки на площадки дают «Отгружено» в «Поставках по площадкам», а «→» у резерва в поставках открывает это же окно движения. Отгрузить больше, чем есть на складе, нельзя — сначала внесите корректировку. Движение можно исправить (✎) или удалить (×) — остатки пересчитаются. Журнал можно отфильтровать по периоду, товару, виду движения, складу (откуда или куда) и площадке. Отгружать можно и товары без аналитики (расходники, микрофоны и т. п.).</p>
-      <p><b>Остатки</b> — две группы: «Основные товары» (по ним аналитика и распределение) и «Дополнительные товары» (расходники и пр.), внутри — по алфавиту. «Свой склад» — сумма рабочих складов (тип «Рабочий (ФФ)»), под ним — сколько едет от поставщиков («в пути», из оцифровки — см. ниже). WB, Ozon, Я.Маркет — из последних сохранённых недель «Остатков и динамики» (Ozon и ЯМ — по API каждое утро: Ozon — FBO, ЯМ — FBY, WB — «Склад WB РФ»; WB — вручную, пока не подключён его API); под числом — на сколько дней хватит запаса на площадке (красным — меньше «Запас мало»). «Продаж в день» — заказы за 14 дней по последний заполненный день каждой карточки ÷ 14, все площадки. «Хватит на» — (свой склад + площадки) ÷ продажи в день. <b>Статус</b>: «Везти на …» — на площадке меньше «Запас мало» дней, а на своём складе товар есть; «Мало на …» — на своём складе его нет (обе пометки — только если в «Поставках по площадкам» текущего месяца у товара «Остаток» больше нуля); «Норма» — всё в порядке. Под «Своим складом» — резерв под ближайшие отгрузки (из «Поставок по площадкам» текущего месяца) и свободный остаток; красным и со знаком ⚠ — если резерва больше, чем товара (на каком складе — в подсказке и при раскрытии товара). Нажмите на товар — остаток и резерв по каждому складу (включая брак и «другое»); ✎ — изменить название, связь с товаром дашборда и «основной».</p>
+      <p><b>Остатки</b> — над таблицей выбор склада («Все рабочие», отдельный склад или «Все склады, включая брак») и галочка «Скрыть товары с нулевым остатком»; внизу каждой группы и всей таблицы — строки «Итого» по своему складу, резерву, площадкам и в пути. Две группы: «Основные товары» (по ним аналитика и распределение) и «Дополнительные товары» (расходники и пр.), внутри — по алфавиту. «Свой склад» — сумма рабочих складов (тип «Рабочий (ФФ)»), под ним — сколько едет от поставщиков («в пути», из оцифровки — см. ниже). WB, Ozon, Я.Маркет — из последних сохранённых недель «Остатков и динамики» (Ozon и ЯМ — по API каждое утро: Ozon — FBO, ЯМ — FBY, WB — «Склад WB РФ»; WB — вручную, пока не подключён его API); под числом — на сколько дней хватит запаса на площадке (красным — меньше «Запас мало»). «Продаж в день» — заказы за 14 дней по последний заполненный день каждой карточки ÷ 14, все площадки. «Хватит на» — (свой склад + площадки) ÷ продажи в день. <b>Статус</b>: «Везти на …» — на площадке меньше «Запас мало» дней, а на своём складе товар есть; «Мало на …» — на своём складе его нет (обе пометки — только если в «Поставках по площадкам» текущего месяца у товара «Остаток» больше нуля); «Норма» — всё в порядке. Под «Своим складом» — резерв под ближайшие отгрузки (из «Поставок по площадкам» текущего месяца) и свободный остаток; красным и со знаком ⚠ — если резерва больше, чем товара (на каком складе — в подсказке и при раскрытии товара). Нажмите на товар — остаток и резерв по каждому складу (включая брак и «другое»); ✎ — изменить название, связь с товаром дашборда и «основной».</p>
       <p><b>Закуп ведётся в оцифровке (с 04.11.2026).</b> Заказы поставщикам, оплаты и себестоимость — в «Календаре заказов» оцифровки; раздела «Планирование закупа» в Воронке больше нет. <b>Приёмку товара от поставщика проводят в оцифровке</b>: она сама записывает в Воронку движение «Приёмка» на выбранный склад, остаток растёт сразу. Такие приёмки — в «Движениях» с примечанием из оцифровки. Если нужно исправить — исправляют в оцифровке (она удалит и запишет приёмку заново). Ручная приёмка в Воронке остаётся — для возвратов, найденного товара и т.п.; в оцифровке она попадёт в «Приёмки без цены», цену укажут там. Новый код товара, которого нет в «Справочнике», оцифровка заводит сама — останется привязать его к товару дашборда.</p>
       <p><b>В пути</b> — заказы поставщикам из оцифровки, которые ещё не приехали (этапы «Производство» и «В пути»): товар, штуки, этап, следующий шаг, трек. Только просмотр, суммы и оплаты не показываются; данные берутся из оцифровки при каждом открытии. Товар определяется по коду: у заказа в оцифровке выбран товар из её справочника, а его код совпадает с кодом в «Справочнике» Воронки. Иначе — «товар не определён»: выберите товар в форме заказа в оцифровке или добавьте товар склада с этим кодом. Эти штуки показываются в «Остатках» под «Своим складом» («+N в пути»). Когда приёмку проведут в оцифровке, заказ уйдёт из списка.</p>
       <p><b>Справочник</b>: товары склада (код — из МоегоСклада, по нему товар узнают оцифровка и приёмки; у товаров, заведённых только в Воронке, кода нет — «—») (название товара — можно поправить прямо в строке, изменённые названия подсвечиваются жёлтым и сохраняются кнопкой «Сохранить»; какому товару дашборда соответствует; основной ли; «+ Товар» — новый), артикулы на площадках — по площадкам, раскрываются нажатием (к какой карточке дашборда относится артикул МП — по нему найдут свою карточку данные из API; «не ведём» — аналоги и архивные карточки; товар склада) и склады (название, тип; можно добавить новый). Всё сохраняется сразу. Если есть артикулы без карточки, сверху — жёлтый блок «Новые артикулы»: выберите карточку или нажмите «Не вести».</p>
@@ -7469,7 +7471,7 @@ const WH_STYPE={work:'Рабочий (ФФ)', defect:'Брак', other:'Друг
 // куда отгружают: площадки + «Сайт/Другое» (продажи с сайта и прочее — уменьшает склад, резерв поставок на площадки не трогает) — решение Ольги 30.10.2026
 const WH_MP=['wb','ozon','ym','site'], whMpLabel=c=>c==='site'?'Сайт/Другое':(MP_LABEL[c]||c);
 const WH_FROM=new Set(['ship','writeoff','move']), WH_TO=new Set(['in','return','move','adjust','start']);
-let whUi={view:'stock', open:new Set(), mvItem:'', mvType:'', artOpen:new Set(), draft:{item:{}, store:{}}};
+let whUi={view:'stock', stStore:'work', stHideZero:true, open:new Set(), mvItem:'', mvType:'', artOpen:new Set(), draft:{item:{}, store:{}}};
 // несохранённые названия товаров/складов (сохраняются кнопкой «Сохранить»)
 function whDraftCount(){ return Object.keys(whUi.draft.item).length+Object.keys(whUi.draft.store).length; }
 let whData=null;
@@ -7639,6 +7641,12 @@ async function paintWhStock(seq){
   let rsv={}, rsvErr=false; try{ rsv=await whReserveByItem(monthNow()); }catch(e){ rsvErr=true; console.error('Склад: резерв не загрузился', e); }
   const rsvOf=(code,sid)=>{ const x=rsv[code]||{}; return sid ? (x[sid]||0) : Object.values(x).reduce((s,v)=>s+v,0); };
   const work=code=>st.filter(s=>s.type==='work').reduce((s,x)=>s+((bal[code]||{})[x.id]||0),0);
+  // выбор склада над таблицей: все рабочие / все склады / один склад (склада больше нет — снова «все рабочие»)
+  if(!['work','all'].includes(whUi.stStore) && !st.some(s=>s.id===whUi.stStore)) whUi.stStore='work';
+  const selSt=st.filter(s=>whUi.stStore==='all' || (whUi.stStore==='work' ? s.type==='work' : s.id===whUi.stStore));
+  const selName=whUi.stStore==='work' ? 'на рабочих складах' : whUi.stStore==='all' ? 'на всех складах' : 'на складе «'+(selSt[0]||{}).name+'»';
+  const ownSel=code=>selSt.reduce((s,x)=>s+((bal[code]||{})[x.id]||0),0);
+  const rsvSel=code=>selSt.reduce((s,x)=>s+rsvOf(code,x.id),0);
   const items=Object.values(whData.items);
   // строки товаров с остатками площадок (последние недели «Остатков и динамики»)
   let comp=[];
@@ -7650,51 +7658,68 @@ async function paintWhStock(seq){
   let supRest=null; try{ supRest=supplyRestByCh(await supplyDocsMerged(monthNow())); }catch(e){ console.error('Склад: поставки по площадкам не прочитались', e); }
   const trn=await trP, trBy=whTransitByCode(trn);
   const rowOf=it=>{
-    const own=work(it.code), r={it, own, mp:{}, v:{}, inTransit:trBy[it.code]||0, status:[]};
+    const ownW=work(it.code), own=ownSel(it.code), r={it, own, ownW, mp:{}, v:{}, inTransit:trBy[it.code]||0, status:[]};
     if(!it.main){ return r; }
     const cs=whCards(it).filter(p=>!p.hidden), ids=new Set(cs.map(p=>p.id));
     const z=comp.find(c=>(c.members||[]).some(p=>ids.has(p.id)));
     for(const ch of ['wb','ozon','ym']){ const ms=cs.filter(p=>p.mp===ch); if(!ms.length) continue; r.mp[ch]=z ? z.stockByCh[ch] : null; r.v[ch]=v14(ms); }
     r.speed=Object.values(r.v).reduce((s,x)=>s+x,0);
     r.mpSum=Object.values(r.mp).reduce((s,x)=>s+(x||0),0);
-    r.days = r.speed>0 ? (own+r.mpSum)/r.speed : null;
+    r.days = r.speed>0 ? (ownW+r.mpSum)/r.speed : null;
     for(const ch of ['wb','ozon','ym']){ const v=r.v[ch], s=r.mp[ch]; if(!(v>0) || s===null || s===undefined) continue;
-      if(s/v<lowDays && supplyHasRest(supRest,ch,cs.filter(p=>p.mp===ch))) r.status.push(own>0 ? {cls:'mid', t:'Везти на '+MP_LABEL[ch]} : {cls:'bad', t:'Мало на '+MP_LABEL[ch]}); }
+      if(s/v<lowDays && supplyHasRest(supRest,ch,cs.filter(p=>p.mp===ch))) r.status.push(ownW>0 ? {cls:'mid', t:'Везти на '+MP_LABEL[ch]} : {cls:'bad', t:'Мало на '+MP_LABEL[ch]}); }
     return r;
   };
-  const main=whSortItems(items.filter(i=>i.main)).map(rowOf), extra=whSortItems(items.filter(i=>!i.main)).map(rowOf);
+  const isZero=r=> whUi.stStore!=='work' && whUi.stStore!=='all' ? !r.own : !r.own && !(r.mpSum||0) && !r.inTransit;
+  const keep=r=>!whUi.stHideZero || !isZero(r);
+  const main=whSortItems(items.filter(i=>i.main)).map(rowOf).filter(keep), extra=whSortItems(items.filter(i=>!i.main)).map(rowOf).filter(keep);
   const tot={own:main.reduce((s,r)=>s+r.own,0), mp:main.reduce((s,r)=>s+(r.mpSum||0),0), tr:[...main, ...extra].reduce((s,r)=>s+r.inTransit,0), act:main.filter(r=>r.status.length).length};
   const num=v=>v===null||v===undefined ? '<span class="wh-muted">—</span>' : `<span class="${v<0?'neg':''}">${fmt(v)}</span>`;
   const days=(s,v)=> v>0 && s!==null && s!==undefined ? `<span class="wh-d ${s/v<lowDays?'neg':''}">${fmt(Math.floor(s/v))} дн.</span>` : '';
   const head=`<tr><th>Товар</th><th class="num" title="Сумма рабочих складов (ФФ). Под числом — резерв под ближайшие отгрузки («Поставки по площадкам») и свободный остаток, товар в пути от поставщиков (из оцифровки)">Свой склад</th><th class="num">WB</th><th class="num">Ozon</th><th class="num">Я.Маркет</th><th class="num" title="Свой склад + площадки">Итого</th><th class="num" title="Заказы за 14 дней по последний заполненный день ÷ 14, все площадки">Продаж в день</th><th class="num" title="(Свой склад + площадки) ÷ продажи в день">Хватит на</th><th>Статус</th><th></th></tr>`;
   const tr=r=>{ const op=whUi.open.has(r.it.code), m=r.it.main;
-    const sub=st.map(s=>`<tr class="wh-sub" data-whsub="${hmEsc(r.it.code)}"${op?'':' hidden'}><td class="wh-name">${hmEsc(s.name)} <span class="wh-muted">· ${WH_STYPE[s.type]||''}</span></td><td class="num">${num((bal[r.it.code]||{})[s.id]||0)}${(q=>q?`<span class="wh-d ${q>((bal[r.it.code]||{})[s.id]||0)?'neg':''}">резерв ${fmt(q)}</span>`:'')(rsvOf(r.it.code,s.id))}</td><td colspan="8"></td></tr>`).join('');
+    const sub=selSt.map(s=>`<tr class="wh-sub" data-whsub="${hmEsc(r.it.code)}"${op?'':' hidden'}><td class="wh-name">${hmEsc(s.name)} <span class="wh-muted">· ${WH_STYPE[s.type]||''}</span></td><td class="num">${num((bal[r.it.code]||{})[s.id]||0)}${(q=>q?`<span class="wh-d ${q>((bal[r.it.code]||{})[s.id]||0)?'neg':''}">резерв ${fmt(q)}</span>`:'')(rsvOf(r.it.code,s.id))}</td><td colspan="8"></td></tr>`).join('');
     return `<tr><td class="wh-name wh-open" data-whopen="${hmEsc(r.it.code)}" title="Показать по складам"><span class="wh-caret">${op?'▾':'▸'}</span> ${hmEsc(whItemName(r.it))}</td>
-      <td class="num"><b>${num(r.own)}</b>${(q=>{ if(!q) return ''; const over=st.filter(s=>rsvOf(r.it.code,s.id)>((bal[r.it.code]||{})[s.id]||0)).map(s=>s.name);
-        return `<span class="wh-d ${r.own-q<0||over.length?'neg':''}"${over.length?` title="Резерв больше остатка: ${hmEsc(over.join(', '))}"`:''}>резерв ${fmt(q)} · свободно ${fmt(r.own-q)}${over.length?' ⚠':''}</span>`; })(rsvOf(r.it.code))}${r.inTransit?`<span class="wh-d" style="color:var(--blue);">+${fmt(r.inTransit)} в пути</span>`:''}</td>
+      <td class="num"><b>${num(r.own)}</b>${(q=>{ if(!q) return ''; const over=selSt.filter(s=>rsvOf(r.it.code,s.id)>((bal[r.it.code]||{})[s.id]||0)).map(s=>s.name);
+        return `<span class="wh-d ${r.own-q<0||over.length?'neg':''}"${over.length?` title="Резерв больше остатка: ${hmEsc(over.join(', '))}"`:''}>резерв ${fmt(q)} · свободно ${fmt(r.own-q)}${over.length?' ⚠':''}</span>`; })(rsvSel(r.it.code))}${r.inTransit?`<span class="wh-d" style="color:var(--blue);">+${fmt(r.inTransit)} в пути</span>`:''}</td>
       ${['wb','ozon','ym'].map(ch=>`<td class="num">${m && ch in r.mp ? num(r.mp[ch])+days(r.mp[ch], r.v[ch]) : '<span class="wh-muted">—</span>'}</td>`).join('')}
       <td class="num">${num(r.own+(r.mpSum||0))}</td>
       <td class="num">${m && r.speed>0 ? fmt1(r.speed)+' шт' : '<span class="wh-muted">—</span>'}</td>
       <td class="num">${r.days!==null && r.days!==undefined ? `<span class="${r.days<lowDays?'neg':''}">${fmt(Math.floor(r.days))} дн.</span>` : '<span class="wh-muted">—</span>'}</td>
       <td>${m ? (r.status.length ? r.status.map(s=>`<span class="wh-st ${s.cls}">${s.t}</span>`).join('') : (r.speed>0?'<span class="wh-st ok">Норма</span>':'<span class="wh-muted">нет продаж</span>')) : ''}</td>
       <td><button class="wh-ic" data-whitemedit="${hmEsc(r.it.code)}" title="Изменить товар">✎</button></td></tr>${sub}`; };
-  const grp=(title, rows)=>`<tr class="wh-grp"><td colspan="10">${title} <span class="wh-muted">· ${rows.length}</span></td></tr>${rows.map(tr).join('')}`;
+  const plural=n=>n%10===1&&n%100!==11?'товар':n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?'товара':'товаров';
+  const sumRow=(label, rows, cls)=>{ if(!rows.length) return '';
+    const o=rows.reduce((s,r)=>s+r.own,0), q=rows.reduce((s,r)=>s+rsvSel(r.it.code),0), t=rows.reduce((s,r)=>s+r.inTransit,0);
+    const mp=ch=>{ const xs=rows.filter(r=>r.it.main && ch in r.mp); return xs.length ? xs.reduce((s,r)=>s+(r.mp[ch]||0),0) : null; };
+    const all=o+rows.reduce((s,r)=>s+(r.mpSum||0),0);
+    return `<tr class="${cls}"><td class="wh-name">${label} <span class="wh-muted">· ${rows.length} ${plural(rows.length)}</span></td>
+      <td class="num"><b>${fmt(o)}</b>${q?`<span class="wh-d">резерв ${fmt(q)} · свободно ${fmt(o-q)}</span>`:''}${t?`<span class="wh-d" style="color:var(--blue);">+${fmt(t)} в пути</span>`:''}</td>
+      ${['wb','ozon','ym'].map(ch=>{ const v=mp(ch); return `<td class="num">${v===null?'<span class="wh-muted">—</span>':'<b>'+fmt(v)+'</b>'}</td>`; }).join('')}
+      <td class="num"><b>${fmt(all)}</b></td><td colspan="4"></td></tr>`; };
+  const grp=(title, rows)=>`<tr class="wh-grp"><td colspan="10">${title} <span class="wh-muted">· ${rows.length}</span></td></tr>${rows.map(tr).join('')}${sumRow('Итого '+title.toLowerCase(), rows, 'wh-sum')}`;
+  const stOpts=[['work','Все рабочие (сумма)'], ...st.map(s=>[s.id, s.name+(s.type==='work'?'':' · '+(WH_STYPE[s.type]||''))]), ['all','Все склады, включая брак']];
+  const filt=`<div class="row" style="gap:14px;align-items:center;flex-wrap:wrap;margin:0 0 10px;">
+      <label class="sm" style="display:flex;gap:8px;align-items:center;">Склад: <select id="whStSel">${stOpts.map(([v,t])=>`<option value="${hmEsc(v)}"${v===whUi.stStore?' selected':''}>${hmEsc(t)}</option>`).join('')}</select></label>
+      <label class="tk-chk"><input type="checkbox" id="whStZero"${whUi.stHideZero?' checked':''}> Скрыть товары с нулевым остатком</label></div>`;
   if(seq!==whPaintSeq) return;
   body.innerHTML=`<div class="hm-kpis wh-kpis">
       <div class="panel hm-kpi"><div class="hm-val">${main.length}</div><div class="sm muted">основных товаров</div></div>
-      <div class="panel hm-kpi"><div class="hm-val">${fmt(tot.own)}</div><div class="sm muted">шт основных товаров на своём складе</div></div>
+      <div class="panel hm-kpi"><div class="hm-val">${fmt(tot.own)}</div><div class="sm muted">шт основных товаров ${hmEsc(selName)}</div></div>
       <div class="panel hm-kpi"><div class="hm-val">${fmt(tot.mp)}</div><div class="sm muted">шт на складах площадок</div></div>
       <div class="panel hm-kpi"><div class="hm-val"${trn.ok?'':` title="${hmEsc(trn.error||'')}"`}>${trn.ok?fmt(tot.tr):'—'}</div><div class="sm muted">шт в пути от поставщиков</div></div>
       <div class="panel hm-kpi"><div class="hm-val ${tot.act?'neg':''}">${tot.act}</div><div class="sm muted">требуют действий</div></div>
     </div>
-    <div class="panel"><h3 style="margin-top:0;">Остатки</h3>
-      <div class="table-scroll"><table class="wh-tbl"><thead>${head}</thead><tbody>${grp('Основные товары', main)}${grp('Дополнительные товары', extra)}</tbody></table></div>${rsvErr?'<div class="note neg">Резерв из «Поставок по площадкам» не загрузился — показан остаток без резерва.</div>':''}
-      <div class="note">Свой склад — сумма рабочих складов, считается из «Движений»; нажмите на товар — остаток по каждому складу. Площадки — из последних сохранённых недель «Остатков и динамики», пока не подключён API; под числом — на сколько дней хватит запаса на площадке. «В пути» — неприехавшие заказы поставщикам из оцифровки, подробно — в подразделе «В пути».${trn.ok?'':' <span class="neg">'+hmEsc(trn.error||'')+'.</span>'} «Везти на …» — на площадке меньше ${lowDays} дн. запаса, а на своём складе товар есть; «Мало на …» — на своём складе его нет.</div>
+    <div class="panel"><h3 style="margin-top:0;">Остатки</h3>${filt}
+      <div class="table-scroll"><table class="wh-tbl"><thead>${head}</thead><tbody>${grp('Основные товары', main)}${grp('Дополнительные товары', extra)}${sumRow('Итого', [...main, ...extra], 'wh-sum wh-total')}</tbody></table></div>${rsvErr?'<div class="note neg">Резерв из «Поставок по площадкам» не загрузился — показан остаток без резерва.</div>':''}
+      <div class="note">Свой склад — сумма рабочих складов, считается из «Движений»; над таблицей можно выбрать один склад или все склады — тогда «Свой склад», резерв и «Итого» считаются по выбранному (статусы и «Хватит на» — всегда по рабочим складам); нажмите на товар — остаток по каждому складу. Площадки — из последних сохранённых недель «Остатков и динамики», пока не подключён API; под числом — на сколько дней хватит запаса на площадке. «В пути» — неприехавшие заказы поставщикам из оцифровки, подробно — в подразделе «В пути».${trn.ok?'':' <span class="neg">'+hmEsc(trn.error||'')+'.</span>'} «Везти на …» — на площадке меньше ${lowDays} дн. запаса, а на своём складе товар есть; «Мало на …» — на своём складе его нет.</div>
     </div>`;
   body.querySelectorAll('[data-whopen]').forEach(td=>td.addEventListener('click', ()=>{ const c=td.dataset.whopen, on=!whUi.open.has(c); on?whUi.open.add(c):whUi.open.delete(c);   // строки по складам уже в таблице — без пересчёта
     td.querySelector('.wh-caret').textContent=on?'▾':'▸';
     body.querySelectorAll('tr[data-whsub]').forEach(x=>{ if(x.dataset.whsub===c) x.hidden=!on; }); }));
   body.querySelectorAll('[data-whitemedit]').forEach(b=>b.addEventListener('click', ()=>openWhItem(whData.items[b.dataset.whitemedit])));
+  body.querySelector('#whStSel').addEventListener('change', e=>{ whUi.stStore=e.target.value; renderWarehouseTab(); });
+  body.querySelector('#whStZero').addEventListener('change', e=>{ whUi.stHideZero=e.target.checked; renderWarehouseTab(); });
 }
 // окно товара склада: название, основной, товар в дашборде (и для нового товара)
 function openWhItem(it){
