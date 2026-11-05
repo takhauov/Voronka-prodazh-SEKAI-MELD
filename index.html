@@ -592,6 +592,7 @@
   .pgtable td.pg-acts{white-space:nowrap;text-align:right;} .pgtable td.pg-acts .btn{padding:4px 10px;font-size:12px;} .tke-ckr .tk-chk{flex:1;}
   .tke-ckr button{border:0;background:transparent;color:var(--tx3);cursor:pointer;font-size:15px;padding:0 4px;} .tke-ckr button:hover{color:var(--neg);}
   .tk-src{margin-top:6px;font-size:11.5px;color:var(--section-tx);}
+  .tk-dl dd.tk-rep{white-space:normal;line-height:1.35;} .tke-rep{display:flex;flex-direction:column;gap:8px;font-size:13px;max-height:200px;overflow:auto;}
   .tk-owner{display:inline-block;font-size:11.5px;font-weight:700;color:var(--blue);background:var(--info-bg);border-radius:10px;padding:1px 9px;margin-bottom:6px;}
   .tk-prog{font-size:11.5px;color:var(--tx3);} .tk-prog.ok{color:var(--pos);}
   .tk-who{display:inline-flex;align-items:center;gap:3px;padding:1px 8px;border-radius:12px;background:var(--panel-sub);border:1px solid var(--line);font-size:11.5px;color:var(--tx2);}
@@ -1170,6 +1171,7 @@
         <div class="field"><label>Перекос запаса, дней</label><input id="set_dc_redist" type="number" min="3" max="90" step="1" style="width:140px;"></div>
         <div class="field"><label>Пауза после отказа, дней</label><input id="set_dc_pause" type="number" min="1" max="180" step="1" style="width:160px;"></div>
       </div>
+      <label class="tk-chk" style="margin:4px 0 10px;"><input type="checkbox" id="set_dc_leadonly"> Принимать, откладывать и отклонять решения может только руководитель (сотрудники видят решения и свои задачи, но не назначают задачи сами)</label>
       <p class="note">ДРР выше предела подсвечивается красным на «Главной» и в столбце «Итого» строки «ДРР, %» в «Ежедневных данных», а товары и площадки с такой ДРР попадают в подсказки на «Главной». «Запас мало» — сколько дней запаса считать тревожным сигналом (по умолчанию 14; на «Главной» и в «Аналитике», красным — меньше половины). «Скорость продаж для закупа» — по последней закрытой неделе или среднее за 2 недели (защищает точку заказа от скачка из-за одной нетипичной недели). <b>Центр решений:</b> «Рост ДРР» — на сколько процентов ДРР товара за 7 дней выросла к прошлой неделе; «Падение заказов» — на сколько процентов меньше заказов за 7 дней; «Избыток» — решение «Ускорить продажи» появляется, если на площадке остатка больше чем на это число дней при её продажах, а на другой площадке товар продаётся быстрее (по умолчанию 60; остаток меньше 5 шт не учитывается); «Перекос запаса» — решение «Пересчитать распределение» появляется, если дни запаса на площадках различаются больше чем на это число; «Пауза после отказа» — сколько дней не предлагать отклонённое решение по тому же товару. Предел ДРР и «Запас мало» тоже используются в решениях.</p>
     </div>
     <div class="panel" id="selfbuyPanel">
@@ -1224,6 +1226,7 @@
     <div class="panel">
       <h2>Центр решений</h2>
       <p>Список того, что стоит сделать сегодня. Решения строятся <b>правилами</b> по данным Воронки (без ИИ) при каждом открытии вкладки и по кнопке «Пересчитать сейчас». В каждом: направление, срочность («Срочно» / «Важно»), действие, ситуация с цифрами, почему, шаги, оценка эффекта в ₽ в месяц, срок и как проверить результат.</p>
+      <p><b>Кто принимает решения.</b> Принимать, откладывать, отклонять и привязывать решения к задачам может только руководитель (настройка «Принимать, откладывать и отклонять решения может только руководитель» в «Настройки → Общие настройки → Центр решений», по умолчанию включена). Сотрудники видят решения и надпись «Решение принимает руководитель», а задачи им назначает руководитель, принимая решение.</p>
       <p><b>Правила</b> (пороги — в «Настройках»). <b>Найти и устранить причину падения заказов</b> — у карточки за 7 дней (по последний заполненный день) заказов на «Падение заказов» % и больше меньше, чем неделей раньше (все 7 дней заполнены, неделей раньше от 5 шт); если у карточки заполнена сезонность, сравнение идёт с ожидаемым по сезону: например, если по сезону неделя должна быть на 20% слабее, решение появится, только если заказов меньше этого ожидания ещё на «Падение заказов» %; подзадачи подбираются по этапу, который просел сильнее всего: показы, CTR, конверсия в корзину или в заказ. <b>Отключить неэффективную рекламу</b> — за 7 дней реклама от 500 ₽ и ни одного заказа. <b>Оптимизировать рекламу</b> — ДРР карточки за 7 дней выше предела. <b>Проверить рост ДРР</b> — ДРР ещё в пределе, но выросла к прошлой неделе на «Рост ДРР» % и больше. <b>Сформировать план продаж</b> — с 1-го числа, пока у какой-то строки плана нет плана на текущий месяц; срок — 10 число; исполнитель — руководитель из «Сотрудников». <b>Ускорить продажи: избыток (площадка)</b> — на WB, Ozon или ЯМ остаток от 5 шт, и его больше чем на «Избыток» дней (по умолчанию 60) при продажах этой площадки, а на другой площадке этот товар продаётся быстрее; или остаток есть, а продаж за 14 дней нет. Скорость — средняя за 14 дней по последний заполненный день. Если у товара заполнена сезонность, дни запаса считаются по прогнозу: скорость на каждый следующий день поправляется на сезон (впереди спад — запаса хватит дольше, впереди сезон — меньше); в решении написано, сколько было бы по текущему темпу. Исполнитель — сотрудники этой площадки. <b>Пополнить запас на площадке</b> — одно решение (и одна задача) на площадку со списком товаров; новое — раз в неделю. Товар попадает в список, если на WB/Ozon/ЯМ запаса меньше «Запас мало» дней (продажи — средние за 14 дней по последний заполненный день), а на фулфилменте товар есть; сколько — до запаса на 2 недели, но не больше, чем есть на ФФ. Где остаток приходит по API (Ozon, ЯМ), считается <b>по каждой карточке отдельно</b>: дубль — отдельной строкой со своим остатком, продажами и количеством; свой склад делится между карточками группы — сначала тем, у кого запас кончится раньше. Только товары, у которых в «Поставках по площадкам» текущего месяца «Остаток» (План − Отгружено − Резерв) больше нуля. С заполненной сезонностью дни запаса и количество на 2 недели считаются по прогнозу с сезоном (в списке помечено «с учётом сезона»). <b>Заполнить сезонность</b> — если у какой-то карточки (основного, не скрытого товара) не указана группа сезонности или у группы не заполнены коэффициенты; одно решение со списком товаров (все площадки и дубли), исполнитель — руководитель, кнопка «Открыть раздел» ведёт в «Настройки» (кнопка «Сезонность» у товара). <b>Привязать новые артикулы</b> — если в «Склад» → «Справочник» есть артикулы площадок без карточки дашборда (жёлтый блок «Новые артикулы»); исполнитель — руководитель, кнопка «Открыть раздел» ведёт в «Справочник». <b>Продлить ключ API</b> (раздел «API», срочно) — если ключ API кабинета площадки истекает через 3 дня или уже истёк (срок узнаёт утренняя загрузка; у Ozon — ключ Seller API, у ключей рекламы срока нет); исполнитель — руководитель. Тогда же точка площадки на Главной становится красной, а в «Подсказках» — предупреждение. Сезонность учитывается в правилах «Падение заказов», «Избыток» и «Пополнить запас» и в подсказке плана. <b>Пересчитать распределение товара</b> — по товарам, у которых дни запаса на площадках (остаток + ещё не отгруженное по плану «Поставок по площадкам») различаются больше чем на «Перекос запаса» дней; предлагается новая раскладка уже запланированного к отгрузке (план − отгружено) так, чтобы запаса везде хватало примерно на одинаковое число дней при скорости продаж каждой площадки за 14 дней; общее количество не меняется. Нераспределённый остаток на ФФ показывается подсказкой. Одна задача на неделю, исполнитель — руководитель. <b>Неудачное изменение карточки</b> — изменение за последние 30 дней, которое «Журнал изменений» на «Воронке и точках роста» оценил как неудачное (❌: главный показатель этого типа правки ухудшился на 3% и больше, данных достаточно, после него не было такого же изменения); название — что сделать по типу правки (главное фото — «Сменить главное фото или провести A/B-тест», заголовок, порядок фото, описание, цена, реклама); проверка результата — через 3 дня и позже (для ДРР — по окну журнала), в «Почему» — вывод журнала. По рекламе — только если ДРР после изменения выше предела. Остатки — из последних сохранённых недель «Остатков и динамики»; если неделя не текущая, это написано в решении.</p>
       <p><b>Кнопки.</b> «Принять» — открывается окно, где можно поменять срок задачи и написать комментарий (необязательно); создаётся <b>одна задача</b>, комментарий — последним абзацем её описания и на карточке решения в «В работе»: название — действие решения, в описании — ситуация с цифрами и вторым абзацем что сделать (без подпунктов; у задачи «Сформировать план продаж» — только ситуация). Исполнитель: «Сформировать план продаж» и «Пересчитать распределение» — руководитель; решения по конкретной площадке — сотрудники, у которых эта площадка отмечена в «Сотрудниках» (если их несколько — назначаются все, у каждого своя карточка); если таких нет — тот, кто принял. Решение пропадает из списка — дальше работа идёт в задаче; когда задача выполнена и прошла «Пауза после отказа», такое же решение может появиться снова, если проблема вернулась. «Отклонить» — с причиной (частые причины — кнопками: «Уже в работе», «Сделано», «Неактуально», «Новинка, тест РК», «Товар выводим из продажи», «ДРР в пределах нормы»; можно дописать или написать свою); такое же решение по тому же товару не предлагается «Пауза после отказа» дней, а с галочкой «Больше не предлагать» — никогда. В блоке «Отклонённые» внизу есть кнопка «Вернуть» — отказ отменяется, и если правило срабатывает, решение снова появляется в списке. «Отложить» — если заняться решением сейчас нельзя (например, ждём поставку): выберите срок (завтра, 3 дня, неделя, 2 недели, месяц или свою дату) и, если нужно, комментарий. До этой даты решение лежит в свёрнутом блоке «Отложенные» внизу (видно, до какого числа и кто отложил; «Вернуть сейчас» — вернуть раньше), а с этой даты снова появляется в списке, если правило всё ещё срабатывает. «Разобрать в «Спросить»» — открывает подходящий готовый вопрос по этому товару или площадке. На вкладке — только новые решения: принятые становятся задачами и дальше живут во вкладке «Задачи». Отклонённые — свёрнутым блоком «Отклонённые» внизу (там же «Вернуть»). Состояние решений общее для всей команды.</p>
       <p><b>Задачи по этому товару.</b> Если по товару из решения уже есть незакрытые задачи на той же площадке (любые, в том числе созданные вручную; дубли карточек этой площадки тоже учитываются), на карточке решения видно «По этому товару уже есть задачи в работе: N» и до трёх задач — нажмите на название, чтобы открыть задачу. «Все задачи по товару» — откроет «Задачи» с фильтром по этому товару. «Привязать решение к задаче» — если уже существующая задача решает эту проблему: новая задача не создаётся, решение уходит из списка и считается «в работе», пока выбранная задача не выполнена (дальше — как у принятого решения: после выполнения и «Паузы после отказа» оно может появиться снова). Без привязки решение остаётся в списке — пометка только подсказывает, что товаром уже занимаются.</p>
@@ -1231,11 +1234,12 @@
     <div class="panel">
       <h2>Задачи</h2>
       <p>Общая доска задач команды: «К выполнению», «В работе», «Готово». Карточку можно перетащить мышкой в другую колонку или нажать «←» / «→» на ней. Щелчок по карточке открывает задачу: название, описание, приоритет, срок, <b>товары</b> (можно несколько: найдите по названию и добавьте карточку или сразу «все карточки» товара; убрать — × на плашке) и <b>исполнители</b> (из «Настроек» → «Сотрудники») — их может быть несколько, у каждого свой статус; там же «Удалить». Под описанием — кнопки «Разобрать в «Спросить»» (подходящий готовый вопрос по товару задачи) и «Открыть товар» (его «Ежедневные данные»; только если в задаче один товар); у задач без товара из Центра решений — «Открыть раздел». Срок показывается как «сегодня», «завтра», «до дд.мм» или «просрочено N дн.» (красным).</p>
+      <p><b>Отчёт при закрытии задачи</b> (с 05.11.2026). При переносе в «Готово» (кнопкой, перетаскиванием или статусом в окне задачи) дашборд спросит «Что сделано?»: коротко опишите, что сделано по задаче. Если это уже отмечено в «Ежедневных данных» (тип изменения или комментарий), поле можно оставить пустым — тогда на карточке будет «без отчёта». Если у задачи есть подпункты, сначала нужно отметить все (ненужный подпункт можно удалить). На карточке в «Готово» видно, что сделано, кто и когда закрыл и сколько задача была в работе; «⚡» — закрыта меньше чем через 10 минут после «В работе» или сразу из «К выполнению», такой отчёт стоит проверить. Все отчёты задачи — в её окне, блок «Отчёты о выполнении». Задачи с решением по каждому заказу (самовыкупы, склад FBS) закрываются сами, когда решено по всем заказам.</p>
       <p><b>Несколько исполнителей.</b> Задача создаётся одна, а на доске у каждого исполнителя — своя карточка (в строке «Исполнитель» — его имя). Каждый двигает свою карточку, и она стоит в колонке его статуса. Статусы всех исполнителей видны в окне задачи. Название, срок, описание и товары общие: поменяли в задаче — изменилось на всех карточках. Задача считается выполненной, когда все исполнители перенесли свои карточки в «Готово». Фильтр по исполнителю показывает только его карточки.</p>
       <p><b>Порядок карточек.</b> Список «Сортировка» рядом с фильтрами: «дата ▲» — сверху ближайший срок (как раньше), «дата ▼» — сверху самый дальний; «приоритет ▼» — сверху высокий, «приоритет ▲» — сверху низкий (▲ — по возрастанию, ▼ — по убыванию). При одинаковом сроке карточки дальше идут по приоритету, при одинаковом приоритете — по сроку; задачи без срока всегда внизу. Колонка «Готово» всегда по дате выполнения — свежие сверху. Выбор запоминается на этом компьютере.</p>
       <p><b>Фильтр «Срок».</b> «Просрочено», «Сегодня», «Завтра», «Ближайшие 7 дней» (вместе с просроченными) — только незакрытые задачи; «Без срока» — задачи, где срок не указан. Плашки «на сегодня» и «просрочено» вверху тоже нажимаются и включают этот фильтр; повторное нажатие снимает его. Приоритет выбирается в соседнем фильтре.</p>
       <p><b>Фильтр «Товар».</b> Показывает задачи по товару целиком — по всем его карточкам на WB, Ozon и Я.Маркете, включая дубли (например, «Набор медиум» — это и WB, и Ozon, и обе карточки ЯМ). Карточки считаются одним товаром, если у них одинаковое название (пометка «дубль» не учитывается) или общая «Группа плана». В списке только товары, по которым есть задачи; «Без товара» — задачи, где товар не выбран.</p>
-      <p>В меню у «Задач» — число карточек «К выполнению» (у сотрудника из списка — только его), у «Центра решений» — число новых решений. В задаче можно вести <b>подпункты</b> с галочками (добавить — ввести текст и Enter), на карточке видно «Подпункты: 1 из 3». Вверху — счётчики задач «открыто / на сегодня / просрочено» (по задаче целиком, а не по карточкам) и фильтры по исполнителю, приоритету и «Из Центра решений» (задачи, созданные кнопкой «Принять»). На карточке по строкам: исполнитель, приоритет, срок (если сегодня, завтра или просрочено — с пометкой), товар (по названию, площадки в скобках). Цвет полоски слева — приоритет: красный — высокий, жёлтый — средний, синий — низкий. Каждая задача хранится отдельно, поэтому сотрудники могут одновременно менять разные задачи. <b>Выполненные задачи удаляются через 30 дней</b> после выполнения.</p>
+      <p>В меню у «Задач» — число карточек «К выполнению» (у сотрудника из списка — только его), у «Центра решений» — число новых решений. В задаче можно вести <b>подпункты</b> с галочками (добавить — ввести текст и Enter), на карточке видно «Подпункты: 1 из 3». Вверху — счётчики задач «открыто / на сегодня / просрочено» (по задаче целиком, а не по карточкам) и фильтры по исполнителю, приоритету и «Из Центра решений» (задачи, созданные кнопкой «Принять»). На карточке по строкам: исполнитель, приоритет, срок (если сегодня, завтра или просрочено — с пометкой), товар (по названию, площадки в скобках). Задачи «Проверить склад отгрузки FBS WB» создаются с высоким приоритетом (с 05.11.2026). Цвет полоски слева — приоритет: красный — высокий, жёлтый — средний, синий — низкий. Каждая задача хранится отдельно, поэтому сотрудники могут одновременно менять разные задачи. <b>Выполненные задачи удаляются через 30 дней</b> после выполнения.</p>
     </div>
     <div class="panel">
       <h2>Спросить</h2>
@@ -5178,7 +5182,9 @@ let productsReadyPromise=null;
    эти блоки работают; площадки с недельным ручным вводом (WB, ЯМ) — по-прежнему «скоро». Флаг ниже больше не используется. */
 const STOCK_API_READY=false;
 const SETTINGS_KEY='settings:general';
-const SETTINGS_DEFAULT={drrLimit:15, stockLowDays:14, drrGrowthPct:30, ordersDropPct:30, planLagPct:85, postponeDays:3, rejectPauseDays:14, excessDays:60, redistGapDays:14};
+const SETTINGS_DEFAULT={drrLimit:15, stockLowDays:14, drrGrowthPct:30, ordersDropPct:30, planLagPct:85, postponeDays:3, rejectPauseDays:14, excessDays:60, redistGapDays:14, dcLeadOnly:true};
+// Центр решений: принимать, откладывать, отклонять и привязывать решения — только руководитель (решение Ольги 05.11.2026; настройка dcLeadOnly)
+const dcCanDecide=()=>state.settings.dcLeadOnly===false || canSettings();
 const EXCESS_MIN_QTY=5; // «Избыток»: меньший остаток на площадке не считаем
 state.settings={...SETTINGS_DEFAULT};
 async function loadSettings(){
@@ -5198,6 +5204,7 @@ async function renderSettingsTab(){
   document.getElementById('set_dc_excess').value=dcSet('excessDays');
   document.getElementById('set_dc_redist').value=dcSet('redistGapDays');
   document.getElementById('set_dc_pause').value=dcSet('rejectPauseDays');
+  document.getElementById('set_dc_leadonly').checked=state.settings.dcLeadOnly!==false;
   loadStaff().then(renderStaffPanel);
   renderSelfbuyPanel();
   document.getElementById('settingsSavedNote').textContent='';
@@ -5241,7 +5248,7 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async ()=>{
     if(!(x>=+el.min && x<=+el.max)){ note.style.color='var(--neg)'; note.textContent=`«${el.previousElementSibling.textContent}» — число от ${el.min} до ${el.max}`; return; }
     dcVals[k]=x; }
   btn.disabled=true;
-  const res=await mutateStoreValue(SETTINGS_KEY, ()=>({...SETTINGS_DEFAULT}), (doc)=>{ doc.drrLimit=v; doc.stockLowDays=low; Object.assign(doc, dcVals); });
+  const res=await mutateStoreValue(SETTINGS_KEY, ()=>({...SETTINGS_DEFAULT}), (doc)=>{ doc.drrLimit=v; doc.stockLowDays=low; Object.assign(doc, dcVals); doc.dcLeadOnly=document.getElementById('set_dc_leadonly').checked; });
   btn.disabled=false;
   if(!res){ note.style.color='var(--neg)'; note.textContent='Не удалось сохранить — проверьте соединение и попробуйте ещё раз'; return; }
   state.settings={...SETTINGS_DEFAULT, ...res};
@@ -5280,7 +5287,7 @@ const syncWhen=iso=>iso ? new Date(iso).toLocaleString('ru-RU',{day:'2-digit',mo
 function syncState(log){
   if(!log) return null;
   const errs=[];
-  Object.entries(log.brands||{}).forEach(([b,x])=>{ if(!x.ok) errs.push(`кабинет ${b}: ${x.error||'ошибка'}`); });
+  Object.entries(log.brands||{}).forEach(([b,x])=>{ if(!x.ok) errs.push(`кабинет ${b}: ${x.error||'ошибка'}`); else if(x.warn) errs.push(`кабинет ${b}: ${x.warn}`); });   // warn — загружено не всё (ЯМ: не ответил список заказов)
   if(log.stock && log.stock.error) errs.push('остатки: '+log.stock.error);
   if(log.warehouse && log.warehouse.error) errs.push('поставки и склад: '+log.warehouse.error);
   // ключ API истекает через 3 дня или раньше — тоже красная точка, «Подсказки», решение в Центре решений
@@ -5318,7 +5325,7 @@ function openSyncDetails(ch){
   const keyTxt=x=>{ if(!x.keyExpires) return ''; const d=keyDaysLeft(x.keyExpires);
     return `; ключ API до <b class="${d<=3?'neg':d<=14?'amb':''}">${fmtRuDate(x.keyExpires.slice(0,10))}</b>`; };
   const brands=Object.entries(log.brands||{}).map(([b,x])=>li(x.ok
-    ? `<b>${hmEsc(b)}</b> — ✓ карточек ${fmt(x.cards||0)}, изменено ячеек ${fmt(x.cells||0)}${x.adNote?'; реклама: '+hmEsc(x.adNote):''}${keyTxt(x)}`
+    ? `<b>${hmEsc(b)}</b> — ✓ карточек ${fmt(x.cards||0)}, изменено ячеек ${fmt(x.cells||0)}${x.adNote?'; реклама: '+hmEsc(x.adNote):''}${keyTxt(x)}${x.warn?`<br><span class="neg">⚠ ${hmEsc(x.warn)}</span>`:''}`
     : `<b>${hmEsc(b)}</b> — <span class="neg">ошибка: ${hmEsc(x.error||'')}</span>${keyTxt(x)}`)).join('');
   const stock=log.stock ? li(log.stock.error ? `Остатки — <span class="neg">ошибка: ${hmEsc(log.stock.error)}</span>` : `Остатки ${ch==='ym'?'FBY':ch==='wb'?'на складах WB':'FBO'} — неделя ${fmtRuDate(log.stock.week)}, строк ${fmt(log.stock.rows)}`) : '';
   const w=log.warehouse;
@@ -6433,19 +6440,63 @@ async function patchTask(id, patch){
   if(r && tasksCache) tasksCache[id]=r;
   return r;
 }
-// сменить статус у части исполнителей (emails) или у всех (emails=null); общий итог пересчитывается по свежей версии
-function applyPeopleStatus(f, emails, status){
-  const now=new Date().toISOString();
-  let people=taskPeople(f).map(p=>({...p}));
+/* Контроль закрытия (решение Ольги 05.11.2026): при переходе в «Готово» — окно «Что сделано?»; отчёт необязательный
+   (можно оставить пустым, если уже отмечено в «Ежедневных данных») — тогда на карточке «без отчёта». В «Готово» — только когда
+   отмечены все подпункты. Отчёт — у исполнителя (report, reportAt, reportBy; reportAt есть и у пустого) и в истории задачи (reports, только с текстом).
+   doingAt — когда исполнитель взял задачу в работу: по нему видно, как быстро закрыли.
+   Задачи с решением по каждому заказу (самовыкупы, склад FBS) закрываются сами по решениям — отчёт им не нужен. */
+const TASK_FAST_MIN=10;
+const taskNeedsReport=t=>!(t && (t.kind==='selfbuy' || t.kind==='fbsstore'));
+// окно «Что сделано?»: подпункты не отмечены — закрыть нельзя; → текст отчёта (может быть пустым) или null (отмена)
+function askTaskReport(t, ckList, who){
+  return new Promise(resolve=>{
+    const left=(ckList||t.checklist||[]).filter(x=>!x.done);
+    let done=false; const fin=v=>{ if(done) return; done=true; resolve(v); };
+    const m=openModal(left.length
+      ? `<h2>Не все подпункты отмечены</h2><p>Задачу «${hmEsc(t.title)}» можно закрыть, когда отмечены все подпункты. Осталось ${left.length}: ${left.slice(0,5).map(x=>'«'+hmEsc(x.text)+'»').join(', ')}${left.length>5?' и др.':''}.</p>
+        <p class="note">Если подпункт больше не нужен — удалите его в задаче.</p><div class="row md-acts"><button class="btn secondary" data-mclose>Понятно</button></div>`
+      : `<h2>Что сделано?</h2><p class="hint" style="margin-top:0;">${hmEsc(t.title)}${who?' · '+hmEsc(who):''}</p>
+        <div class="md-f"><textarea id="tkrText" rows="3" placeholder="Что сделано по задаче"></textarea></div>
+        <p class="note" style="margin:0 0 6px;">Коротко опишите, что сделано по задаче. Если вы уже отметили это в «Ежедневных данных» (тип изменения или комментарий), можно оставить поле пустым.</p>
+        <div class="row md-acts"><button class="btn" id="tkrOk">Готово</button><button class="btn secondary" data-mclose>Отмена</button></div>`);
+    new MutationObserver((_, o)=>{ if(!document.body.contains(m.el)){ o.disconnect(); fin(null); } }).observe(document.body, {childList:true});
+    if(left.length) return;
+    const ta=m.el.querySelector('#tkrText'); setTimeout(()=>ta.focus(), 30);
+    m.el.querySelector('#tkrOk').addEventListener('click', ()=>{ fin(ta.value.trim()); m.close(); });
+  });
+}
+// сменить статус у части исполнителей (emails) или у всех (emails=null); общий итог пересчитывается по свежей версии.
+// report — отчёт «что сделано» для тех, кто сейчас переходит в «Готово»
+function applyPeopleStatus(f, emails, status, report){
+  const now=new Date().toISOString(), me=myEmail();
+  let people=taskPeople(f).map(p=>({...p})), closed=[];
   if(people.length){
-    people.forEach(p=>{ if(!emails || emails.includes(p.email)){ p.status=status; p.doneAt= status==='done' ? (p.doneAt||now) : null; } });
+    people.forEach(p=>{ if(!emails || emails.includes(p.email)){
+      if(status==='done' && p.status!=='done' && report!=null){ p.report=report; p.reportAt=now; p.reportBy=me; closed.push(p.email); }
+      if(status!=='done'){ delete p.report; delete p.reportAt; delete p.reportBy; }
+      if(status==='doing' && !p.doingAt) p.doingAt=now;
+      if(status==='todo') delete p.doingAt;
+      p.status=status; p.doneAt= status==='done' ? (p.doneAt||now) : null; } });
     f.assignees=people; delete f.who;
     f.status=taskOverall(people);
-  } else f.status=status;
+  } else {
+    if(status==='done' && f.status!=='done' && report!=null){ f.report=report; f.reportAt=now; f.reportBy=me; closed.push(''); }
+    if(status!=='done'){ delete f.report; delete f.reportAt; delete f.reportBy; }
+    if(status==='doing' && !f.doingAt) f.doingAt=now;
+    f.status=status;
+  }
+  if(closed.length && report) f.reports=[...(f.reports||[]), {by:me, for:closed.filter(Boolean), text:report, at:now}];
   f.doneAt= f.status==='done' ? (people.map(p=>p.doneAt).filter(Boolean).sort().pop() || now) : null;
 }
-async function setTaskStatus(id, status, emails){
-  const r=await mutateStoreValue('task:'+id, ()=>({id}), f=>applyPeopleStatus(f, emails, status));
+// как закрыли: отчёт, кто и когда, сколько было в работе (быстрее TASK_FAST_MIN минут или сразу из «К выполнению» — ⚡)
+function taskCloseInfo(t, p){
+  const x=p||t; if(!x || !x.reportAt) return null;
+  const from=x.doingAt || null, min=from ? Math.round((Date.parse(x.reportAt||x.doneAt)-Date.parse(from))/60000) : null;
+  const dur = min===null ? 'сразу из «К выполнению»' : min<60 ? `в работе ${min} мин` : min<1440 ? `в работе ${Math.round(min/60)} ч` : `в работе ${Math.round(min/1440)} дн.`;
+  return {text:x.report||'', by:x.reportBy, at:x.reportAt, dur, fast: min===null || min<TASK_FAST_MIN};
+}
+async function setTaskStatus(id, status, emails, report){
+  const r=await mutateStoreValue('task:'+id, ()=>({id}), f=>applyPeopleStatus(f, emails, status, report));
   if(r && tasksCache) tasksCache[id]=r;
   return r;
 }
@@ -6518,6 +6569,9 @@ function taskCardHtml(c, colIdx){
       <dt>Срок</dt><dd>${due}</dd>
       <dt>Товар</dt><dd>${prodHtml}</dd>
       ${(t.checklist||[]).length?`<dt>Подпункты</dt><dd>${t.checklist.filter(x=>x.done).length} из ${t.checklist.length}</dd>`:''}
+      ${(()=>{ if(c.status!=='done') return ''; const ci=taskCloseInfo(t, c.pe ? taskPeople(t).find(p=>p.email===c.pe) : (taskPeople(t).length ? null : t)); if(!ci) return '';
+        return `<dt>Сделано</dt><dd class="tk-rep" title="${hmEsc(ci.text)}">${ci.text ? hmEsc(ci.text.length>90 ? ci.text.slice(0,90)+'…' : ci.text) : '<span class="muted">без отчёта</span>'}</dd>
+        <dt>Закрыл(а)</dt><dd>${hmEsc(staffName(ci.by)||'')}${ci.at?', '+fmtRuDate(ci.at.slice(0,10)).slice(0,5):''} · <span class="${ci.fast?'amb':'muted'}" title="${ci.fast?'Закрыта сразу после взятия в работу или минуя «В работе» — проверьте отчёт':''}">${ci.fast?'⚡ ':''}${ci.dur}</span></dd>`; })()}
       ${t.kind==='selfbuy' || t.kind==='fbsstore'?`<dt>Заказы</dt><dd>решено ${(t.items||[]).filter(x=>x.verdict).length} из ${(t.items||[]).length}</dd>`:''}
     </dl>
     ${t.src==='decision'?'<div class="tk-src">из Центра решений</div>':t.src==='api'?'<div class="tk-src">создана загрузкой API</div>':''}
@@ -6582,9 +6636,11 @@ async function moveTask(id, status, pe){
   const targets = pe ? [pe] : (people.length ? people.map(p=>p.email) : null);
   const already = people.length ? people.filter(p=>!targets || targets.includes(p.email)).every(p=>p.status===status) : t.status===status;
   if(already) return;
+  let report=null;
+  if(status==='done' && taskNeedsReport(t)){ report=await askTaskReport(t, null, pe ? staffName(pe) : ''); if(report===null) return; }
   const prev=JSON.parse(JSON.stringify(t));
-  applyPeopleStatus(t, targets, status); paintTasks(); updateTasksBadge(); // сразу на экране
-  const r=await setTaskStatus(id, status, targets);
+  applyPeopleStatus(t, targets, status, report); paintTasks(); updateTasksBadge(); // сразу на экране
+  const r=await setTaskStatus(id, status, targets, report);
   if(!r){ tasksCache[id]=prev; paintTasks(); homeToast('Не удалось сохранить — проверьте соединение'); }
 }
 (function initTasksEvents(){
@@ -6667,6 +6723,7 @@ function openTaskEditor(t, preset){
       ${emails.length ? `<div class="tke-people">${emails.map(personRow).join('')}</div>${!isNew && people.length && emails.length>people.length ? '<button type="button" class="tke-addp" id="tkeAddP">+ Добавить исполнителя</button>' : ''}` : '<p class="note" style="margin:0;">Список сотрудников заполняется в «Настройках» → «Сотрудники».</p>'}
       ${!emails.length && !isNew ? `<select id="tkeStatus">${TASK_COLS.map(([k,l])=>`<option value="${k}"${v.status===k?' selected':''}>${l}</option>`).join('')}</select>` : ''}
     </div>
+    ${(v.reports||[]).length ? `<div class="md-f"><label>Отчёты о выполнении</label><div class="tke-rep">${v.reports.slice().reverse().map(r=>`<div><b>${hmEsc(staffName(r.by)||r.by||'')}</b> <span class="muted">${r.at?fmtRuDate(r.at.slice(0,10))+' '+r.at.slice(11,16):''}${(r.for||[]).length && !(r.for.length===1 && r.for[0]===r.by) ? ' · за '+hmEsc(r.for.map(staffName).join(', ')) : ''}</span><br>${hmEsc(r.text)}</div>`).join('')}</div></div>` : ''}
     ${isNew?'':`<p class="note">${v.src==='decision'?'Создана из Центра решений. ':v.src==='api'?'Создана загрузкой API. ':''}${v.createdBy?'Создал: '+hmEsc(staffName(v.createdBy))+(v.createdAt?', '+fmtRuDate(v.createdAt.slice(0,10)):''):''}</p>`}
     <div class="md-err neg" id="tkeErr"></div>
     <div class="row md-acts">
@@ -6765,12 +6822,28 @@ function openTaskEditor(t, preset){
     const now=new Date().toISOString();
     const assignees=[...m.el.querySelectorAll('[data-pe]')].filter(cb=>cb.checked).map(cb=>{
       const st=m.el.querySelector(`[data-ps="${CSS.escape(cb.dataset.pe)}"]`).value, old=people.find(p=>p.email===cb.dataset.pe);
-      return {email:cb.dataset.pe, status:st, doneAt: st==='done' ? ((old && old.status==='done' && old.doneAt) || now) : null};
+      const keep={}; if(old){ ['doingAt','report','reportAt','reportBy'].forEach(k=>{ if(old[k]) keep[k]=old[k]; }); }
+      if(st!=='done'){ delete keep.report; delete keep.reportAt; delete keep.reportBy; }
+      if(st==='doing' && !keep.doingAt) keep.doingAt=now;
+      if(st==='todo') delete keep.doingAt;
+      return {email:cb.dataset.pe, status:st, doneAt: st==='done' ? ((old && old.status==='done' && old.doneAt) || now) : null, ...keep};
     });
     const fallback = $('tkeStatus') ? $('tkeStatus').value : (isNew ? 'todo' : v.status);
+    // кто сейчас переходит в «Готово» — окно «Что сделано?» (и все подпункты отмечены)
+    const closing=assignees.filter(p=>p.status==='done' && !p.reportAt && !(people.find(o=>o.email===p.email)||{}).status?.startsWith('done'));
+    const closingTask=!assignees.length && fallback==='done' && v.status!=='done';
+    let report=null, reports=v.reports||[];
+    if((closing.length || closingTask) && taskNeedsReport(v)){
+      report=await askTaskReport(v, ck, closing.map(p=>staffName(p.email)).join(', '));
+      if(report===null){ $('tkeErr').textContent=ck.some(x=>!x.done) ? 'Чтобы закрыть задачу, отметьте все подпункты' : ''; return; }
+      closing.forEach(p=>{ p.report=report; p.reportAt=now; p.reportBy=myEmail(); });
+      if(report) reports=[...reports, {by:myEmail(), for:closing.map(p=>p.email), text:report, at:now}];
+    }
     const status=taskOverall(assignees, fallback);
     const doneAt= status==='done' ? (assignees.map(p=>p.doneAt).filter(Boolean).sort().pop() || (v.status==='done' && v.doneAt) || now) : null;
-    const patch={title, desc:$('tkeDesc').value.trim(), prio:$('tkePrio').value, due:$('tkeDue').value, pids:selPids, checklist:ck, assignees, status, doneAt};
+    const patch={title, desc:$('tkeDesc').value.trim(), prio:$('tkePrio').value, due:$('tkeDue').value, pids:selPids, checklist:ck, assignees, status, doneAt, reports};
+    if(closingTask && report!==null) Object.assign(patch, {report, reportAt:now, reportBy:myEmail()});
+    else if(!assignees.length && status!=='done') Object.assign(patch, {report:null, reportAt:null, reportBy:null});
     $('tkeSave').disabled=true;
     let r;
     if(isNew){
@@ -7225,13 +7298,13 @@ function dcCardHtml(x){
     ${s.linked && ts.length?`<div class="dc-kv"><span>Привязано к задаче: <b>${hmEsc(ts[0].title)}</b></span></div>`:''}
     ${rel.tasks.length?`<div class="dc-rel">По этому товару уже есть задачи в работе: <b>${rel.tasks.length}</b>
       <ul>${rel.tasks.slice(0,3).map(t=>`<li><a data-dcact="opentask" data-tid="${t.id}">${hmEsc(t.title)}</a> <span class="muted">· ${TASK_COLS.find(c=>c[0]===(t.status||'todo'))?.[1]||''}${t.due?' · срок '+fmtRuDate(t.due).slice(0,5):''}</span></li>`).join('')}${rel.tasks.length>3?`<li class="muted">и ещё ${rel.tasks.length-3}</li>`:''}</ul>
-      ${rel.famKey?`<a data-dcact="reltasks" data-fam="${rel.famKey}">Все задачи по товару</a> · `:''}<a data-dcact="link" data-k="${k}">Привязать решение к задаче</a></div>`:''}
+      ${rel.famKey?`<a data-dcact="reltasks" data-fam="${rel.famKey}">Все задачи по товару</a> · `:''}${dcCanDecide()?`<a data-dcact="link" data-k="${k}">Привязать решение к задаче</a>`:''}</div>`:''}
     <div class="row dc-acts">
-      ${x.status==='new'?`<button class="btn" data-dcact="accept" data-k="${k}">Принять</button>`:''}
+      ${dcCanDecide() ? `${x.status==='new'?`<button class="btn" data-dcact="accept" data-k="${k}">Принять</button>`:''}
       ${x.status==='new'?`<button class="btn secondary" data-dcact="later" data-k="${k}">Отложить</button>`:''}
       ${x.status==='new'?`<button class="btn danger" data-dcact="reject" data-k="${k}">Отклонить</button>`:''}
       ${x.status==='later'?`<button class="btn secondary" data-dcact="unreject" data-k="${k}" data-later="1">Вернуть сейчас</button>`:''}
-      ${x.status==='rejected'?`<button class="btn secondary" data-dcact="unreject" data-k="${k}">Вернуть</button>`:''}
+      ${x.status==='rejected'?`<button class="btn secondary" data-dcact="unreject" data-k="${k}">Вернуть</button>`:''}` : (x.status==='new' ? '<span class="sm muted" style="align-self:center;">Решение принимает руководитель</span>' : '')}
       ${x.status==='work'?'<button class="btn secondary" data-dcact="tasks">Открыть задачи</button>':''}
       ${d.ask?`<button class="btn secondary" data-dcact="ask" data-k="${k}">Разобрать в «Спросить»</button>`:''}
       ${p?`<button class="btn secondary" data-dcact="open" data-pid="${p.id}">Открыть товар</button>`:d.go?`<button class="btn secondary" data-dcact="go" data-go="${d.go}">Открыть раздел</button>`:''}
@@ -7270,6 +7343,7 @@ async function dcAccept(d, btn, comment, dueOverride){
     const t=e.target.closest('[data-dctab]'); if(t){ dcTab=t.dataset.dctab; paintDecisions(); return; }
     const b=e.target.closest('[data-dcact]'); if(!b) return;
     const act=b.dataset.dcact;
+    if(['accept','later','reject','unreject','link'].includes(act) && !dcCanDecide()){ homeToast('Решения в Центре решений принимает руководитель'); return; }
     if(act==='tasks'){ taskUi.fromDc=true; goTab('tasks'); return; }
     if(act==='open'){ openProductDaily(b.dataset.pid); return; }
     if(act==='go'){ goTab(b.dataset.go); return; }
