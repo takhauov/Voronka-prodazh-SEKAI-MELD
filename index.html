@@ -558,6 +558,10 @@
   .tk-f{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
   .tk-own{font-weight:600;color:var(--tx);font-size:13.5px;}
   .tk-chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2);cursor:pointer;}
+  .man-mark{color:var(--warn);font-size:11px;margin-left:2px;cursor:help;}
+  .tkr-dw{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:4px 0 8px;}
+  .tkr-types{display:flex;flex-wrap:wrap;gap:6px 14px;} .tkr-types .tk-chk,.tkr-row .tk-chk{display:inline-flex;margin-right:10px;}
+  .tkr-row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:8px 0 2px;} .tkr-row input[type=date]{width:auto;margin-left:6px;}
   .tk-keep{margin:0 0 0 auto;}
   .tk-kan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;}
   .tk-mcols{display:none;} /* переключатель колонок — только на телефоне */
@@ -1234,7 +1238,7 @@
     <div class="panel">
       <h2>Задачи</h2>
       <p>Общая доска задач команды: «К выполнению», «В работе», «Готово». Карточку можно перетащить мышкой в другую колонку или нажать «←» / «→» на ней. Щелчок по карточке открывает задачу: название, описание, приоритет, срок, <b>товары</b> (можно несколько: найдите по названию и добавьте карточку или сразу «все карточки» товара; убрать — × на плашке) и <b>исполнители</b> (из «Настроек» → «Сотрудники») — их может быть несколько, у каждого свой статус; там же «Удалить». Под описанием — кнопки «Разобрать в «Спросить»» (подходящий готовый вопрос по товару задачи) и «Открыть товар» (его «Ежедневные данные»; только если в задаче один товар); у задач без товара из Центра решений — «Открыть раздел». Срок показывается как «сегодня», «завтра», «до дд.мм» или «просрочено N дн.» (красным).</p>
-      <p><b>Отчёт при закрытии задачи</b> (с 05.11.2026). При переносе в «Готово» (кнопкой, перетаскиванием или статусом в окне задачи) дашборд спросит «Что сделано?»: коротко опишите, что сделано по задаче. Если это уже отмечено в «Ежедневных данных» (тип изменения или комментарий), поле можно оставить пустым — тогда на карточке будет «без отчёта». Если у задачи есть подпункты, сначала нужно отметить все (ненужный подпункт можно удалить). На карточке в «Готово» видно, что сделано, кто и когда закрыл и сколько задача была в работе; «⚡» — закрыта меньше чем через 10 минут после «В работе» или сразу из «К выполнению», такой отчёт стоит проверить. Все отчёты задачи — в её окне, блок «Отчёты о выполнении». Задачи с решением по каждому заказу (самовыкупы, склад FBS) закрываются сами, когда решено по всем заказам.</p>
+      <p><b>Отчёт при закрытии задачи</b> (с 05.11.2026). <b>Запись в «Ежедневные данные»</b> (с 06.11.2026): у задачи с товаром в окне «Что сделано?» есть галочка «Записать в «Ежедневные данные»» — выберите тип изменения (обязательно), день (по умолчанию сегодня) и карточки (заранее отмечены площадки исполнителя из «Настроек» → «Сотрудники»). В этот день карточки запишется тип изменения, а текст отчёта станет комментарием (пустой отчёт — название задачи); уже заполненные тип и комментарий не перезаписываются, это видно в окне до «Готово». Дня ещё нет — он создаётся черновиком, утренняя загрузка дозаполнит показатели. Так изменение попадает в «Журнал изменений» и анализ. Если менять ничего на карточке не пришлось — снимите галочку. У руководителя и сотрудников без площадок в «Настройках» → «Сотрудники» галочка изначально выключена (общая работа, например анализ товара) — включите её, если меняли карточку. На карточке задачи — строка «В данных». У задач Центра решений про запас и поставки («Пополнить запас», «Перераспределить», «Сформировать план», «Заполнить сезонность», «Привязать артикулы», «Продлить ключ API», «Заказ поставщику без товара склада») блока записи нет — только текст «что сделано». При переносе в «Готово» (кнопкой, перетаскиванием или статусом в окне задачи) дашборд спросит «Что сделано?»: коротко опишите, что сделано по задаче. Если это уже отмечено в «Ежедневных данных» (тип изменения или комментарий), поле можно оставить пустым — тогда на карточке будет «без отчёта». Если у задачи есть подпункты, сначала нужно отметить все (ненужный подпункт можно удалить). На карточке в «Готово» видно, что сделано, кто и когда закрыл и сколько задача была в работе; «⚡» — закрыта меньше чем через 10 минут после «В работе» или сразу из «К выполнению», такой отчёт стоит проверить. Все отчёты задачи — в её окне, блок «Отчёты о выполнении». Задачи с решением по каждому заказу (самовыкупы, склад FBS) закрываются сами, когда решено по всем заказам.</p>
       <p><b>Несколько исполнителей.</b> Задача создаётся одна, а на доске у каждого исполнителя — своя карточка (в строке «Исполнитель» — его имя). Каждый двигает свою карточку, и она стоит в колонке его статуса. Статусы всех исполнителей видны в окне задачи. Название, срок, описание и товары общие: поменяли в задаче — изменилось на всех карточках. Задача считается выполненной, когда все исполнители перенесли свои карточки в «Готово». Фильтр по исполнителю показывает только его карточки.</p>
       <p><b>Порядок карточек.</b> Список «Сортировка» рядом с фильтрами: «дата ▲» — сверху ближайший срок (как раньше), «дата ▼» — сверху самый дальний; «приоритет ▼» — сверху высокий, «приоритет ▲» — сверху низкий (▲ — по возрастанию, ▼ — по убыванию). При одинаковом сроке карточки дальше идут по приоритету, при одинаковом приоритете — по сроку; задачи без срока всегда внизу. Колонка «Готово» всегда по дате выполнения — свежие сверху. Выбор запоминается на этом компьютере.</p>
       <p><b>Фильтр «Срок».</b> «Просрочено», «Сегодня», «Завтра», «Ближайшие 7 дней» (вместе с просроченными) — только незакрытые задачи; «Без срока» — задачи, где срок не указан. Плашки «на сегодня» и «просрочено» вверху тоже нажимаются и включают этот фильтр; повторное нажатие снимает его. Приоритет выбирается в соседнем фильтре.</p>
@@ -1305,7 +1309,7 @@
       <p><b>Как появляется сегодняшний день</b> — при выборе товара дашборд сам проверяет, есть ли уже запись за сегодня, и если нет — создаёт её, подтягивая цену, ставки и акцию с последнего известного дня (если пропустили несколько дней подряд — достроит сразу всю цепочку). Ничего печатать для этого не нужно; повторные заходы в тот же день ничего не задваивают.</p>
       <p><b>Цена в ЛК / для покупателя / с Ozon картой</b> — уже стоит в строке за сегодня, подтянутая с прошлого дня. Если цена изменилась — просто впишите новую прямо в ячейку за сегодня, это обычная правка конкретного дня. Так же с прошлого дня переносятся <b>акция и ставки</b> — и тогда, когда новый день первой создаёт утренняя загрузка по API (с 29.10.2026).</p>
       <p><b>Черновик</b> — день, в котором ещё не заполнены показатели воронки (показы, клики, корзины, заказы), даже если цена/ставки/акция/комментарий уже стоят. Как только вписываете хотя бы один из этих четырёх показателей — день перестаёт быть черновиком и участвует в анализе.</p>
-      <p><b>Заказы, ₽</b> — при вводе «Заказы, шт» сумма в рублях сама посчитается как штуки × цена в ЛК этого же дня. Дальше можно поправить вручную, если нужно нестандартное значение.</p>
+      <p><b>Заказы, ₽</b> — при вводе «Заказы, шт» сумма в рублях сама посчитается как штуки × цена в ЛК этого же дня. Дальше можно поправить вручную, если нужно нестандартное значение. <b>Если заказы приходят по API</b> (с 06.11.2026), «Заказы, шт» и «Заказы, ₽» тоже можно исправить вручную, каждое отдельно (рубли сами не пересчитываются): исправленное число помечается ✎, и утренняя загрузка его больше не меняет. Чтобы вернуть число из API, очистите ячейку и сохраните — оно вернётся со следующей загрузки.</p>
       <p><b>Рекламные ставки и Акции</b> — справочная информация, на расчёты не влияет, но переносится изо дня в день автоматически вместе с созданием нового дня.</p>
       <p><b>Тип изменения</b> — можно выбрать сразу несколько значений, зажав Ctrl (на Mac — Cmd) при клике. <b>Комментарий</b> рядом — отдельное необязательное текстовое поле.</p>
       <p><b>Выкупили / Отмены</b> — для «Отмены» по умолчанию подставляется 0 при создании нового дня, менять не нужно, если это верно; «Выкупили» — без дефолта. Для обоих полей: если оставить пустым (не 0, а именно пусто) — сохранится как «неизвестно», а не как ноль. Если показатель не заполняется больше недели подряд — он перестаёт участвовать в «Точках роста».</p>
@@ -3737,10 +3741,13 @@ function applyDailyOp(dmObj, op, product){
     } else if(AD_BREAKDOWN_YM.includes(field)){
       day.adspend=(+day.adspend_bpr||0)+(+day.adspend_bpk||0)+(+day.adspend_polki||0);
     }
-    if(field==='orders') day.ordersRub=Math.round((+day.orders||0)*(+day.priceLK||0));
+    if(field==='orders' && !apiFieldsFor(product?.mp).has('ordersRub')) day.ordersRub=Math.round((+day.orders||0)*(+day.priceLK||0)); // у площадки с API ₽ правится отдельно
     if(FUNNEL_FIELDS.includes(field) && day.draft) delete day.draft;
   } else if(op.kind==='changeTypes'){
     day.changeTypes=op.value;
+  } else if(op.kind==='manual'){
+    const s=new Set(Array.isArray(day.manual)?day.manual:[]); op.value ? s.add(op.field) : s.delete(op.field);
+    if(s.size) day.manual=[...s]; else delete day.manual;
   } else if(op.kind==='changeNote'){
     day.changeNote=op.value;
   } else if(op.kind==='promo'){
@@ -3760,6 +3767,7 @@ function dailyOpIsNoop(op){
   if(!day) return false; // дня ещё нет — запись создаст его
   if(op.kind==='field') return (day[op.field]??null)===(op.value??null);
   if(op.kind==='changeNote') return (day.changeNote||'')===op.value;
+  if(op.kind==='manual') return dayManual(day, op.field)===!!op.value;
   if(op.kind==='promo') return (day.promo??null)===(op.value??null);
   if(op.kind==='bid') return (day.adBids?.[op.idx]?.value??null)===(op.value??null);
   return false;
@@ -3988,6 +3996,9 @@ function stockApiStale(mp){ const a=((apiSync||{})[mp]||{}).stockAt; return !a |
 const API_MP_LABEL={wb:'Wildberries', ozon:'Ozon', ym:'Яндекс Маркета'};
 // поля API, которые всё равно можно править вручную: цену могут поменять в течение дня, а загрузка — раз в сутки (решение Ольги 28.10.2026)
 const API_EDITABLE=new Set(['priceLK']);
+// поля API, которые можно исправить вручную и закрепить: загрузка их больше не меняет (day.manual), очистить ячейку — снова по API
+const API_LOCKABLE=new Set(['orders','ordersRub']);
+const dayManual=(day,f)=>!!(day && Array.isArray(day.manual) && day.manual.includes(f));
 
 // поля «Ежедневных данных» в рублях — показываются с «₽»
 const DAY_MONEY=new Set(['priceLK','priceCustomer','priceOzonCard','ordersRub','adspend','adspend_ark','adspend_search','adspend_cpc','adspend_bpr','adspend_bpk','adspend_polki']);
@@ -4244,10 +4255,11 @@ function renderDailyTableLocal(){
           <option value="no"${cur==='no'?' selected':''}>Не участвую</option>
         </select></td>`;
       }
-      if(r.editField && apiF.has(r.editField) && !API_EDITABLE.has(r.editField)) return `<td class="api-cell">${dayNumShow(val, r.editField)}</td>`;
+      if(r.editField && apiF.has(r.editField) && !API_EDITABLE.has(r.editField) && !API_LOCKABLE.has(r.editField)) return `<td class="api-cell">${dayNumShow(val, r.editField)}</td>`;
+      const lockMark = r.editField && apiF.has(r.editField) && API_LOCKABLE.has(r.editField) && dayManual(e, r.editField) ? `<span class="man-mark" title="Исправлено вручную — загрузка API это число не меняет. Очистите ячейку, чтобы вернуть число из API (со следующей загрузки)">✎</span>` : '';
       if(r.editField){
         if(!e && d>today) return `<td></td>`;
-        return `<td><input type="text" inputmode="decimal" class="num-edit-input${dirtyCls(d,'field',r.editField)}" data-notedate="${d}" data-editfield="${r.editField}" data-raw="${val??''}" value="${dayNumShow(val, r.editField)}" style="width:${DAY_MONEY.has(r.editField)?96:76}px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:left;padding:2px;"></td>`;
+        return `<td><input type="text" inputmode="decimal" class="num-edit-input${dirtyCls(d,'field',r.editField)}" data-notedate="${d}" data-editfield="${r.editField}" data-raw="${val??''}" value="${dayNumShow(val, r.editField)}" style="width:${DAY_MONEY.has(r.editField)?96:76}px;border:none;background:transparent;font-family:inherit;font-size:inherit;color:inherit;text-align:left;padding:2px;">${lockMark}</td>`;
       }
       if(r.isEditableBid){
         if(!e && d>today) return `<td></td>`;
@@ -4275,7 +4287,7 @@ function renderDailyTableLocal(){
     const aggCell = `<td class="sticky2 txt"${aggIsHighDrr?' style="color:var(--neg);"':''}>${aggText}${wowHtml(r)}</td>`;
     const labelCell = r.isEditableBid
       ? `<td class="sticky txt"><input type="text" class="bidlabel-edit-input" data-bidindex="${r.bidIndex}" value="${(r.label||'').replace(/"/g,'&quot;')}" style="border:none;background:transparent;font-family:inherit;font-weight:600;font-size:inherit;color:inherit;padding:2px;width:100%;"></td>`
-      : `<td class="sticky txt">${r.label}${isApiRow ? `<sup class="api-tag" title="Заполняется автоматически из API ${API_MP_LABEL[product.mp]||''}${apiAt ? ', обновлено '+apiAt : ''}${API_EDITABLE.has(r.editField) ? '. Можно поправить вручную в течение дня (цену поменяли после утренней загрузки) — завтра загрузка поставит цену на завтрашний день' : '. Вручную не правится'}">API</sup>` : ''}</td>`;
+      : `<td class="sticky txt">${r.label}${isApiRow ? `<sup class="api-tag" title="Заполняется автоматически из API ${API_MP_LABEL[product.mp]||''}${apiAt ? ', обновлено '+apiAt : ''}${API_EDITABLE.has(r.editField) ? '. Можно поправить вручную в течение дня (цену поменяли после утренней загрузки) — завтра загрузка поставит цену на завтрашний день' : API_LOCKABLE.has(r.editField) ? '. Можно исправить вручную: исправленное число помечается ✎ и загрузка его больше не меняет; очистите ячейку, чтобы вернуть число из API' : '. Вручную не правится'}">API</sup>` : ''}</td>`;
     return `<tr class="${rowClass}">${labelCell}${aggCell}<td class="sticky2 sticky3">${sparkHtml(r)}</td>${cells}</tr>`;
   }).join('');
 
@@ -4333,6 +4345,16 @@ function renderDailyTableLocal(){
       const emptyAsNull = ['searchPosition','buyouts','cancellations'].includes(field);
       const txt=inp.value.replace(/[\s ₽]/g,'').replace(',','.');
       if(txt!=='' && !isFinite(+txt)){ inp.value=inp.dataset.raw||''; return; } // не число — оставляем как было
+      const lp=dailyWork && state.products.find(p=>p.id===dailyWork.productId);
+      if(API_LOCKABLE.has(field) && lp && apiFieldsFor(lp.mp).has(field)){
+        const d=inp.dataset.notedate;
+        if(txt===''){ inp.value=dayNumShow(inp.dataset.raw===''?null:+inp.dataset.raw, field);
+          if(dayManual(dailyWork.local[d], field)){ recordDailyOp({kind:'manual', date:d, field, value:false}); homeToast('Ручная правка снята — число вернётся из API со следующей загрузки'); rerenderDailyLocalKeepFocus(); }
+          return; }
+        const v=Math.max(0, +txt); inp.dataset.raw=v; inp.value=v;
+        recordDailyOp({kind:'field', date:d, field, value:v}); recordDailyOp({kind:'manual', date:d, field, value:true});
+        rerenderDailyLocalKeepFocus(); return;
+      }
       let newVal = txt==='' ? (emptyAsNull? null : 0) : +txt;
       if(newVal!==null && newVal<0) newVal=0; // отрицательные значения не принимаем
       inp.dataset.raw = newVal??'';
@@ -6447,8 +6469,34 @@ async function patchTask(id, patch){
    Задачи с решением по каждому заказу (самовыкупы, склад FBS) закрываются сами по решениям — отчёт им не нужен. */
 const TASK_FAST_MIN=10;
 const taskNeedsReport=t=>!(t && (t.kind==='selfbuy' || t.kind==='fbsstore'));
-// окно «Что сделано?»: подпункты не отмечены — закрыть нельзя; → текст отчёта (может быть пустым) или null (отмена)
-function askTaskReport(t, ckList, who){
+// запись из окна «Что сделано?» в «Ежедневные данные» — ждёт сохранения задачи (ключ — id задачи, у новой '_new')
+const taskDailyPending={};
+// правила Центра решений, задачи которых — не изменение карточки (запас, поставки, план, справочники, ключи API)
+const TASK_NO_DAILY=new Set(['shipmp','ship','redist','reorder','planform','seasonfill','artbind','apikey','trnocode']);
+// окно «Что сделано?»: подпункты не отмечены — закрыть нельзя; → текст отчёта (может быть пустым) или null (отмена).
+// opt: {pids — карточки задачи (в окне задачи — выбранные сейчас), closers — e-mail тех, кто закрывает}.
+// У задачи с товаром — блок «Записать в «Ежедневные данные»» (решение Ольги 06.11.2026): тип изменения обязателен,
+// комментарий — текст отчёта (пустой — название задачи); пишется только в пустые поля дня, дня нет — создаётся черновиком.
+function askTaskReport(t, ckList, who, opt){
+  opt=opt||{}; const tkey=t.id||'_new'; delete taskDailyPending[tkey];
+  const cards=TASK_NO_DAILY.has((t.decisionKey||'').split(':')[0]) ? [] : (opt.pids||taskPids(t)).map(id=>state.products.find(p=>p.id===id)).filter(Boolean);
+  // заранее отмечены карточки площадок тех, кто закрывает (Настройки → Сотрудники), иначе — свои, иначе — все
+  const mpsOf=es=>[...new Set(es.flatMap(e=>((staffCache.find(s=>(s.email||'').toLowerCase()===String(e||'').toLowerCase())||{}).mps)||[]))];
+  let preMps=mpsOf(opt.closers||[]); if(!preMps.length) preMps=mpsOf([myEmail()]);
+  const preOn=p=>!preMps.length || !cards.some(c=>preMps.includes(c.mp)) || preMps.includes(p.mp);
+  const oneName=new Set(cards.map(p=>p.name)).size===1, cardLbl=p=>oneName ? MP_LABEL[p.mp] : `${p.name} (${MP_LABEL[p.mp]})`;
+  const dailyBlock=cards.length ? `<div class="tkr-dw">
+        <label class="tk-chk"><input type="checkbox" id="tkrDw"${preMps.length?' checked':''}> <b>Записать в «Ежедневные данные»</b></label>
+        ${preMps.length?'':'<div class="sm muted">У вас не указаны площадки — включите, если меняли карточку.</div>'}
+        <div id="tkrDwBox"${preMps.length?'':' hidden'}>
+          <div class="sm muted" style="margin:8px 0 4px;">Тип изменения <span class="neg">*</span> (можно несколько)</div>
+          <div class="tkr-types">${Object.entries(CHANGE_TYPES).map(([k,v])=>`<label class="tk-chk"><input type="checkbox" data-tkrty="${k}"> ${hmEsc(v.label)}</label>`).join('')}</div>
+          <div class="tkr-row"><label class="sm">День <input type="date" id="tkrDate" value="${todayISO()}" max="${todayISO()}"></label>
+            <span class="sm">Карточки: ${cards.map(p=>`<label class="tk-chk"><input type="checkbox" data-tkrp="${p.id}"${preOn(p)?' checked':''}> ${hmEsc(cardLbl(p))}</label>`).join('')}</span></div>
+          ${preMps.length && cards.some(c=>!preMps.includes(c.mp)) && cards.some(c=>preMps.includes(c.mp)) ? '<div class="sm muted">Отмечены площадки исполнителя из «Настроек» → «Сотрудники».</div>' : ''}
+          <p class="note" style="margin:6px 0 0;">В выбранный день запишется тип изменения, а текст отчёта станет комментарием. Уже заполненное не перезаписывается.</p>
+          <div class="sm" id="tkrDwInfo"></div>
+        </div></div>` : '';
   return new Promise(resolve=>{
     const left=(ckList||t.checklist||[]).filter(x=>!x.done);
     let done=false; const fin=v=>{ if(done) return; done=true; resolve(v); };
@@ -6457,12 +6505,60 @@ function askTaskReport(t, ckList, who){
         <p class="note">Если подпункт больше не нужен — удалите его в задаче.</p><div class="row md-acts"><button class="btn secondary" data-mclose>Понятно</button></div>`
       : `<h2>Что сделано?</h2><p class="hint" style="margin-top:0;">${hmEsc(t.title)}${who?' · '+hmEsc(who):''}</p>
         <div class="md-f"><textarea id="tkrText" rows="3" placeholder="Что сделано по задаче"></textarea></div>
-        <p class="note" style="margin:0 0 6px;">Коротко опишите, что сделано по задаче. Если вы уже отметили это в «Ежедневных данных» (тип изменения или комментарий), можно оставить поле пустым.</p>
+        <p class="note" style="margin:0 0 6px;">${cards.length ? 'Коротко опишите, что сделано по задаче и отметьте Тип изменения ниже. Если вы уже отметили это в «Ежедневных данных» (тип изменения или комментарий), снимите галочку в ячейке «Записать в «Ежедневные данные»».' : 'Коротко опишите, что сделано по задаче. Если вы уже отметили это в «Ежедневных данных» (тип изменения или комментарий), можно оставить поле пустым.'}</p>
+        ${dailyBlock}<div class="md-err neg" id="tkrErr"></div>
         <div class="row md-acts"><button class="btn" id="tkrOk">Готово</button><button class="btn secondary" data-mclose>Отмена</button></div>`);
     new MutationObserver((_, o)=>{ if(!document.body.contains(m.el)){ o.disconnect(); fin(null); } }).observe(document.body, {childList:true});
     if(left.length) return;
     const ta=m.el.querySelector('#tkrText'); setTimeout(()=>ta.focus(), 30);
-    m.el.querySelector('#tkrOk').addEventListener('click', ()=>{ fin(ta.value.trim()); m.close(); });
+    const q=s=>m.el.querySelector(s), qa=s=>[...m.el.querySelectorAll(s)];
+    const selCards=()=>qa('[data-tkrp]:checked').map(x=>cards.find(p=>p.id===x.dataset.tkrp)).filter(Boolean);
+    const dwOn=()=>cards.length && q('#tkrDw').checked;
+    // что уже заполнено в выбранный день — видно до «Готово»
+    let infoSeq=0;
+    const paintInfo=async()=>{ if(!cards.length) return; const my=++infoSeq, d=q('#tkrDate').value, cs=selCards(), box=q('#tkrDwInfo');
+      if(!d || !cs.length){ box.innerHTML=''; return; }
+      const dms=await Promise.all(cs.map(p=>getDailyMap(p.id).catch(()=>null))); if(my!==infoSeq) return;
+      box.innerHTML=cs.map((p,i)=>{ if(!dms[i]) return `<div class="neg">${hmEsc(cardLbl(p))}: не удалось прочитать «Ежедневные данные»</div>`;
+        const day=dms[i][d], dd=fmtRuDate(d).slice(0,5); if(!day) return `<div class="muted">${hmEsc(cardLbl(p))} ${dd}: дня ещё нет — создастся черновиком</div>`;
+        const ty=(day.changeTypes&&day.changeTypes.length ? day.changeTypes : (day.changeType?[day.changeType]:[])), nt=(day.changeNote||'').trim(), parts=[];
+        if(ty.length) parts.push('уже указан тип «'+ty.map(x=>(CHANGE_TYPES[x]||{}).label||x).join('», «')+'» — тип не изменится');
+        if(nt) parts.push('комментарий уже есть — не изменится');
+        return parts.length ? `<div class="amb">${hmEsc(cardLbl(p))} ${dd}: ${hmEsc(parts.join('; '))}</div>` : ''; }).join(''); };
+    if(cards.length){
+      q('#tkrDw').addEventListener('change', ()=>{ q('#tkrDwBox').hidden=!q('#tkrDw').checked; q('#tkrErr').textContent=''; });
+      q('#tkrDate').addEventListener('change', paintInfo); qa('[data-tkrp]').forEach(x=>x.addEventListener('change', paintInfo));
+      paintInfo();
+    }
+    q('#tkrOk').addEventListener('click', async ()=>{
+      const text=ta.value.trim(), err=q('#tkrErr');
+      if(dwOn()){
+        const types=qa('[data-tkrty]:checked').map(x=>x.dataset.tkrty), d=q('#tkrDate').value, cs=selCards();
+        if(!types.length){ err.textContent='Выберите тип изменения или снимите галочку «Записать в «Ежедневные данные»»'; return; }
+        if(!cs.length){ err.textContent='Отметьте карточку, в которую записать изменение'; return; }
+        if(!d || d>todayISO()){ err.textContent='Укажите день — не позже сегодняшнего'; return; }
+        const note=text || t.title || '', btn=q('#tkrOk'); btn.disabled=true; btn.textContent='Записываю…'; err.textContent='';
+        const done=[], failed=[];
+        for(const p of cs){
+          let res=null;
+          const r=await mutateStoreValue('daily:'+p.id, ()=>({}), fresh=>{
+            res={created:false, type:false, note:false};
+            if(!fresh[d]){ const prev=Object.keys(fresh).filter(x=>x<d).sort().pop(), src=prev?fresh[prev]:null, day=blankDailyEntry(p);
+              if(src){ ['priceLK','priceCustomer','priceOzonCard'].forEach(k=>{ day[k]=src[k]||0; }); day.promo=src.promo??null; if(src.adBids) day.adBids=src.adBids.map(b=>({...b})); }
+              fresh[d]=day; res.created=true; }
+            const day=fresh[d];
+            if(!(day.changeTypes&&day.changeTypes.length) && !day.changeType){ day.changeTypes=types.slice(); res.type=true; }
+            if(!(day.changeNote||'').trim() && note){ day.changeNote=note; res.note=true; }
+          });
+          if(r) done.push({p, ...res}); else failed.push(p);
+        }
+        btn.disabled=false; btn.textContent='Готово';
+        if(failed.length){ err.textContent='Не удалось записать в «Ежедневные данные»: '+failed.map(cardLbl).join(', ')+' — проверьте соединение и нажмите «Готово» ещё раз'; return; }
+        taskDailyPending[tkey]={by:myEmail(), for:(opt.closers||[]).filter(Boolean), at:new Date().toISOString(), date:d, types, cards:done.filter(x=>x.type||x.note).map(x=>cardLbl(x.p)), skipped:done.filter(x=>!x.type&&!x.note).map(x=>cardLbl(x.p))};
+        if(dailyWork && !dailyWork.ops.size && cs.some(p=>p.id===dailyWork.productId) && typeof renderDailyTab==='function'){ try{ dailyWork=null; renderDailyTab(); }catch(e){} }
+      }
+      fin(text); m.close();
+    });
   });
 }
 // сменить статус у части исполнителей (emails) или у всех (emails=null); общий итог пересчитывается по свежей версии.
@@ -6486,8 +6582,13 @@ function applyPeopleStatus(f, emails, status, report){
     f.status=status;
   }
   if(closed.length && report) f.reports=[...(f.reports||[]), {by:me, for:closed.filter(Boolean), text:report, at:now}];
+  const dw=closed.length && taskDailyPending[f.id]; if(dw) f.dailyLog=[...(f.dailyLog||[]).filter(x=>x.at!==dw.at), dw];
   f.doneAt= f.status==='done' ? (people.map(p=>p.doneAt).filter(Boolean).sort().pop() || now) : null;
 }
+// что записано в «Ежедневные данные» при закрытии (последняя запись)
+function taskDailyHtml(t, pe){ const x=(t.dailyLog||[]).filter(e=>!pe || !(e.for||[]).length || e.for.includes(pe)).slice(-1)[0]; if(!x) return '';
+  const ty=(x.types||[]).map(k=>(CHANGE_TYPES[k]||{}).label||k).join(', '), dd=fmtRuDate(x.date).slice(0,5);
+  return `<dt>В данных</dt><dd title="Записано в «Ежедневные данные»: ${hmEsc(ty)}${(x.skipped||[]).length?'; не изменено (уже заполнено): '+hmEsc(x.skipped.join(', ')):''}">${x.cards.length ? hmEsc(x.cards.join(', '))+' — '+dd+' · '+hmEsc(ty) : '<span class="muted">уже было заполнено — '+dd+'</span>'}</dd>`; }
 // как закрыли: отчёт, кто и когда, сколько было в работе (быстрее TASK_FAST_MIN минут или сразу из «К выполнению» — ⚡)
 function taskCloseInfo(t, p){
   const x=p||t; if(!x || !x.reportAt) return null;
@@ -6571,7 +6672,7 @@ function taskCardHtml(c, colIdx){
       ${(t.checklist||[]).length?`<dt>Подпункты</dt><dd>${t.checklist.filter(x=>x.done).length} из ${t.checklist.length}</dd>`:''}
       ${(()=>{ if(c.status!=='done') return ''; const ci=taskCloseInfo(t, c.pe ? taskPeople(t).find(p=>p.email===c.pe) : (taskPeople(t).length ? null : t)); if(!ci) return '';
         return `<dt>Сделано</dt><dd class="tk-rep" title="${hmEsc(ci.text)}">${ci.text ? hmEsc(ci.text.length>90 ? ci.text.slice(0,90)+'…' : ci.text) : '<span class="muted">без отчёта</span>'}</dd>
-        <dt>Закрыл(а)</dt><dd>${hmEsc(staffName(ci.by)||'')}${ci.at?', '+fmtRuDate(ci.at.slice(0,10)).slice(0,5):''} · <span class="${ci.fast?'amb':'muted'}" title="${ci.fast?'Закрыта сразу после взятия в работу или минуя «В работе» — проверьте отчёт':''}">${ci.fast?'⚡ ':''}${ci.dur}</span></dd>`; })()}
+        <dt>Закрыл(а)</dt><dd>${hmEsc(staffName(ci.by)||'')}${ci.at?', '+fmtRuDate(ci.at.slice(0,10)).slice(0,5):''} · <span class="${ci.fast?'amb':'muted'}" title="${ci.fast?'Закрыта сразу после взятия в работу или минуя «В работе» — проверьте отчёт':''}">${ci.fast?'⚡ ':''}${ci.dur}</span></dd>${taskDailyHtml(t, c.pe)}`; })()}
       ${t.kind==='selfbuy' || t.kind==='fbsstore'?`<dt>Заказы</dt><dd>решено ${(t.items||[]).filter(x=>x.verdict).length} из ${(t.items||[]).length}</dd>`:''}
     </dl>
     ${t.src==='decision'?'<div class="tk-src">из Центра решений</div>':t.src==='api'?'<div class="tk-src">создана загрузкой API</div>':''}
@@ -6637,7 +6738,7 @@ async function moveTask(id, status, pe){
   const already = people.length ? people.filter(p=>!targets || targets.includes(p.email)).every(p=>p.status===status) : t.status===status;
   if(already) return;
   let report=null;
-  if(status==='done' && taskNeedsReport(t)){ report=await askTaskReport(t, null, pe ? staffName(pe) : ''); if(report===null) return; }
+  if(status==='done' && taskNeedsReport(t)){ report=await askTaskReport(t, null, pe ? staffName(pe) : '', {closers:targets||[]}); if(report===null) return; }
   const prev=JSON.parse(JSON.stringify(t));
   applyPeopleStatus(t, targets, status, report); paintTasks(); updateTasksBadge(); // сразу на экране
   const r=await setTaskStatus(id, status, targets, report);
@@ -6834,7 +6935,7 @@ function openTaskEditor(t, preset){
     const closingTask=!assignees.length && fallback==='done' && v.status!=='done';
     let report=null, reports=v.reports||[];
     if((closing.length || closingTask) && taskNeedsReport(v)){
-      report=await askTaskReport(v, ck, closing.map(p=>staffName(p.email)).join(', '));
+      report=await askTaskReport(v, ck, closing.map(p=>staffName(p.email)).join(', '), {pids:selPids, closers:closing.map(p=>p.email)});
       if(report===null){ $('tkeErr').textContent=ck.some(x=>!x.done) ? 'Чтобы закрыть задачу, отметьте все подпункты' : ''; return; }
       closing.forEach(p=>{ p.report=report; p.reportAt=now; p.reportBy=myEmail(); });
       if(report) reports=[...reports, {by:myEmail(), for:closing.map(p=>p.email), text:report, at:now}];
@@ -6844,6 +6945,7 @@ function openTaskEditor(t, preset){
     const patch={title, desc:$('tkeDesc').value.trim(), prio:$('tkePrio').value, due:$('tkeDue').value, pids:selPids, checklist:ck, assignees, status, doneAt, reports};
     if(closingTask && report!==null) Object.assign(patch, {report, reportAt:now, reportBy:myEmail()});
     else if(!assignees.length && status!=='done') Object.assign(patch, {report:null, reportAt:null, reportBy:null});
+    { const dw=report!==null && taskDailyPending[v.id||'_new']; if(dw) patch.dailyLog=[...(v.dailyLog||[]).filter(x=>x.at!==dw.at), dw]; }
     $('tkeSave').disabled=true;
     let r;
     if(isNew){
