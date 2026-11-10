@@ -425,7 +425,8 @@
   .hm-fbars{display:flex;align-items:flex-end;gap:5px;height:110px;margin:14px 0 6px;}
   .hm-fbars div{flex:1;background:var(--grad);border-radius:4px 4px 0 0;min-height:3px;opacity:.85;position:relative;}
   .hm-fbars div:hover{opacity:1;}
-  .hm-fbars div span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;font-size:11px;color:var(--tx);background:var(--card2);border:1px solid var(--line2);border-radius:6px;padding:2px 6px;white-space:nowrap;display:none;z-index:3;}
+  .hm-fbars div span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;font-size:11px;line-height:1.45;color:var(--tx);background:var(--card2);border:1px solid var(--line2);border-radius:6px;padding:3px 7px;white-space:nowrap;display:none;z-index:3;}
+  .hm-fbars div:first-child span{left:0;transform:none;} .hm-fbars div:last-child span, .hm-fbars div:nth-last-child(2) span{left:auto;right:0;transform:none;}
   .hm-fbars div:hover span{display:block;}
   .hm-list>div{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);}
   .hm-list>div:last-child{border:0;}
@@ -5557,7 +5558,7 @@ async function renderHomeTab(){
   const curPerDay = tot.rub/dayN;
 
   // --- ряды для мини-графиков
-  const dayAgg=d=>{ let rub=0,units=0,ad=0; for(const p of all){ const e=dmById[p.id][d]; if(e){ rub+=+e.ordersRub||0; units+=+e.orders||0; ad+=+e.adspend||0; } } return {rub,units,ad}; };
+  const dayAgg=d=>{ let rub=0,units=0,ad=0; const mp={}; for(const p of all){ const e=dmById[p.id][d]; if(e){ rub+=+e.ordersRub||0; units+=+e.orders||0; ad+=+e.adspend||0; const x=mp[p.mp]=mp[p.mp]||{rub:0,units:0}; x.rub+=+e.ordersRub||0; x.units+=+e.orders||0; } } return {rub,units,ad,mp}; };   // mp — по площадкам, для подсказки «Заказов по дням»
   const series=days14.map(d=>({d, ...dayAgg(d)}));
   const planDaySeries=series.map(s=>{ const m=s.d.slice(0,7); const pl=planForMonth(m, all); if(!(pl>0)) return 0;
     const rub=all.filter(p=>hasPlan(p,m)).reduce((a,p)=>a+(+((dmById[p.id]||{})[s.d]||{}).ordersRub||0),0); return rub/(pl/daysInMonth(m))*100; });
@@ -5702,7 +5703,7 @@ async function renderHomeTab(){
   const maxRub=Math.max(1,...series.map(s=>s.rub));
   const ordersCard=`<div class="panel hm-card"><div class="hm-h">Заказы по дням<a class="hm-more" data-go="daily">Ежедневные данные</a></div>
     ${lastAgg ? `<div class="hm-row hm-between"><span class="muted">Последний заполненный день — ${fmtRuDate(lastDay)}</span><span><span class="hm-big">${fmt(lastAgg.units)} шт</span> <span class="muted">· ${fmt(lastAgg.rub)} ₽</span> ${hmChip(lastAgg.rub, prevDayAgg.rub, 'pct')}</span></div>` : '<div class="empty">Заполненных дней пока нет</div>'}
-    <div class="hm-fbars">${series.map(s=>`<div style="height:${Math.max(2,s.rub/maxRub*100)}%"><span>${fmtRuDate(s.d)}: ${fmt(s.units)} шт · ${fmt(s.rub)} ₽</span></div>`).join('')}</div>
+    <div class="hm-fbars">${series.map(s=>`<div style="height:${Math.max(2,s.rub/maxRub*100)}%"><span><b>${fmtRuDate(s.d)}: ${fmt(s.units)} шт · ${fmt(s.rub)} ₽</b>${['wb','ozon','ym'].filter(m=>s.mp&&s.mp[m]).map(m=>`<br>${MP_LABEL[m]} — ${fmt(s.mp[m].units)} шт · ${fmt(s.mp[m].rub)} ₽`).join('')}</span></div>`).join('')}</div>
     <div class="hm-row hm-between sm muted"><span>${fmtRuDate(days14[0])}</span><span>${fmtRuDate(days14[13])}</span></div></div>`;
 
   const stockCard=!readyCh.length ? `<div class="panel hm-card"><div class="hm-h">Запас на площадках <span class="ad-soon">скоро</span><a class="hm-more" data-go="stock">Остатки и динамика</a></div>
