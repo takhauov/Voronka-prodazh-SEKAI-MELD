@@ -2693,11 +2693,9 @@ async function sumLatestStock(channel, keys){
   const latestWeek=results.filter(r=>r.week).map(r=>r.week).sort().reverse()[0]||null;
   return {value: results.reduce((s,r)=>s+(r.value||0),0), week: latestWeek, filled: results.some(r=>r.filled)};
 }
+// карточки товара на площадке — по названию (без «дубль») и «Группе плана». Старые списки из «Настроек закупа»
+// (settings.*ProductIds) не используем: раздела закупа нет, новые карточки (например, дубли) в них не попадали (Ольга 16.11.2026)
 function resolveChannelMembers(row, settings, channel){
-  const overrideIds = settings[channel+'ProductIds'];
-  if(overrideIds && overrideIds.length>0){
-    return overrideIds.map(id=>state.products.find(x=>x.id===id)).filter(Boolean);
-  }
   return row.members.filter(m=>m.mp===channel);
 }
 async function computeZakupRow(row, settings){
@@ -2790,7 +2788,7 @@ async function renderProductsTable(){
   }
   zRows.sort((a,b)=>a.row.name.localeCompare(b.row.name,'ru'));
   const claimed=new Map();
-  zRows.forEach(({row,settings})=>{ if(hasZakupOverride(settings)) ['wb','ozon','ym'].forEach(ch=>(settings[ch+'ProductIds']||[]).forEach(id=>claimed.set(id,row.rowKey))); });
+  // старые списки карточек из «Настроек закупа» больше не учитываем (16.11.2026) — claimed остаётся пустым
   const printed=new Set();
   const cardRow = p=>{
     const th=getThresholds(p);
@@ -2852,7 +2850,7 @@ async function renderProductsTable(){
     rows+=pHead(row, settings)+cards.map(cardRow).join('');
   }
   const rest=state.products.filter(p=>!printed.has(p.id) && (showHidden || !p.hidden));
-  if(rest.length) rows+=`<tr class="pg-head pg-off"><td colspan="5"><div class="pg-line"><div class="pg-name">${rest.every(p=>p.hidden)?'Скрытые карточки':'Остальные карточки'}</div><span class="note" style="margin:0;">не участвуют в закупе</span></div></td></tr>`+rest.map(cardRow).join('');
+  if(rest.length) rows+=`<tr class="pg-head pg-off"><td colspan="5"><div class="pg-line"><div class="pg-name">${rest.every(p=>p.hidden)?'Скрытые карточки':'Остальные карточки'}</div></div></td></tr>`+rest.map(cardRow).join('');
   const hideBar = (hiddenCount||showHidden) ? `<div style="margin:0 0 10px;"><button class="btn secondary" id="toggleHiddenProducts">${showHidden?'Не показывать скрытые':'Показать скрытые ('+hiddenCount+')'}</button> <span class="note" style="display:inline;">Скрытые товары не попадают в списки выбора, остатки, поставки и закуп; данные и история сохраняются.</span></div>` : '';
   wrap.innerHTML = hideBar + `<table class="pgtable"><thead><tr><th>Площадка</th><th>Карточка</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
   const tgl=wrap.querySelector('#toggleHiddenProducts');
